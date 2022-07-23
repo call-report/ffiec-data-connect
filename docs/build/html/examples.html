@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Example Code &mdash; FFIEC Webservice Python Connector 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Version History" href="versionhistory.html" />
+    <link rel="prev" title="ffiec_data_connect package" href="ffiec_data_connect.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> FFIEC Webservice Python Connector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Example Code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FFIEC Webservice Python Connector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Example Code</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="example-code">
+<h1>Example Code<a class="headerlink" href="#example-code" title="Permalink to this headline"></a></h1>
+<section id="loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">
+<h2>Loading credentials and starting a connection to the FFIEC Webservice<a class="headerlink" href="#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice" title="Permalink to this headline"></a></h2>
+<p>When using the package, credentials to the Webservice may be loaded from environment variables, or through the instantiation of the <cite>WebserviceCredentials</cite> class.</p>
+<p>The following example shows how to load credentials from instantiation (note that the username and password included are placeholders):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">ffiec_connection</span>
+
+
+<span class="n">creds</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">WebserviceCredentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;user1234&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password1234&quot;</span><span class="p">)</span>
+
+<span class="n">conn</span> <span class="o">=</span> <span class="n">ffiec_connection</span><span class="o">.</span><span class="n">FFIECConnection</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="collecting-the-reporting-periods">
+<h2>Collecting the reporting periods<a class="headerlink" href="#collecting-the-reporting-periods" title="Permalink to this headline"></a></h2>
+<p>The following example shows how to collect the reporting periods from the FFIEC Webservice.</p>
+<p>These reporting periods may be utilized for subsequent queries to the FFIEC Webservice, and to determine when new reporting periods are available for query.</p>
+<p>Output is returned as a list of dates in the format of mm/dd/YYYY, which is the “native” format of the FFIEC Webservice.</p>
+<p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+
+<span class="n">reporting_periods</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_reporting_periods</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">,</span>
+    <span class="n">date_output_format</span><span class="o">=</span><span class="s2">&quot;string_original&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">reporting_periods</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
+
+<span class="o">&gt;&gt;</span> <span class="p">[</span><span class="s1">&#39;6/30/2022&#39;</span><span class="p">,</span> <span class="s1">&#39;3/31/2022&#39;</span><span class="p">,</span> <span class="s1">&#39;12/31/2021&#39;</span><span class="p">,</span> <span class="s1">&#39;9/30/2021&#39;</span><span class="p">,</span> <span class="s1">&#39;6/30/2021&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="collect-the-list-of-filers-for-a-particular-reporting-period">
+<h2>Collect the list of filers for a particular reporting period<a class="headerlink" href="#collect-the-list-of-filers-for-a-particular-reporting-period" title="Permalink to this headline"></a></h2>
+<blockquote>
+<div><p>The following example shows how to collect the list of filers for a particular reporting period.</p>
+<p>This list of filers may be utilized for subsequent queries to the FFIEC Webservice, and to determine which filers are available for query.</p>
+<p>Output is returned as a list of filers, with the “rssd” (the name of the Federal Reserve’s ID for regulations) as the primary key.</p>
+<p>Note that due to the nature of the FFIEC Webservice, the list of filers may be very large. As a result, the wall time for this query may be very long, depending on the size of the list of filers, the speed of the connection, and the server load of the FFIEC Webservice.</p>
+<p><cite>A data dictionary for the output is provided below the output</cite></p>
+<p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+
+<span class="n">filers</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_filers_on_reporting_period</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;6/30/2022&quot;</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;list&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">filers</span><span class="p">[</span><span class="mi">100</span><span class="p">:</span><span class="mi">102</span><span class="p">])</span>
+
+<span class="o">&gt;&gt;</span>
+<span class="p">[{</span><span class="s1">&#39;id_rssd&#39;</span><span class="p">:</span> <span class="s1">&#39;5752005&#39;</span><span class="p">,</span>
+<span class="s1">&#39;fdic_cert_number&#39;</span><span class="p">:</span> <span class="s1">&#39;59322&#39;</span><span class="p">,</span>
+<span class="s1">&#39;occ_chart_number&#39;</span><span class="p">:</span> <span class="s1">&#39;25264&#39;</span><span class="p">,</span>
+<span class="s1">&#39;ots_dock_number&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;primary_aba_rout_number&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;PEAK TRUST COMPANY, NATIONAL ASSOCIATION&#39;</span><span class="p">,</span>
+<span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="s1">&#39;AK&#39;</span><span class="p">,</span>
+<span class="s1">&#39;city&#39;</span><span class="p">:</span> <span class="s1">&#39;ANCHORAGE&#39;</span><span class="p">,</span>
+<span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;3000 A STREET, SUITE 200&#39;</span><span class="p">,</span>
+<span class="s1">&#39;filing_type&#39;</span><span class="p">:</span> <span class="s1">&#39;041&#39;</span><span class="p">,</span>
+<span class="s1">&#39;has_filed_for_reporting_period&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+
+<span class="p">{</span><span class="s1">&#39;id_rssd&#39;</span><span class="p">:</span> <span class="s1">&#39;114260&#39;</span><span class="p">,</span>
+<span class="s1">&#39;fdic_cert_number&#39;</span><span class="p">:</span> <span class="s1">&#39;16130&#39;</span><span class="p">,</span>
+<span class="s1">&#39;occ_chart_number&#39;</span><span class="p">:</span> <span class="s1">&#39;12072&#39;</span><span class="p">,</span>
+<span class="s1">&#39;ots_dock_number&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;primary_aba_rout_number&#39;</span><span class="p">:</span> <span class="s1">&#39;125200060&#39;</span><span class="p">,</span>
+<span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;FIRST NATIONAL BANK ALASKA&#39;</span><span class="p">,</span>
+<span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="s1">&#39;AK&#39;</span><span class="p">,</span>
+<span class="s1">&#39;city&#39;</span><span class="p">:</span> <span class="s1">&#39;ANCHORAGE&#39;</span><span class="p">,</span>
+<span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;360 K STREET&#39;</span><span class="p">,</span>
+<span class="s1">&#39;filing_type&#39;</span><span class="p">:</span> <span class="s1">&#39;041&#39;</span><span class="p">,</span>
+<span class="s1">&#39;has_filed_for_reporting_period&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}]</span>
+</pre></div>
+</div>
+<table class="colwidths-given docutils align-default" id="id1">
+<caption><span class="caption-text">Output Fields</span><a class="headerlink" href="#id1" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 7%" />
+<col style="width: 71%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Data Type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>id_rssd</p></td>
+<td><p>The ID of the financial institution, as provided by the FFIEC.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-odd"><td><p>fdic_cert_number (optional)</p></td>
+<td><p>The FDIC certificate number of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-even"><td><p>occ_chart_number (optional)</p></td>
+<td><p>The OCC ID of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-odd"><td><p>ots_dock_number (optional)</p></td>
+<td><p>The OTS docket number of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-even"><td><p>primary_aba_rout_number (optional)</p></td>
+<td><p>The primary ABA routing number of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-odd"><td><p>name</p></td>
+<td><p>The name of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-even"><td><p>state</p></td>
+<td><p>The state of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-odd"><td><p>city</p></td>
+<td><p>The city of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-even"><td><p>address</p></td>
+<td><p>The address of the financial institution.</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-odd"><td><p>filing_type</p></td>
+<td><p>The type of filing for the financial institution (FFIEC 031, 041, or 051).</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-even"><td><p>has_filed_for_reporting_period</p></td>
+<td><p>Whether or not the financial institution has filed for the reporting period.</p></td>
+<td><p>boolean</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</section>
+<section id="collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">
+<h2>Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.<a class="headerlink" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date" title="Permalink to this headline"></a></h2>
+<blockquote>
+<div><p>The following example shows how to collect the rssd IDs of all filers who have filed for a particular reporting period, since a particular date.</p>
+<p>This method is useful for determining how many filers have completed their reporting for the reporting period.</p>
+<p>Filers may also re-submit their filings for the reporting period, so this method may also be useful for determining which and how many filers have re-submitted.</p>
+<p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+
+<span class="n">last_filing_date_time</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_filers_submission_date_time</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">since_date</span><span class="o">=</span><span class="s2">&quot;6/30/2022&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;6/30/2022&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">last_filing_date_time</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;</span> <span class="p">[{</span><span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="mi">688556</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="s1">&#39;7/1/2022 12:15:06 AM&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="mi">175458</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="s1">&#39;7/1/2022 8:00:37 AM&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="mi">92144</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="s1">&#39;7/1/2022 12:25:04 PM&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="mi">750444</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="s1">&#39;7/1/2022 4:41:37 PM&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="mi">715630</span><span class="p">,</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="s1">&#39;7/2/2022 12:08:13 PM&#39;</span><span class="p">}]</span>
+</pre></div>
+</div>
+<p>The method outputs a list of rssd(s), which represents the Federal Reserve’s ID for regulated institutions, and the date and time of the last filing for the reporting period.</p>
+<p>Note that the date and time of the last filing is in Washington DC time. If the requested date output format is <cite>python_format</cite>, the date and time will be converted to a <code class="docutils literal notranslate"><span class="pre">datetime</span></code> object, with the time zone set explicitly to <code class="docutils literal notranslate"><span class="pre">America/NewYork</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">
+<h2>Collect the list of rssd(s) that have filed in a reporting period since a particular date.<a class="headerlink" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date" title="Permalink to this headline"></a></h2>
+<blockquote>
+<div><p>The following example shows how to collect the list of rssd(s) that have filed in a reporting period since a particular date.</p>
+<p>This list of rssd(s) may be utilized for subsequent queries to the FFIEC Webservice, and to determine which rssd(s) have filed for the reporting period.</p>
+<p>The difference between this example and the prior example is that this example only returns a list of RSSDs, not a list of RSSDs and the RSSD’s last filing date and time.</p>
+<p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+
+<span class="n">inst_list</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_filers_since_date</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">since_date</span><span class="o">=</span><span class="s2">&quot;6/30/2022&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;6/30/2022&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">inst_list</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;</span> <span class="p">[</span><span class="mi">688556</span><span class="p">,</span> <span class="mi">175458</span><span class="p">,</span> <span class="mi">92144</span><span class="p">,</span> <span class="mi">750444</span><span class="p">,</span> <span class="mi">715630</span><span class="p">]</span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+<section id="collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">
+<h2>Collect the time series data associated with a particular rssd and reporting period.<a class="headerlink" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period" title="Permalink to this headline"></a></h2>
+<blockquote>
+<div><p>With the metadata collected from the earlier examples, the following example shows how to collect the time series data associated with a particular rssd and reporting period.</p>
+<p>There are two time series that may be collected: “Call [Report]” and “UBPR” (Universal Bank Performance Report) data. Call Report data reflects the rolling data submissions of banks submitting their <cite>FFIEC 031</cite>, <cite>FFIEC 041</cite>, and <cite>FFIEC 051</cite> filings. UBPR data is released en masse for all banks mid-month, each month.</p>
+<p>(For more information on these reports and data, visit <a class="reference external" href="https://call.report">https://call.report</a>)</p>
+<p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+
+<span class="n">time_series</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;6/30/2022&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">time_series</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+
+<span class="o">&gt;&gt;</span>
+<span class="p">[{</span><span class="s1">&#39;mdrm&#39;</span><span class="p">:</span> <span class="s1">&#39;RCONK280&#39;</span><span class="p">,</span>
+<span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="s1">&#39;37&#39;</span><span class="p">,</span>
+<span class="s1">&#39;quarter&#39;</span><span class="p">:</span> <span class="s1">&#39;6/30/2022&#39;</span><span class="p">,</span>
+<span class="s1">&#39;int_data&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<span class="s1">&#39;float_data&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;bool_data&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;str_data&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;data_type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">},</span>
+<span class="p">{</span><span class="s1">&#39;mdrm&#39;</span><span class="p">:</span> <span class="s1">&#39;RCONB834&#39;</span><span class="p">,</span>
+<span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="s1">&#39;37&#39;</span><span class="p">,</span>
+<span class="s1">&#39;quarter&#39;</span><span class="p">:</span> <span class="s1">&#39;6/30/2022&#39;</span><span class="p">,</span>
+<span class="s1">&#39;int_data&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<span class="s1">&#39;float_data&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;bool_data&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;str_data&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="s1">&#39;data_type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">}]</span>
+</pre></div>
+</div>
+<table class="colwidths-given docutils align-default" id="id2">
+<caption><span class="caption-text">Output Fields</span><a class="headerlink" href="#id2" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 7%" />
+<col style="width: 71%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Data Type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>mdrm</p></td>
+<td><p>The ID code for the time series</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-odd"><td><p>rssd</p></td>
+<td><p>The Federal Reserve’s ID for the reporting institution</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-even"><td><p>quarter</p></td>
+<td><p>The quarter of the reporting period</p></td>
+<td><p>string or datetime</p></td>
+</tr>
+<tr class="row-odd"><td><p>int_data</p></td>
+<td><p>If present, the integer data for the time series</p></td>
+<td><p>integer</p></td>
+</tr>
+<tr class="row-even"><td><p>float_data</p></td>
+<td><p>If present, the floating point data for the time series</p></td>
+<td><p>float</p></td>
+</tr>
+<tr class="row-odd"><td><p>bool_data</p></td>
+<td><p>If present, the boolean data for the time series</p></td>
+<td><p>boolean</p></td>
+</tr>
+<tr class="row-even"><td><p>str_data</p></td>
+<td><p>If present, the string data for the time series</p></td>
+<td><p>string</p></td>
+</tr>
+<tr class="row-odd"><td><p>data_type</p></td>
+<td><p>The data type of the time series</p></td>
+<td><p>string</p></td>
+</tr>
+</tbody>
+</table>
+<p>Note on output:</p>
+<ul class="simple">
+<li><p>The output is a list of dictionaries.</p></li>
+<li><p>For information on mapping the <cite>MDRM</cite> field to a descriptive data dictionary,
+visit <a class="reference external" href="https://call.report">https://call.report</a></p></li>
+<li><p>Each row/record within a row/DataFrame will contain only one data_type,
+with the data type indicating which field within the dict/Series contains the data.</p></li>
+<li><p>The data_type field will be one of the following:
+* int
+* float
+* bool
+* str</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ffiec_data_connect.html" class="btn btn-neutral float-left" title="ffiec_data_connect package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="versionhistory.html" class="btn btn-neutral float-right" title="Version History" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Michael Handelman.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

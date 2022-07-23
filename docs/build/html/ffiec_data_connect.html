@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ffiec_data_connect package &mdash; FFIEC Webservice Python Connector 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Example Code" href="examples.html" />
+    <link rel="prev" title="FFIEC Webservice Data Connector" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> FFIEC Webservice Python Connector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">ffiec_data_connect package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect.constants">ffiec_data_connect.constants module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect.credentials">ffiec_data_connect.credentials module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect.datahelpers">ffiec_data_connect.datahelpers module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect.exceptions">ffiec_data_connect.exceptions module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect.ffiec_connection">ffiec_data_connect.ffiec_connection module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect.methods">ffiec_data_connect.methods module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect.xbrl_processor">ffiec_data_connect.xbrl_processor module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ffiec_data_connect">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FFIEC Webservice Python Connector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">FFIEC Webservice Data Connector</a> &raquo;</li>
+      <li>ffiec_data_connect package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ffiec_data_connect.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ffiec-data-connect-package">
+<h1>ffiec_data_connect package<a class="headerlink" href="#ffiec-data-connect-package" title="Permalink to this headline"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline"></a></h2>
+</section>
+<section id="module-ffiec_data_connect.constants">
+<span id="ffiec-data-connect-constants-module"></span><h2>ffiec_data_connect.constants module<a class="headerlink" href="#module-ffiec_data_connect.constants" title="Permalink to this headline"></a></h2>
+<p>Constant values utilized for data collection and other purposes.</p>
+<p>This module contains constant values that are unlikely to change,
+but need to be referenced by other modules.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="ffiec_data_connect.constants.WebserviceConstants">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">WebserviceConstants</span></span><a class="headerlink" href="#ffiec_data_connect.constants.WebserviceConstants" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The URL endpoint for the FFIEC SOAP-based webservice.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ffiec_data_connect.constants.WebserviceConstants.base_url">
+<span class="sig-name descname"><span class="pre">base_url</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://cdr.ffiec.gov/Public/PWS/WebServices/RetrievalService.asmx?WSDL'</span></em><a class="headerlink" href="#ffiec_data_connect.constants.WebserviceConstants.base_url" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ffiec_data_connect.credentials">
+<span id="ffiec-data-connect-credentials-module"></span><h2>ffiec_data_connect.credentials module<a class="headerlink" href="#module-ffiec_data_connect.credentials" title="Permalink to this headline"></a></h2>
+<p>Methods to utilize for inputting credentials for the FFIEC data connection.</p>
+<p>This module provides secure methods for inputting credentials for the FFIEC webservice data connection.</p>
+<p>Credentials may be input via environment variables, or passing them as arguments into the class structure. Wherever possible, the credentials should not be stored in source code.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.CredentialType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CredentialType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ffiec_data_connect.credentials.CredentialType" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>Enumerated values that represent the methods through which credentials are provided to the FFIEC webservice via the package.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Enum</strong> (<em>integer</em>) – Integer that represents the credential input method</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.CredentialType.NO_CREDENTIALS">
+<span class="sig-name descname"><span class="pre">NO_CREDENTIALS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#ffiec_data_connect.credentials.CredentialType.NO_CREDENTIALS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.CredentialType.SET_FROM_ENV">
+<span class="sig-name descname"><span class="pre">SET_FROM_ENV</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#ffiec_data_connect.credentials.CredentialType.SET_FROM_ENV" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.CredentialType.SET_FROM_INIT">
+<span class="sig-name descname"><span class="pre">SET_FROM_INIT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#ffiec_data_connect.credentials.CredentialType.SET_FROM_INIT" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.WebserviceCredentials">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">WebserviceCredentials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The WebserviceCredentials class. This class is used to store the credentials for the FFIEC webservice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em><em>, </em><em>optional</em>) – FFIEC Webservice username. Optional: If not provided, the credentials will be set from the environment variable <cite>FFIEC_USERNAME</cite></p></li>
+<li><p><strong>password</strong> (<em>str</em><em>, </em><em>optional</em>) – FFIEC Webservice password. Optional: If not provided, the credentials will be set from the environment variable <cite>FFIEC_PASSWORD</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An instance of the WebserviceCredentials class.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials">WebserviceCredentials</a></p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.WebserviceCredentials.password">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">password</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.credentials.WebserviceCredentials.password" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the password from the WebserviceCredentials instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the password stored in the WebserviceCredentials instance</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.WebserviceCredentials.test_credentials">
+<span class="sig-name descname"><span class="pre">test_credentials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">requests.sessions.Session</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ffiec_data_connect.credentials.WebserviceCredentials.test_credentials" title="Permalink to this definition"></a></dt>
+<dd><p>Test the credentials with the FFIEC Webservice to determine if they are valid and accepted.</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Note: The session argument can be generated directly from requests, or</div>
+<div class="line">using the helper class <cite>FFIECConnection</cite></div>
+</div>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>session</strong> (<em>requests.Session</em>) – the connection to test the credentials</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the credentials are valid, False otherwise</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – if the credentials are not set</p></li>
+<li><p><strong>Exception</strong> – Other unspecified errors</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.credentials.WebserviceCredentials.username">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">username</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.credentials.WebserviceCredentials.username" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the username from the WebserviceCredentials instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the username stored in the WebserviceCredentials instance</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ffiec_data_connect.datahelpers">
+<span id="ffiec-data-connect-datahelpers-module"></span><h2>ffiec_data_connect.datahelpers module<a class="headerlink" href="#module-ffiec_data_connect.datahelpers" title="Permalink to this headline"></a></h2>
+<p>Internal functions to assist with processing results from the Webservice</p>
+</section>
+<section id="module-ffiec_data_connect.exceptions">
+<span id="ffiec-data-connect-exceptions-module"></span><h2>ffiec_data_connect.exceptions module<a class="headerlink" href="#module-ffiec_data_connect.exceptions" title="Permalink to this headline"></a></h2>
+<p>Descriptive exceptions for the ffiec_data_connect package</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="ffiec_data_connect.exceptions.NoDataError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NoDataError</span></span><a class="headerlink" href="#ffiec_data_connect.exceptions.NoDataError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+</section>
+<section id="module-ffiec_data_connect.ffiec_connection">
+<span id="ffiec-data-connect-ffiec-connection-module"></span><h2>ffiec_data_connect.ffiec_connection module<a class="headerlink" href="#module-ffiec_data_connect.ffiec_connection" title="Permalink to this headline"></a></h2>
+<p>Wrapper to establish requests.Session and set proxy server values if needed</p>
+<p><cite>An instance of this class may be substituted for an instance requests.Session class.</cite></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FFIECConnection</span></span><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Creates a FFIECConnection object, which may include proxy server connection parameters</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_host">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">proxy_host</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_host" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the hostname of the proxy server</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The hostname of the proxy server</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_password">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">proxy_password</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_password" title="Permalink to this definition"></a></dt>
+<dd><p>Get the optional proxy password</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the password of the proxy server</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_port">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">proxy_port</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_port" title="Permalink to this definition"></a></dt>
+<dd><p>Get the optional proxy port</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the proxy port</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_protocol">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">proxy_protocol</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_protocol" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the protocol of the proxy server</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the protocol of the proxy server</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_user_name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">proxy_user_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_user_name" title="Permalink to this definition"></a></dt>
+<dd><p>Get the optional proxy username</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the proxy username</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.session">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">session</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">requests.sessions.Session</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.session" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the requests.Session object
+* Note that this property may be utilized for methods in the <cite>methods</cite> module.</p>
+<p><cite>This session property is automatically generated when the FFIECConnection object is created.</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the requests.Session object</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>requests.Session</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.test_connection">
+<span class="sig-name descname"><span class="pre">test_connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'https://google.com'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.test_connection" title="Permalink to this definition"></a></dt>
+<dd><p>Tests a connection, using the proxy server if one is not set</p>
+<p>Note: This method tests if a web page on the public internet (not the FFIEC webservice)
+is accessible using this library, through the proxy server.</p>
+<p>We do not yet test access to the Webservice, because a user name and password
+is needed to access the Webservice, which is outside the scope of this module.</p>
+<p>An alternative web site may be selected in lieu of google.com,
+using the url parameter.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.FFIECConnection.use_proxy">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_proxy</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.FFIECConnection.use_proxy" title="Permalink to this definition"></a></dt>
+<dd><p>Get the optional proxy flag</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the proxy flag (True if proxy is used, False if not)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.ProxyProtocol">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ProxyProtocol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.ProxyProtocol" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>Enumerated values that represent the proxy protocol options</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Enum</strong> (<a class="reference internal" href="#ffiec_data_connect.ffiec_connection.ProxyProtocol" title="ffiec_data_connect.ffiec_connection.ProxyProtocol"><em>ProxyProtocol</em></a>) – Enumerated value for HTTP or HTTPS</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.ProxyProtocol.HTTP">
+<span class="sig-name descname"><span class="pre">HTTP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.ProxyProtocol.HTTP" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ffiec_data_connect.ffiec_connection.ProxyProtocol.HTTPS">
+<span class="sig-name descname"><span class="pre">HTTPS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#ffiec_data_connect.ffiec_connection.ProxyProtocol.HTTPS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-ffiec_data_connect.methods">
+<span id="ffiec-data-connect-methods-module"></span><h2>ffiec_data_connect.methods module<a class="headerlink" href="#module-ffiec_data_connect.methods" title="Permalink to this headline"></a></h2>
+<p>Methods that wrap the FFIEC Webservice API</p>
+<p>The methods contained in this module are utilized to call and collect data from the FFIEC Webservice API.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffiec_data_connect.methods.collect_data">
+<span class="sig-name descname"><span class="pre">collect_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><span class="pre">ffiec_data_connect.ffiec_connection.FFIECConnection</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">requests.sessions.Session</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><span class="pre">ffiec_data_connect.credentials.WebserviceCredentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporting_period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">datetime.datetime</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rssd_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'list'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_output_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'string_original'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.core.frame.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ffiec_data_connect.methods.collect_data" title="Permalink to this definition"></a></dt>
+<dd><p>Return time series data from the FFIEC webservice for a given reporting period and RSSD ID</p>
+<p>Translates the input reporting period to a FFIEC-formatted date
+Transforms the output to a pandas dataframe if output_type is ‘pandas’, otherwise returns a list</p>
+<div class="line-block">
+<div class="line"><cite>Valid arguments for the ``reporting_period`</cite> argument:</div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mm/dd/yyyy</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yyyy-mm-dd</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yyyymmdd</span></code></p></li>
+<li><p>a python <code class="docutils literal notranslate"><span class="pre">datetime</span></code> object</p></li>
+<li><p>For the above types, the date msut be the last day in the quarter (e.g. March 31, June 30, September 30, or December 31)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#Qyyyy</span></code>, where <code class="docutils literal notranslate"><span class="pre">#</span></code> is the quarter number and <code class="docutils literal notranslate"><span class="pre">yyyy</span></code> is the year.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session</strong> (<a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><em>FFIECConnection</em></a><em> or </em><em>requests.Session</em>) – The requests session object to use for the request.</p></li>
+<li><p><strong>creds</strong> (<a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><em>WebserviceCredentials</em></a>) – The credentials to use for the request.</p></li>
+<li><p><strong>reporting_period</strong> (<em>str</em><em> or </em><em>datetime</em>) – Reporting period.</p></li>
+<li><p><strong>rssd_id</strong> (<em>str</em>) – The RSSD ID of the entity for which you want to retrieve data.</p></li>
+<li><p><strong>series</strong> (<em>str</em>) – <cite>call</cite> or <cite>ubpr</cite></p></li>
+<li><p><strong>output_type</strong> (<em>str</em>) – <cite>list</cite> or <cite>pandas</cite></p></li>
+<li><p><strong>date_output_format</strong> (<em>str</em>) – <cite>string_original</cite>, <cite>string_yyyymmdd</cite>, or <cite>python_format</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns either a list of dicts or a pandas DataFrame</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list or pandas</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffiec_data_connect.methods.collect_filers_on_reporting_period">
+<span class="sig-name descname"><span class="pre">collect_filers_on_reporting_period</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><span class="pre">ffiec_data_connect.ffiec_connection.FFIECConnection</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">requests.sessions.Session</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><span class="pre">ffiec_data_connect.credentials.WebserviceCredentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporting_period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">datetime.datetime</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'list'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.core.frame.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ffiec_data_connect.methods.collect_filers_on_reporting_period" title="Permalink to this definition"></a></dt>
+<dd><p>Retrieves the Financial Institutions in a Panel of Reporters for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.</p>
+<div class="line-block">
+<div class="line"><cite>Valid arguments for the ``reporting_period`</cite> argument:</div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mm/dd/yyyy</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yyyy-mm-dd</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yyyymmdd</span></code></p></li>
+<li><p>a python <code class="docutils literal notranslate"><span class="pre">datetime</span></code> object</p></li>
+<li><p>For the above types, the date must be the last day in the quarter (e.g. March 31, June 30, September 30, or December 31)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#Qyyyy</span></code>, where <code class="docutils literal notranslate"><span class="pre">#</span></code> is the quarter number and <code class="docutils literal notranslate"><span class="pre">yyyy</span></code> is the year.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session</strong> (<a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><em>ffiec_connection.FFIECConnection</em></a><em> or </em><em>requests.Session</em>) – The requests session object to use for the request.</p></li>
+<li><p><strong>creds</strong> (<a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><em>credentials.WebserviceCredentials</em></a>) – The credentials to use for the request.</p></li>
+<li><p><strong>reporting_period</strong> (<em>str</em><em> or </em><em>datetime</em>) – The reporting period to use for the request.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of dicts or pandas DataFrame containing the rssd id of the filer, and the following fields: “id_rssd”, “fdic_cert_number”, “occ_chart_number”, “ots_dock_number”, “primary_aba_rout_number”, “name”, “state”, “city”, “address”, “filing_type”, “has_filed_for_reporting_period”</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list or pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffiec_data_connect.methods.collect_filers_since_date">
+<span class="sig-name descname"><span class="pre">collect_filers_since_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><span class="pre">ffiec_data_connect.ffiec_connection.FFIECConnection</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">requests.sessions.Session</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><span class="pre">ffiec_data_connect.credentials.WebserviceCredentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporting_period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">datetime.datetime</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">since_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">datetime.datetime</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'list'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.core.series.Series</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ffiec_data_connect.methods.collect_filers_since_date" title="Permalink to this definition"></a></dt>
+<dd><p>Retrieves the ID RSSDs of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.</p>
+<div class="line-block">
+<div class="line"><cite>Valid arguments for the ``since_date`</cite> argument:</div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mm/dd/yyyy</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yyyy-mm-dd</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">yyyymmdd</span></code></p></li>
+<li><p>a python <code class="docutils literal notranslate"><span class="pre">datetime</span></code> object</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><cite>Valid arguments for the ``reporting_period`</cite> argument:</div>
+</div>
+<ul class="simple">
+<li><p>all of the above, as long as the date is the last day in the quarter (e.g. March 31, June 30, September 30, or December 31)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#Qyyyy</span></code>, where <code class="docutils literal notranslate"><span class="pre">#</span></code> is the quarter number and <code class="docutils literal notranslate"><span class="pre">yyyy</span></code> is the year.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session</strong> (<a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><em>FFIECConnection</em></a><em> or </em><em>requests.Session</em>) – The requests session object to use for the request.</p></li>
+<li><p><strong>creds</strong> (<a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><em>WebserviceCredentials</em></a>) – The credentials to use for the request.</p></li>
+<li><p><strong>since_date</strong> (<em>str</em><em> or </em><em>datetime</em>) – The date to use for the request. May be in the format of ‘YYYY-MM-DD’, ‘YYYYMMDD’, ‘MM/DD/YYYY’, or a python datetime object.</p></li>
+<li><p><strong>output_type</strong> (<em>str</em><em>, </em><em>optional</em>) – “list” or “pandas”. Defaults to “list”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns either a list of dicts or a pandas Series comprising the ID RSSDs of the reporters who have filed after a given date for a given reporting period.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffiec_data_connect.methods.collect_filers_submission_date_time">
+<span class="sig-name descname"><span class="pre">collect_filers_submission_date_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><span class="pre">ffiec_data_connect.ffiec_connection.FFIECConnection</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">requests.sessions.Session</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><span class="pre">ffiec_data_connect.credentials.WebserviceCredentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">since_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporting_period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'list'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_output_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'string_original'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.core.frame.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ffiec_data_connect.methods.collect_filers_submission_date_time" title="Permalink to this definition"></a></dt>
+<dd><p>Retrieves the ID RSSDs and DateTime of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.</p>
+<div class="line-block">
+<div class="line">Note on <cite>date_output_format</cite>:</div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">string_original</span></code> is the default output format, and is the format that is used by the FFIEC webservice: mm/dd/yyyy</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">string_yyyymmdd</span></code> is the date in yyyymmdd format</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python_format</span></code> is the date in python datetime format</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session</strong> (<a class="reference internal" href="#ffiec_data_connect.ffiec_connection.FFIECConnection" title="ffiec_data_connect.ffiec_connection.FFIECConnection"><em>ffiec_connection.FFIECConnection</em></a><em> or </em><em>requests.Session</em>) – The requests session object to use for the request.</p></li>
+<li><p><strong>creds</strong> (<a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><em>WebserviceCredentials</em></a><em> or </em><em>requests.Session</em>) – The credentials to use for the request.</p></li>
+<li><p><strong>since_date</strong> (<em>str</em><em> or </em><em>datetime</em>) – The date to use for the request. May be in the format of ‘YYYY-MM-DD’, ‘YYYYMMDD’, ‘MM/DD/YYYY’, or a python datetime object.</p></li>
+<li><p><strong>reporting_period</strong> (<em>str</em><em> or </em><em>datetime</em>) – The reporting period to use for the request (e.g. “2020-03-21”). Note that the date must be in the format of “YYYY-MM-DD”, “YYYYMMDD”, “MM/DD/YYYY”, #QYYYY or a python datetime object, with the month and date set to March 31, June 30, September 30, or December 31.</p></li>
+<li><p><strong>output_type</strong> (<em>str</em><em>, </em><em>optional</em>) – “list” or “pandas”. Defaults to “list”.</p></li>
+<li><p><strong>date_output_format</strong> (<em>str</em><em>, </em><em>optional</em>) – string_original or python_datetime. Defaults to “string_original”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of dicts or pandas DataFrame containing the rssd id of the filer, and the submission date and time, in Washington DC timezone.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffiec_data_connect.methods.collect_reporting_periods">
+<span class="sig-name descname"><span class="pre">collect_reporting_periods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">requests.sessions.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><span class="pre">ffiec_data_connect.credentials.WebserviceCredentials</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'call'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'list'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_output_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'string_original'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.core.series.Series</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ffiec_data_connect.methods.collect_reporting_periods" title="Permalink to this definition"></a></dt>
+<dd><p>Returns list of reporting periods available for access via the FFIEC webservice</p>
+<div class="line-block">
+<div class="line">Note on <cite>date_output_format</cite>:</div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">string_original</span></code> is the default output format, and is the format that is used by the FFIEC webservice: mm/dd/yyyy</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">string_yyyymmdd</span></code> is the date in yyyymmdd format</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python_format</span></code> is the date in python datetime format</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session</strong> (<em>requests.Session</em>) – The requests session object to use for the request.</p></li>
+<li><p><strong>creds</strong> (<a class="reference internal" href="#ffiec_data_connect.credentials.WebserviceCredentials" title="ffiec_data_connect.credentials.WebserviceCredentials"><em>credentials.WebserviceCredentials</em></a>) – The credentials to use for the request.</p></li>
+<li><p><strong>series</strong> (<em>str</em><em>, </em><em>optional</em>) – <cite>call</cite> or <cite>ubpr</cite></p></li>
+<li><p><strong>output_type</strong> (<em>str</em>) – <cite>list</cite> or <cite>pandas</cite></p></li>
+<li><p><strong>date_output_format</strong> – <cite>string_original</cite>, <cite>string_yyyymmdd</cite>, or <cite>python_format</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns a list of reporting periods from the FFIEC Webservice</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><cite>list</cite> or <cite>Pandas</cite> series</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-ffiec_data_connect.xbrl_processor">
+<span id="ffiec-data-connect-xbrl-processor-module"></span><h2>ffiec_data_connect.xbrl_processor module<a class="headerlink" href="#module-ffiec_data_connect.xbrl_processor" title="Permalink to this headline"></a></h2>
+<p>Internal functions used to process XBRL data received from the FFIEC Webservice</p>
+</section>
+<section id="module-ffiec_data_connect">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ffiec_data_connect" title="Permalink to this headline"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="FFIEC Webservice Data Connector" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Example Code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Michael Handelman.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

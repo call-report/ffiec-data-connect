@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to FFIEC Webservice Python Connector’s documentation! &mdash; FFIEC Webservice Python Connector 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FFIEC Account Setup Instructions" href="account_setup.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> FFIEC Webservice Python Connector
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">FFIEC Webservice Python Connector</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>Welcome to FFIEC Webservice Python Connector’s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-ffiec-webservice-python-connector-s-documentation">
+<h1>Welcome to FFIEC Webservice Python Connector’s documentation!<a class="headerlink" href="#welcome-to-ffiec-webservice-python-connector-s-documentation" title="Permalink to this headline"></a></h1>
+<p>Repo: <a class="reference external" href="https://github.com/call-report/ffiec-data-connect">https://github.com/call-report/ffiec-data-connect</a></p>
+<ul class="simple">
+<li><p><strong>This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.</strong></p></li>
+<li><p><strong>Please review the license and disclaimer before using this package.</strong></p></li>
+</ul>
+<p>The FFIEC Webservice Python Connector (<cite>ffiec_data_connect</cite>) was created to facilitate the use of the SOAP-based FFIEC Webservice.</p>
+<p>Although limited documentation is provided for the Webservice by the FFIEC, practical use of the Webservice via Python requires a considerable amount of boilerplate code - and knowledge of esoteric terms and concepts inherent to bank regulatory data.</p>
+<p>With these challenges in mind, this package provides a Python wrapper for the FFIEC Webservice, simplifying the process of interacting with the Webservice, and allow the rapid development of Python applications that require use of the data hosted on the Webservice.</p>
+<p>Data returned from the Webservice may be returned as a native Python data structure (<cite>list</cite>) or Pandas DataFrames or Series.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="account_setup.html#prerequisites-for-ffiec-data-connect-package">Prerequisites for ffiec_data_connect package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="account_setup.html#how-to-create-an-account">How to create an account</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html">ffiec_data_connect package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.constants">ffiec_data_connect.constants module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.credentials">ffiec_data_connect.credentials module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.datahelpers">ffiec_data_connect.datahelpers module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.exceptions">ffiec_data_connect.exceptions module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.ffiec_connection">ffiec_data_connect.ffiec_connection module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.methods">ffiec_data_connect.methods module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.xbrl_processor">ffiec_data_connect.xbrl_processor module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="licensedisclaimer.html#disclaimers">Disclaimers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="licensedisclaimer.html#license">License</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="account_setup.html" class="btn btn-neutral float-right" title="FFIEC Account Setup Instructions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Michael Handelman.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
