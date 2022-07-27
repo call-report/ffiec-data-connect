@@ -3,3 +3,6 @@ build:
 
 test-publish:
 	twine upload -r testpypi dist/*
+
+publish:
+	twine upload dist/*
