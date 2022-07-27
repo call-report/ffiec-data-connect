@@ -16,7 +16,7 @@ from zeep import Client, Settings
 from zeep.wsse.username import UsernameToken
 from zeep.transports import Transport
 
-from ffiec_data_connect import constants 
+from ffiec_data_connect import constants, ffiec_connection
 
 class CredentialType(Enum):
     """Enumerated values that represent the methods through which credentials are provided to the FFIEC webservice via the package.
@@ -126,7 +126,12 @@ class WebserviceCredentials(object):
         try:
 
             # create a transport
-            transport = Transport(session=session)
+            transport = None
+            
+            if isinstance(session, requests.Session):
+                transport = Transport(session=session)                
+            elif isinstance(session, ffiec_connection.FFIECConnection):
+                transport = Transport(session=session.session)
             
             # create the client
             soap_client = Client(constants.WebserviceConstants.base_url, wsse=wsse, transport=transport)

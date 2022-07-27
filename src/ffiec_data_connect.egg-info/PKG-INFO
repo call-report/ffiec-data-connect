@@ -1,14 +1,30 @@
-FFIEC Data Connector
-=============================================================
+Metadata-Version: 2.1
+Name: ffiec-data-connect
+Version: 0.8.7
+Summary: Wrapper for the FFIEC's Webservice API
+Home-page: https://github.com/call-report/ffiec-data-connect
+Author: Michael Handelman
+Author-email: m@mikeh.dev
+License: MIT
+Project-URL: Documentation, https://ffiec-data-connect.readthedocs.io/en/latest/
+Project-URL: Repo, https://github.com/call-report/ffiec-data-connect
+Project-URL: Additional Info, http://call.report
+Project-URL: Author, https://mikeh.dev
+Keywords: ffiec call report bank regulatory
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
 
-About
------
+# FFIEC Data Connector
 
-Repo: https://github.com/call-report/ffiec-data-connect
-Documentation: https://ffiec-data-connect.readthedocs.io/en/latest/
+The FFIEC Webservice Python Connector (`ffiec_data_connect`) was created to facilitate the use of the SOAP-based FFIEC Webservice.
 
-* **This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.**
-* **Please review the license and disclaimer before using this package.**
+
+### Disclaimer
+
+-  __This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.__
+-  __Please review the license and disclaimer before using this package.__
+
+### Overview
 
 The FFIEC Webservice Python Connector (`ffiec_data_connect`) was created to facilitate the use of the SOAP-based FFIEC Webservice.
 
@@ -18,15 +34,15 @@ With these challenges in mind, this package provides a Python wrapper for the FF
 
 Data returned from the Webservice may be returned as a native Python data structure (`list`) or Pandas DataFrames or Series.
 
-Installing
-----------
+## Installation
+
 ``pip install ffiec-data-connect``
 
-Quick Start
------------
+## Quickstart
 
-**To run this Quick Start, you must have an account on the FFIEC Webservice at https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true .**
+__To run this Quick Start, you must have an account on the FFIEC Webservice at https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true__
 
+```
         from ffiec_data_connect import methods, credentials, ffiec_connection
         
         creds = credentials.WebserviceCredentials(username="user1234", password="password1234")
@@ -39,7 +55,4 @@ Quick Start
             output_type="list",
             date_output_format="string_original"
         )
-
-
-
-
+```
