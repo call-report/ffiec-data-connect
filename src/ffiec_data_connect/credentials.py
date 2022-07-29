@@ -42,6 +42,11 @@ class WebserviceCredentials(object):
     
     def __init__(self, username = None, password = None):
 
+        # collect the credentials from the environment variables
+        # if the environment variables are not set, we will set the credentials from the arguments
+        username_env = os.getenv("FFIEC_USERNAME")
+        password_env = os.getenv("FFIEC_PASSWORD")
+
         # if we are passing in credentials, use them
         if password and username:
             self.username = username
@@ -49,30 +54,19 @@ class WebserviceCredentials(object):
             self.credential_source: CredentialType = CredentialType.SET_FROM_INIT
             return
         
-        # do we have a username and password?
-        if self.username is None or self.password is None:
+        # if not, check if we have the two environment variables
         
-            # do we have a environment variable for the username and password?
-            # get the value of the env variable named "FFIEC_USERNAME"
-            env_ffiec_username = os.environ.get("FFIEC_USERNAME")
-            env_ffiec_password = os.environ.get("FFIEC_PASSWORD")
-        
-            # is env_ffiec_username and env_ffiec_password not None?
-            if env_ffiec_username is not None and env_ffiec_password is not None:
-            
-                # set the username and password
-                self.username = env_ffiec_username
-                self.password = env_ffiec_password
-                self.credential_source  = CredentialType.SET_FROM_ENV
-
-            else:
-                # we don't have a username and password, so raise an error
-                self.credential_source = CredentialType.NO_CREDENTIALS
-                raise ValueError("Username and password must be set to create a connection")
+        # do we have both environment variables?
+        elif username_env and password_env:
+            self.username = username_env
+            self.password = password_env
+            self.credential_source: CredentialType = CredentialType.SET_FROM_ENV
         
         else:
+            # do we have a username and password?
             self.credential_source = CredentialType.NO_CREDENTIALS
-            return
+
+            raise ValueError("Username and password must be set to create a connection")
         
         return
     
