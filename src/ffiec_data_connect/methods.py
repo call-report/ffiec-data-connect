@@ -347,8 +347,10 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
     #print("Reporting period: {}".format(reporting_period_ffiec))
     
     # try to convert the rssd_id to an int and raise an error if it fails
-    rssd_id_int = int(rssd_id)
-    
+    try:
+        rssd_id_int = int(rssd_id)
+    except:
+        raise ValueError("Invalid RSSD ID. Must be an integer-type string.")
     
     ## scope ret outside the if statement
     ret = None
@@ -471,6 +473,9 @@ def collect_filers_submission_date_time(session: Union[ffiec_connection.FFIECCon
     client = _client_factory(session, creds)
     
     ret = client.service.RetrieveFilersSubmissionDateTime(dataSeries="Call", lastUpdateDateTime=since_date_ffiec, reportingPeriodEndDate=reporting_period_datetime_ffiec)
+    
+    if ret is None:
+        raise ValueError("No data returned from FFIEC webservice. Check your credentials and date inputs.")
     
     # normalize the output
     normalized_ret = [{"rssd":x["ID_RSSD"], "datetime":x["DateTime"]} for x in ret]
