@@ -1,6 +1,11 @@
 .vscode
 *.pyc
+<<<<<<< HEAD
 *__pycache__*
 .DS_Store
 .pytest_cache
 .pytest_cache
+=======
+__pycache__
+.DS_Store
+>>>>>>> 631f304 (first commit)
