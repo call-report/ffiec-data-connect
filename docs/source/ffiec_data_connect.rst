@@ -1,8 +1,15 @@
 ffiec\_data\_connect package
 ============================
 
-Submodules
-----------
+
+ffiec\_data\_connect.methods module
+-----------------------------------
+
+.. automodule:: ffiec_data_connect.methods
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
 
 ffiec\_data\_connect.constants module
 -------------------------------------
@@ -44,13 +51,6 @@ ffiec\_data\_connect.ffiec\_connection module
    :undoc-members:
    :show-inheritance:
 
-ffiec\_data\_connect.methods module
------------------------------------
-
-.. automodule:: ffiec_data_connect.methods
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 ffiec\_data\_connect.xbrl\_processor module
 -------------------------------------------
