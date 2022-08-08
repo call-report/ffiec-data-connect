@@ -4,9 +4,9 @@ import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, 'python')
 
-import credentials
-import ffiec_connection
-import methods as m
+from ffiec_data_connect import credentials
+from ffiec_data_connect import ffiec_connection
+from ffiec_data_connect import methods as m
 
 """Tests that require valid credentials to access the FFIEC webservice site
 """

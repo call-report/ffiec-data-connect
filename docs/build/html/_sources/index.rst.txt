@@ -24,7 +24,7 @@ Data returned from the Webservice may be returned as a native Python data struct
    :caption: Contents:
 
    account_setup
-   modules
+   ffiec_data_connect
    examples
    versionhistory
    licensedisclaimer
