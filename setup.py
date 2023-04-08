@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='ffiec-data-connect',
     python_requires='>3.0.0',
-    version='0.2.1',
+    version='0.2.5',
     license='MIT',
     description="Wrapper for the FFIEC's Webservice API",
     readme='README.md',
