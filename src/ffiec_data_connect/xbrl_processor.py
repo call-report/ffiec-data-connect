@@ -58,6 +58,24 @@ def _process_xml(data: bytes, output_date_format: str):
     
     return ret_data
 
+
+def _create_ffiec_date_from_datetime(indate: datetime) -> str:
+    """Converts a datetime object to a FFIEC-formatted date
+
+    Args:
+        indate (datetime): the date to convert
+
+    Returns:
+        str: the date in FFIEC format
+    """
+    month_str = str(indate.month)
+    day_str = str(indate.day)
+    year_str = str(indate.year)
+    
+    mmddyyyy = month_str + "/" + day_str + "/" + year_str
+    
+    return mmddyyyy
+
 def _process_xbrl_item(name, items, date_format):
     # incoming is a data dictionary
     results = []
@@ -75,7 +93,7 @@ def _process_xbrl_item(name, items, date_format):
 
         # transform the date to the requested date format
         if date_format == 'string_original':
-            quarter = datetime.strptime(quarter, '%Y-%m-%d').strftime('%-m/%-d/%Y')
+            quarter = _create_ffiec_date_from_datetime(datetime.strptime(quarter, '%Y-%m-%d'))
         elif date_format == 'string_yyyymmdd':
             quarter = datetime.strptime(quarter, '%Y-%m-%d').strftime('%Y%m%d')
         elif date_format == 'python_format':

@@ -24,6 +24,23 @@ mmddyyyyRegex = r"^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 validRegexList = [quarterStringRegex, yyyymmddRegex, yyyymmddDashRegex, mmddyyyyRegex]
 
 
+def _create_ffiec_date_from_datetime(indate: datetime) -> str:
+    """Converts a datetime object to a FFIEC-formatted date
+
+    Args:
+        indate (datetime): the date to convert
+
+    Returns:
+        str: the date in FFIEC format
+    """
+    month_str = str(indate.month)
+    day_str = str(indate.day)
+    year_str = str(indate.year)
+    
+    mmddyyyy = month_str + "/" + day_str + "/" + year_str
+    
+    return mmddyyyy
+
 def _convert_any_date_to_ffiec_format(indate: str or datetime) -> str:
     """Converts a string-based date or python datetime object to a FFIEC-formatted date
  
@@ -35,15 +52,15 @@ def _convert_any_date_to_ffiec_format(indate: str or datetime) -> str:
     """
     
     if isinstance(indate, datetime):
-        return indate.strftime("%-m/%-d/%Y")
+        return _create_ffiec_date_from_datetime(indate)
     elif isinstance(indate, str):
         # does the date have two slashes?
         if indate.count("-") == 2:
-            return datetime.strptime(indate, "%Y-%m-%d").strftime("%-m/%-d/%Y")
+            return _create_ffiec_date_from_datetime(datetime.strptime(indate, "%Y-%m-%d"))
         elif indate.count("/") == 2:
-            return datetime.strptime(indate, "%m/%d/%Y").strftime("%-m/%-d/%Y")
+            return _create_ffiec_date_from_datetime(datetime.strptime(indate, "%m/%d/%Y"))
         elif len(indate) == 8:
-            return datetime.strptime(indate, "%Y%m%d").strftime("%-m/%-d/%Y")    
+            return _create_ffiec_date_from_datetime(datetime.strptime(indate, "%Y%m%d"))  
     else:
         # raise an error if we don't have a valid date
         raise(ValueError("Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"))
@@ -118,10 +135,10 @@ def _is_valid_date_or_quarter(reporting_period: str or datetime) -> bool:
     
 def _return_ffiec_reporting_date(indate: datetime or str) -> str:
     if isinstance(indate, datetime):
-        return indate.strftime("%-m/%-d/%Y")
+        return _create_ffiec_date_from_datetime(indate)
     elif isinstance(indate, str):
         if indate[1] == "Q":
-            return _convert_quarter_to_date(indate).strftime("%-m/%-d/%Y")
+            return _create_ffiec_date_from_datetime(_convert_quarter_to_date(indate))
         else:
             ffiec_date =  _convert_any_date_to_ffiec_format(indate)
             ffiec_date_month = ffiec_date.split("/")[0]
