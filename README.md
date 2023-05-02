@@ -30,6 +30,23 @@ Data returned from the Webservice may be returned as a native Python data struct
 2. After you create an account, verify your password, and complete the sign-in process, log into the public web interface here: https://cdr.ffiec.gov/Public/PWS/Login.aspx
 3. When you login, go to the "Account Details" tab. On this screen, look for the _Security Token_. This token is the password that you will use for the login credentials for ffiec-data-connect, __not the password__.
 
+## Troubleshooting and Helpful Info
+
+- Seeing the `ValueError: Invalid Format String` error? Make sure you are running version >= 0.2.7. If running earlier versions in Windows, an incompatibility with the `strptime` library prevents parsing of valid date strings. A workaround is present in more recent versions of the library. To install the latest version, you may type `pip install ffiec-data-connect==0.2.7` at the commend line.
+
+- The FFIEC Webservice throttles requests. As per the Webservice:
+
+```
+Currently, the PWS will allow a limited number of downloads (approximately 2500 per hour). 
+
+If the download limit has been reached within one hour, the user will have to wait until the next hour to continue with the next download.
+```
+
+A back-off function is recommended if your anticipated downloads would be greater than this limit.
+
+
+## Sample Code
+
 Sample code to login and collect reporting periods:
 
 ```
