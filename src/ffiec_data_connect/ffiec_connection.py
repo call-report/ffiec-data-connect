@@ -37,10 +37,13 @@ class FFIECConnection(object):
         self.proxy_password = None
         self.proxy_user_name = None
         self.proxy_protocol = None
+        self.verify_ssl = True
         
         self._generate_session()
         
         return
+    
+    
     
     @property
     def session(self) -> requests.Session:
@@ -55,6 +58,7 @@ class FFIECConnection(object):
         """
         return self._session
     
+    
     @session.setter
     def session(self, session: requests.Session) -> None:
         """Set the requests.Session object
@@ -64,6 +68,43 @@ class FFIECConnection(object):
         """
         self._session = session
         return
+
+
+    @property
+    def verify_ssl(self) -> str:
+        """Change the default SSL verification setting
+        
+        Returns:
+            str: The hostname of the proxy server
+        
+        """
+        return self._proxy_host
+    
+    @verify_ssl.setter
+    def verify_ssl(self, verify_ssl: bool) -> None:
+        """Set the SSL verification flag
+
+        Args:
+            verify_ssl (bool): the SSL verification flag
+        """
+        
+        self._generate_session()
+        
+        self._verify_ssl = verify_ssl
+        pass
+        
+    @proxy_host.setter
+    def proxy_host(self, host: str) -> None:
+        """Set the optional proxy hostname
+
+        Args:
+            host (str): the host name of the proxy server
+        """
+        
+        self._generate_session()
+        
+        self._proxy_host = host
+        pass
         
     @property
     def proxy_host(self) -> str:
@@ -242,6 +283,12 @@ class FFIECConnection(object):
                 session.proxies['http']['proxy_auth'] = (self._proxy_user_name, self.proxy_password)
         
          # set the session to self.connection
+         
+        if self.verify_ssl:
+            session.verify = True
+        else:
+            session.verify = False
+        
         self.session = session
 
         return

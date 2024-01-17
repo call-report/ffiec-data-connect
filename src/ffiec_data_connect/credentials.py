@@ -46,7 +46,7 @@ class WebserviceCredentials(object):
         # if the environment variables are not set, we will set the credentials from the arguments
         username_env = os.getenv("FFIEC_USERNAME")
         password_env = os.getenv("FFIEC_PASSWORD")
-
+        
         # if we are passing in credentials, use them
         if password and username:
             self.username = username
