@@ -69,42 +69,29 @@ class FFIECConnection(object):
         self._session = session
         return
 
-
     @property
     def verify_ssl(self) -> str:
-        """Change the default SSL verification setting
+        """Returns the ssl verification option
         
         Returns:
-            str: The hostname of the proxy server
+            str: The boolean value if ssl verification is enabled
         
         """
-        return self._proxy_host
-    
+        return self._verify_ssl
+        
     @verify_ssl.setter
     def verify_ssl(self, verify_ssl: bool) -> None:
-        """Set the SSL verification flag
+        """Set the ssl verification option
 
         Args:
-            verify_ssl (bool): the SSL verification flag
+            verify_ssl (str): The boolean value if ssl verification is enabled
         """
         
         self._generate_session()
         
         self._verify_ssl = verify_ssl
         pass
-        
-    @proxy_host.setter
-    def proxy_host(self, host: str) -> None:
-        """Set the optional proxy hostname
-
-        Args:
-            host (str): the host name of the proxy server
-        """
-        
-        self._generate_session()
-        
-        self._proxy_host = host
-        pass
+    
         
     @property
     def proxy_host(self) -> str:
@@ -128,6 +115,7 @@ class FFIECConnection(object):
         
         self._proxy_host = host
         pass
+    
     
     @property
     def proxy_protocol(self) -> int:
