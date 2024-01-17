@@ -31,13 +31,13 @@ class FFIECConnection(object):
         
         """
         
-        self._use_proxy = False
-        self._proxy_host = None
-        self._proxy_port = None
-        self._proxy_password = None
-        self._proxy_user_name = None
-        self._proxy_protocol = None
-        self._verify_ssl = True
+        self.use_proxy = False
+        self.proxy_host = None
+        self.proxy_port = None
+        self.proxy_password = None
+        self.proxy_user_name = None
+        self.proxy_protocol = None
+        self.verify_ssl = True
 
         self._session = None  # Initialize the session attribute
         self._generate_session()
@@ -331,6 +331,7 @@ class FFIECConnection(object):
         is the proxy active? = {self.use_proxy}
         proxy username = {self.proxy_user_name}
         is proxy password set? = {self.proxy_password is not None}
+        is SSL verification enabled? = {self.verify_ssl}
         
         """
         
