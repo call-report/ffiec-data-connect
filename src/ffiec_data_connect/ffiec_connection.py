@@ -71,7 +71,7 @@ class FFIECConnection(object):
         return
 
     @property
-    def verify_ssl(self) -> str:
+    def verify_ssl(self) -> bool:
         """Returns the ssl verification option
         
         Returns:
