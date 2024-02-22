@@ -32,6 +32,8 @@ Data returned from the Webservice may be returned as a native Python data struct
 
 ## Troubleshooting and Helpful Info
 
+- General issues with certificates and authentication: Multiple users have reported issues running the library on Windows-based python installations. The issues arise from libraries that have dependencies on Windows platform-specific SSL authentication libraries. Unfortunately, there are no universal fixes to these issues, as each Windows-based installation can be unique. If you are unable to operate the library in Windows, I advise utilizing a service such as Google Colab or finding a Linux-based or Mac-based machine instead.
+
 - Seeing the `ValueError: Invalid Format String` error? Make sure you are running version >= 0.2.7. If running earlier versions in Windows, an incompatibility with the `strptime` library prevents parsing of valid date strings. A workaround is present in more recent versions of the library. To install the latest version, you may type `pip install ffiec-data-connect==0.2.7` at the commend line.
 
 - The FFIEC Webservice throttles requests. As per the Webservice:
