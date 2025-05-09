@@ -9,7 +9,7 @@ Credentials may be input via environment variables, or passing them as arguments
 import requests
 import sys
 import os
-
+import operator
 from enum import Enum
 
 from zeep import Client, Settings
@@ -85,6 +85,36 @@ class WebserviceCredentials(object):
     def __repr__(self) -> str:
         return self.__str__()
 
+    def return_all_services_and_methods(self, session: requests.Session) -> None:
+        """Returns all services and methods for the FFIEC Webservice.
+        
+        Args:
+            session (requests.Session): the connection to the FFIEC Webservice
+        """
+    
+        # create the wsse token
+        wsse = UsernameToken(self.username, self.password)
+        
+        # create the transport
+        transport = Transport(session=session)
+        
+        # create the client
+        soap_client = Client(constants.WebserviceConstants.base_url, wsse=wsse, transport=transport)
+    
+
+        for service in soap_client.wsdl.services.values():
+            print(f"Service: {service.name}")
+            for port in service.ports.values():
+                operations = sorted(port.binding._operations.values(), key=operator.attrgetter('name'))
+                for operation in operations:
+                    print(f"  Method: {operation.name}")
+                    print(f"    Input: {operation.input.signature()}")
+                    print(f"    Output: {operation.output.signature()}")  # Added output signature
+                    print("--------------------------------")
+            pass
+        
+    
+
         
     def test_credentials(self, session: requests.Session) -> bool:
         """Test the credentials with the FFIEC Webservice to determine if they are valid and accepted.
@@ -131,8 +161,11 @@ class WebserviceCredentials(object):
             soap_client = Client(constants.WebserviceConstants.base_url, wsse=wsse, transport=transport)
             
             print("Standby...testing your access.")    
+        
             
             has_access_response = soap_client.service.TestUserAccess()
+            
+            print(has_access_response)
             
             if has_access_response:
                 print("Your credentials are valid.")

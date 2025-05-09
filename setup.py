@@ -6,8 +6,8 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name='ffiec-data-connect',
-    python_requires='>3.9.0',
-    version='0.2.7',
+    python_requires='>3.11.0',
+    version='0.4.0',
     license='MIT',
     description="Wrapper for the FFIEC's Webservice API",
     readme='README.md',
@@ -27,10 +27,11 @@ setup(
     url='https://github.com/call-report/ffiec-data-connect',
     keywords='ffiec call report bank regulatory',
     install_requires=[
-          'zeep',
-          'xmltodict',
-          'requests',
-          'pandas'
+          'zeep>=4.3.0,<4.4.0',
+          'xmltodict>=0.14.0,<0.15.0',
+          'requests>=2.32.0',
+          'pandas>=2.2.0',
+          'polars>=1.29.0'
       ],
 
 )

@@ -13,8 +13,9 @@ from zoneinfo import ZoneInfo
 from zeep import Client, Settings
 from zeep.wsse.username import UsernameToken
 from zeep.transports import Transport
+import polars as pl
 from ffiec_data_connect import datahelpers, credentials, constants, xbrl_processor, ffiec_connection
-
+import pyarrow as pa
 # global date regex
 quarterStringRegex = r"^[1-4](q|Q)([0-9]{4})$"
 yyyymmddRegex = r"^[0-9]{4}[0-9]{2}[0-9]{2}$"
@@ -41,7 +42,8 @@ def _create_ffiec_date_from_datetime(indate: datetime) -> str:
     
     return mmddyyyy
 
-def _convert_any_date_to_ffiec_format(indate: str or datetime) -> str:
+
+def _convert_any_date_to_ffiec_format(indate: Union[str, datetime]) -> str:
     """Converts a string-based date or python datetime object to a FFIEC-formatted date
  
     Args:
@@ -65,6 +67,16 @@ def _convert_any_date_to_ffiec_format(indate: str or datetime) -> str:
         # raise an error if we don't have a valid date
         raise(ValueError("Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"))
     
+def _convert_any_date_to_python_format(indate: Union[str, datetime]) -> str:
+    """Converts a string-based date or python datetime object to a python datetime object
+    """
+    if isinstance(indate, datetime):
+        return indate
+    elif isinstance(indate, str):
+        return datetime.strptime(_convert_any_date_to_ffiec_format(indate), "%m/%d/%Y")
+    else:
+        raise(ValueError("Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"))
+
 def _convert_quarter_to_date(reporting_period: str) -> datetime:
     
     """Converts date in the format of #QYYYY to a datetime object
@@ -95,7 +107,7 @@ def _convert_quarter_to_date(reporting_period: str) -> datetime:
     pass
     
 
-def _is_valid_date_or_quarter(reporting_period: str or datetime) -> bool:
+def _is_valid_date_or_quarter(reporting_period: Union[str, datetime]) -> bool:
     
     """ Validates the reporting period input argument, which should indicate either the name of a calendar quarter, or a string that represents the last day of a quarter (e.g. "2019-03-31"), or a datetime object.
     
@@ -133,7 +145,7 @@ def _is_valid_date_or_quarter(reporting_period: str or datetime) -> bool:
         return False # we don't know what to do with this type of input, so return false
     
     
-def _return_ffiec_reporting_date(indate: datetime or str) -> str:
+def _return_ffiec_reporting_date(indate: Union[datetime, str]) -> str:
     if isinstance(indate, datetime):
         return _create_ffiec_date_from_datetime(indate)
     elif isinstance(indate, str):
@@ -164,8 +176,8 @@ def _output_type_validator(output_type: str) -> bool:
     Returns:
         bool: True if valid, False if not
     """
-    if output_type not in ['list', 'pandas']:
-        raise(ValueError("Invalid output_type. Must be 'list' or 'pandas'"))
+    if output_type not in ['list', 'pandas', 'polars']:
+        raise(ValueError("Invalid output_type. Must be 'list', 'pandas', or 'polars'"))
     else:
         return True
     
@@ -239,7 +251,7 @@ def _return_client_session(session: requests.Session, creds: credentials.Webserv
 
 
 
-def collect_reporting_periods(session: requests.Session, creds: credentials.WebserviceCredentials, series= "call", output_type = "list", date_output_format="string_original") -> Union[list, pd.Series]:
+def collect_reporting_periods(session: requests.Session, creds: credentials.WebserviceCredentials, series= "call", output_type = "list", date_output_format="string_original") -> Union[list, pd.Series, pl.Series]:
     """Returns list of reporting periods available for access via the FFIEC webservice
 
     | Note on `date_output_format`:
@@ -253,11 +265,11 @@ def collect_reporting_periods(session: requests.Session, creds: credentials.Webs
         session (requests.Session): The requests session object to use for the request.
         creds (credentials.WebserviceCredentials): The credentials to use for the request.
         series (str, optional): `call` or `ubpr`
-        output_type (str): `list` or `pandas`
+        output_type (str): `list`, `pandas`, or `polars`
         date_output_format: `string_original`, `string_yyyymmdd`, or `python_format`
 
     Returns:
-        `list` or `Pandas` series: Returns a list of reporting periods from the FFIEC Webservice
+        `list`, `Pandas Series`, or `Polars Series`: Returns a list of reporting periods from the FFIEC Webservice
         
     """
     
@@ -286,15 +298,18 @@ def collect_reporting_periods(session: requests.Session, creds: credentials.Webs
     ret_date_formatted = ret
         
     if date_output_format == "string_yyyymmdd":
-        ret_date_formatted = [datetime.strftime(datetime.strptime(x, "%Y-%m-%d"), "%Y%m%d") for x in ret]
+        #ret_date_formatted = [datetime.strftime(datetime.strptime(x, "%m/%d/%Y"), "%Y%m%d") for x in ret]
+        ret_date_formatted = [_convert_any_date_to_ffiec_format(x) for x in ret]
     elif date_output_format == "python_format":
-        ret_date_formatted =  [datetime.strptime(x, "%Y-%m-%d") for x in ret]
+        ret_date_formatted =  [_convert_any_date_to_python_format(x) for x in ret]
     # the default is to return the original string
         
     if output_type == "list":
         return ret_date_formatted
     elif output_type == "pandas":
-        return pd.DataFrame(ret_date_formatted, columns=['reporting_period'])
+        return pd.Series(ret_date_formatted, name='reporting_period')
+    elif output_type == "polars":
+        return pl.Series(name='reporting_period', values=ret_date_formatted)
     else:
         # for now, default is to return a list
         return ret_date_formatted
@@ -323,7 +338,7 @@ def _client_factory(session, creds)-> Client:
         raise Exception("Invalid session. Must be a FFIECConnection or requests.Session instance")
     
 
-def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], rssd_id:str, series: str, output_type = "list", date_output_format ="string_original") -> Union[list, pd.DataFrame]:
+def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], rssd_id:str, series: str, output_type = "list", date_output_format ="string_original") -> Union[list, pd.DataFrame, pl.DataFrame]:
     """Return time series data from the FFIEC webservice for a given reporting period and RSSD ID
 
     Translates the input reporting period to a FFIEC-formatted date
@@ -381,11 +396,91 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
         return processed_ret
     elif output_type == "pandas":
         return pd.DataFrame(processed_ret)
+    elif output_type == "polars":
+        # Define the target schema for the Polars DataFrame.
+        # This helps with type consistency and explicit casting if needed.
+        # polars_schema = {
+        #     "mdrm": pl.String,
+        #     "rssd": pl.String,
+        #     "quarter": pl.Date,    # Target Polars Date type
+        #     "int_data": pl.Int64,   # Polars native nullable integer.
+        #     "float_data": pl.Float64,
+        #     "bool_data": pl.Boolean,
+        #     "str_data": pl.String,
+        #     "data_type": pl.String
+        # }
+
+        # convert the input data to pandas, and then coerce each column to the appropriate polars type
+        pandas_df = pd.DataFrame(processed_ret)
+        
+        # remove any rows where the rssd is null or mdrm is null
+        pandas_df = pandas_df[pandas_df['rssd'].notna()]
+        pandas_df = pandas_df[pandas_df['mdrm'].notna()]
+        
+        # Prepare Pandas DataFrame columns for Polars conversion
+
+        # Ensure 'mdrm' and 'rssd' are string type.
+        # These columns are asserted to exist due to the .notna() filters above.
+        pandas_df['mdrm'] = pandas_df['mdrm'].astype(str)
+        pandas_df['rssd'] = pandas_df['rssd'].astype(str)
+
+        # Convert 'quarter' column to datetime.date objects.
+        # _convert_any_date_to_python_format is assumed to return datetime.datetime.
+        if 'quarter' in pandas_df.columns:
+            
+                # if the requested date_output_format is python_format, then we need to convert the quarter to a datetime.date object, otherwise we can just use the quarter as is
+            if date_output_format == "python_format":
+                pandas_df['quarter'] = pandas_df['quarter'].apply(
+                    lambda x: _convert_any_date_to_python_format(x).date() if pd.notna(x) else None
+                )
+
+        # Coerce 'int_data' to numeric. Errors become NaN.
+        # Polars' schema_override to pl.Int64 will handle NaNs as nulls.
+        if 'int_data' in pandas_df.columns:
+            pandas_df['int_data'] = pd.to_numeric(pandas_df['int_data'], errors='coerce')
+
+        # Coerce 'float_data' to numeric. Errors become NaN.
+        if 'float_data' in pandas_df.columns:
+            pandas_df['float_data'] = pd.to_numeric(pandas_df['float_data'], errors='coerce')
+
+        # Convert 'bool_data' to Pandas nullable boolean type (pd.BooleanDtype()).
+        # This handles Python None/NaN correctly before Polars pl.Boolean conversion.
+        if 'bool_data' in pandas_df.columns:
+            pandas_df['bool_data'] = pandas_df['bool_data'].astype(pd.BooleanDtype())
+
+        # For 'str_data' and 'data_type', if _process_xml produces Python None for missing values,
+        # Pandas will keep them as None in an object-dtype column.
+        # pl.from_pandas with schema_overrides to pl.String will correctly convert these Nones to Polars nulls.
+        # Explicit .astype(str) here would convert None to the string "None", which is usually not desired.
+        # If these columns might contain non-string/non-None data that needs to be stringified,
+        # then specific handling or .astype(str) would be needed. Assuming clean input for now.
+        # Example if explicit string conversion is needed for 'data_type':
+        if 'data_type' in pandas_df.columns:
+            pandas_df['data_type'] = pandas_df['data_type'].astype(str) # Converts None to "None"
+        if 'str_data' in pandas_df.columns:
+            pandas_df['str_data'] = pandas_df['str_data'].astype(str) # Converts None to "None"
+
+        # # copy the pandas_df into a new variable
+        # pandas_df_copy = pandas_df.copy(deep=True)
+        
+        # # confirm that the pandas_df_copy is not empty
+        # if pandas_df_copy.empty:
+        #     raise ValueError("Pandas DataFrame is empty. Please check the input data and try again.")
+        
+        # # ensure that the pandas_df is a dataframe
+        # if not isinstance(pandas_df_copy, pd.DataFrame):
+        #     raise ValueError("Pandas DataFrame is not a dataframe. Please check the input data and try again.")
+
+        pyarrow_table = pa.Table.from_pandas(pandas_df)
+
+        # check that the pandas_df is not empty
+        if pandas_df.empty:
+            raise ValueError("Pandas DataFrame is empty. Please check the input data and try again.")
+
+        return pl.from_arrow(pyarrow_table)    
     
-    return processed_ret
     
-    
-def collect_filers_since_date(session: Union[ffiec_connection.FFIECConnection , requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], since_date: Union[str, datetime], output_type = "list") -> Union[list, pd.Series]:
+def collect_filers_since_date(session: Union[ffiec_connection.FFIECConnection , requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], since_date: Union[str, datetime], output_type = "list") -> Union[list, pd.Series, pl.Series]:
     """Retrieves the ID RSSDs of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
     
     | `Valid arguments for the ``since_date`` argument:
@@ -404,10 +499,10 @@ def collect_filers_since_date(session: Union[ffiec_connection.FFIECConnection , 
         session (FFIECConnection or requests.Session): The requests session object to use for the request.
         creds (WebserviceCredentials): The credentials to use for the request.
         since_date (str or datetime): The date to use for the request. May be in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object.
-        output_type (str, optional): "list" or "pandas". Defaults to "list".
+        output_type (str, optional): "list", "pandas", or "polars". Defaults to "list".
 
     Returns:
-        any: Returns either a list of dicts or a pandas Series comprising the ID RSSDs of the reporters who have filed after a given date for a given reporting period.
+        list, Pandas Series, or Polars Series: Returns either a list of dicts, a pandas Series, or a Polars Series comprising the ID RSSDs of the reporters who have filed after a given date for a given reporting period.
         
     """
     
@@ -435,14 +530,16 @@ def collect_filers_since_date(session: Union[ffiec_connection.FFIECConnection , 
     if output_type == "list":
         return ret
     elif output_type == "pandas":
-        return pd.DataFrame(ret, columns=['rssd_id'])
+        return pd.Series(ret, name='rssd_id')
+    elif output_type == "polars":
+        return pl.Series(name='rssd_id', values=ret)
     else:
         # for now, default is to return a list
         return ret
     
     
 
-def collect_filers_submission_date_time(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, since_date: str or datetime, reporting_period: str or datetime, output_type = "list", date_output_format ="string_original") -> Union[list, pd.DataFrame]:
+def collect_filers_submission_date_time(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, since_date: Union[str, datetime], reporting_period: Union[str, datetime], output_type = "list", date_output_format ="string_original") -> Union[list, pd.DataFrame, pl.DataFrame]:
     """Retrieves the ID RSSDs and DateTime of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
 
     | Note on `date_output_format`:
@@ -456,11 +553,11 @@ def collect_filers_submission_date_time(session: Union[ffiec_connection.FFIECCon
         creds (WebserviceCredentials or requests.Session): The credentials to use for the request.
         since_date (str or datetime): The date to use for the request. May be in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object.
         reporting_period (str or datetime): The reporting period to use for the request (e.g. "2020-03-21"). Note that the date must be in the format of "YYYY-MM-DD", "YYYYMMDD", "MM/DD/YYYY", #QYYYY or a python datetime object, with the month and date set to March 31, June 30, September 30, or December 31.
-        output_type (str, optional): "list" or "pandas". Defaults to "list".
+        output_type (str, optional): "list", "pandas", or "polars". Defaults to "list".
         date_output_format (str, optional): string_original or python_datetime. Defaults to "string_original".
 
     Returns:
-        any: List of dicts or pandas DataFrame containing the rssd id of the filer, and the submission date and time, in Washington DC timezone.
+        list, Pandas DataFrame, or Polars DataFrame: List of dicts, pandas DataFrame, or Polars DataFrame containing the rssd id of the filer, and the submission date and time, in Washington DC timezone.
     """
     
         
@@ -491,6 +588,7 @@ def collect_filers_submission_date_time(session: Union[ffiec_connection.FFIECCon
     
     # normalize the output
     normalized_ret = [{"rssd":x["ID_RSSD"], "datetime":x["DateTime"]} for x in ret]
+    
 
     # all submission times are in eastern time, so if we are converting to a python datetime,
     # the datetime object needs to be timezone aware, so that the user may convert the time to their local timezone    
@@ -507,6 +605,8 @@ def collect_filers_submission_date_time(session: Union[ffiec_connection.FFIECCon
         return normalized_ret
     elif output_type == "pandas":
         return pd.DataFrame(normalized_ret)
+    elif output_type == "polars":
+        return pl.DataFrame(normalized_ret, schema=['rssd_id', 'datetime'])
     else:
         # for now, default is to return a list
         return ret
@@ -514,7 +614,7 @@ def collect_filers_submission_date_time(session: Union[ffiec_connection.FFIECCon
     
     pass
 
-def collect_filers_on_reporting_period(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], output_type = "list") -> Union[list, pd.DataFrame]:
+def collect_filers_on_reporting_period(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], output_type = "list") -> Union[list, pd.DataFrame, pl.DataFrame]:
     """Retrieves the Financial Institutions in a Panel of Reporters for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
 
     | `Valid arguments for the ``reporting_period`` argument:
@@ -531,8 +631,9 @@ def collect_filers_on_reporting_period(session: Union[ffiec_connection.FFIECConn
         session (ffiec_connection.FFIECConnection or requests.Session): The requests session object to use for the request.
         creds (credentials.WebserviceCredentials): The credentials to use for the request.
         reporting_period (str or datetime): The reporting period to use for the request.
+        output_type (str, optional): "list", "pandas", or "polars". Defaults to "list".
     Returns:
-        list or pd.DataFrame: List of dicts or pandas DataFrame containing the rssd id of the filer, and the following fields: "id_rssd", "fdic_cert_number", "occ_chart_number", "ots_dock_number", "primary_aba_rout_number", "name", "state", "city", "address", "filing_type", "has_filed_for_reporting_period"
+        list, pd.DataFrame, or pl.DataFrame: List of dicts, pandas DataFrame, or Polars DataFrame containing the rssd id of the filer, and the following fields: "id_rssd", "fdic_cert_number", "occ_chart_number", "ots_dock_number", "primary_aba_rout_number", "name", "state", "city", "address", "filing_type", "has_filed_for_reporting_period"
     """
     
         # conduct standard validation on function input arguments
@@ -556,6 +657,8 @@ def collect_filers_on_reporting_period(session: Union[ffiec_connection.FFIECConn
         return normalized_ret
     elif output_type == "pandas":
         return pd.DataFrame(normalized_ret)
+    elif output_type == "polars":
+        return pl.DataFrame(normalized_ret)
     else:
         # for now, default is to return a list
         return ret

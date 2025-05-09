@@ -6,3 +6,7 @@ Version History
 
 * version 0.2.0 (2020-07-28)
   - Fixed issues where credentials provided as environment variables were triggering an exception when used
+
+* version 0.4.0 (2025-05-09)
+  - Updated and tested on latest python versions and dependencies
+
