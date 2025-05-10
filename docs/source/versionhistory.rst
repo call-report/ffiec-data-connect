@@ -7,6 +7,9 @@ Version History
 * version 0.2.0 (2020-07-28)
   - Fixed issues where credentials provided as environment variables were triggering an exception when used
 
-* version 0.4.0 (2025-05-09)
+* version 0.4.1 (2025-05-09)
   - Updated and tested on latest python versions and dependencies
-
+  - Added support for polars output type
+  - Added example python notebook
+  - Enhanced documentation
+  - Fixed other minor bugs

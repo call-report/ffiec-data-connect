@@ -26,13 +26,15 @@ validRegexList = [quarterStringRegex, yyyymmddRegex, yyyymmddDashRegex, mmddyyyy
 
 
 def _create_ffiec_date_from_datetime(indate: datetime) -> str:
-    """Converts a datetime object to a FFIEC-formatted date
+    """
+    [INTERNAL USE ONLY]
+    Converts a datetime object to a FFIEC-formatted date string (MM/DD/YYYY).
 
     Args:
-        indate (datetime): the date to convert
+        indate (datetime): The date to convert.
 
     Returns:
-        str: the date in FFIEC format
+        str: The date in FFIEC format (MM/DD/YYYY).
     """
     month_str = str(indate.month)
     day_str = str(indate.day)
@@ -44,13 +46,18 @@ def _create_ffiec_date_from_datetime(indate: datetime) -> str:
 
 
 def _convert_any_date_to_ffiec_format(indate: Union[str, datetime]) -> str:
-    """Converts a string-based date or python datetime object to a FFIEC-formatted date
- 
+    """
+    [INTERNAL USE ONLY]
+    Converts a string-based date or python datetime object to a FFIEC-formatted date string (MM/DD/YYYY).
+
     Args:
-        date (str or datetime): the date to convert. This can be a string in the format of "YYYY-MM-DD", "YYYYMMDD", "MM/DD/YYYY", or a python datetime object
+        indate (str or datetime): The date to convert. Accepts string in the format of "YYYY-MM-DD", "YYYYMMDD", "MM/DD/YYYY", or a python datetime object.
 
     Returns:
-        str: the date in FFIEC format
+        str: The date in FFIEC format (MM/DD/YYYY).
+
+    Raises:
+        ValueError: If the input is not a recognized date format or a datetime object.
     """
     
     if isinstance(indate, datetime):
@@ -67,8 +74,19 @@ def _convert_any_date_to_ffiec_format(indate: Union[str, datetime]) -> str:
         # raise an error if we don't have a valid date
         raise(ValueError("Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"))
     
-def _convert_any_date_to_python_format(indate: Union[str, datetime]) -> str:
-    """Converts a string-based date or python datetime object to a python datetime object
+def _convert_any_date_to_python_format(indate: Union[str, datetime]) -> datetime:
+    """
+    [INTERNAL USE ONLY]
+    Converts a string-based date or python datetime object to a python datetime object.
+
+    Args:
+        indate (str or datetime): The date to convert. Accepts string in the format of "YYYY-MM-DD", "YYYYMMDD", "MM/DD/YYYY", or a python datetime object.
+
+    Returns:
+        datetime: The date as a Python datetime object.
+
+    Raises:
+        ValueError: If the input is not a recognized date format or a datetime object.
     """
     if isinstance(indate, datetime):
         return indate
@@ -78,11 +96,18 @@ def _convert_any_date_to_python_format(indate: Union[str, datetime]) -> str:
         raise(ValueError("Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"))
 
 def _convert_quarter_to_date(reporting_period: str) -> datetime:
-    
-    """Converts date in the format of #QYYYY to a datetime object
+    """
+    [INTERNAL USE ONLY]
+    Converts a string in the format of #QYYYY to a datetime object representing the last day of the quarter.
+
+    Args:
+        reporting_period (str): Quarter string (e.g., '1Q2024').
 
     Returns:
-        _type_: _description_
+        datetime: The last day of the specified quarter.
+
+    Raises:
+        ValueError: If the quarter number is invalid.
     """
     
     # convert the reporting period to a datetime object
@@ -108,19 +133,15 @@ def _convert_quarter_to_date(reporting_period: str) -> datetime:
     
 
 def _is_valid_date_or_quarter(reporting_period: Union[str, datetime]) -> bool:
-    
-    """ Validates the reporting period input argument, which should indicate either the name of a calendar quarter, or a string that represents the last day of a quarter (e.g. "2019-03-31"), or a datetime object.
-    
-    If reporting period is a datetime, validate that the date is at quarter end.
-    
-    If reporting period is a string, validate that the string is in the format of "Q#-YYYY", "Q#-YY", "YYYY-MM-DD", "YYYYMMDD", or m/d/YYYY, or m/d/YY.
-    
+    """
+    [INTERNAL USE ONLY]
+    Validates the reporting period input argument, which should indicate either the name of a calendar quarter, a string that represents the last day of a quarter, or a datetime object.
+
     Args:
-        reporting_period (str or datetime): the reporting period to validate
+        reporting_period (str or datetime): The reporting period to validate.
 
     Returns:
-        bool: True if valid reporting period, False if not valid reporting period
-    
+        bool: True if valid reporting period, False otherwise.
     """
 
     if isinstance(reporting_period, datetime):
@@ -146,6 +167,19 @@ def _is_valid_date_or_quarter(reporting_period: Union[str, datetime]) -> bool:
     
     
 def _return_ffiec_reporting_date(indate: Union[datetime, str]) -> str:
+    """
+    [INTERNAL USE ONLY]
+    Converts a datetime or string to a FFIEC-formatted reporting date string (MM/DD/YYYY).
+
+    Args:
+        indate (datetime or str): The date or quarter string to convert.
+
+    Returns:
+        str: The date in FFIEC format (MM/DD/YYYY).
+
+    Raises:
+        ValueError: If the date is not a valid quarter end.
+    """
     if isinstance(indate, datetime):
         return _create_ffiec_date_from_datetime(indate)
     elif isinstance(indate, str):
@@ -168,13 +202,15 @@ def _return_ffiec_reporting_date(indate: Union[datetime, str]) -> str:
                 raise(ValueError("Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"))
     
 def _output_type_validator(output_type: str) -> bool:
-    """Internal function to validate the output_type
-    
+    """
+    [INTERNAL USE ONLY]
+    Validates the output_type argument.
+
     Args:
-        output_type (str): the output_type to validate
-    
+        output_type (str): The output_type to validate ('list', 'pandas', or 'polars').
+
     Returns:
-        bool: True if valid, False if not
+        bool: True if valid, raises ValueError otherwise.
     """
     if output_type not in ['list', 'pandas', 'polars']:
         raise(ValueError("Invalid output_type. Must be 'list', 'pandas', or 'polars'"))
@@ -182,13 +218,15 @@ def _output_type_validator(output_type: str) -> bool:
         return True
     
 def _date_format_validator(date_format: str) -> bool:
-    """Internal function to validate the date_format
-    
+    """
+    [INTERNAL USE ONLY]
+    Validates the date_format argument.
+
     Args:
-        date_format (str): the date_format to validate
-    
+        date_format (str): The date_format to validate ('string_original', 'string_yyyymmdd', or 'python_format').
+
     Returns:
-        bool: True if valid, False if not
+        bool: True if valid, raises ValueError otherwise.
     """
     if date_format not in ['string_original', 'string_yyyymmdd', 'python_format']:
         raise(ValueError("Invalid date_format. Must be 'string_original', 'string_yyyymmdd', or 'python_format'"))
@@ -197,13 +235,15 @@ def _date_format_validator(date_format: str) -> bool:
     
 
 def _credentials_validator(creds: credentials.WebserviceCredentials) -> bool:
-    """Internal function to validate the credentials
-    
+    """
+    [INTERNAL USE ONLY]
+    Validates the credentials argument.
+
     Args:
-        credentials (credentials.WebserviceCredentials): the credentials to validate
-    
+        creds (credentials.WebserviceCredentials): The credentials to validate.
+
     Returns:
-        bool: True if valid, False if not
+        bool: True if valid, raises ValueError otherwise.
     """
     if not isinstance(creds, credentials.WebserviceCredentials):
         raise(ValueError("Invalid credentials. Must be a WebserviceCredentials instance"))
@@ -211,13 +251,15 @@ def _credentials_validator(creds: credentials.WebserviceCredentials) -> bool:
         return True
     
 def _session_validator(session: requests.Session) -> bool:
-    """Internal function to validate the session
-    
+    """
+    [INTERNAL USE ONLY]
+    Validates the session argument.
+
     Args:
-        session (requests.Session): the session to validate
-    
+        session (requests.Session): The session to validate.
+
     Returns:
-        bool: True if valid, False if not
+        bool: True if valid, raises ValueError otherwise.
     """
     if isinstance(session, ffiec_connection.FFIECConnection):
         return True
@@ -227,15 +269,16 @@ def _session_validator(session: requests.Session) -> bool:
         raise(ValueError("Invalid session/connection. Must be a requests.Session instance or FFIECConnection instance"))
     
 def _return_client_session(session: requests.Session, creds: credentials.WebserviceCredentials) -> Client:
-    
-    """Internal function to return a zeep client session
-    
+    """
+    [INTERNAL USE ONLY]
+    Returns a zeep client session for the FFIEC webservice.
+
     Args:
-        session (requests.Session): the requests.Session object to use
-        creds (credentials.WebserviceCredentials): the credentials to use
+        session (requests.Session): The requests.Session object to use.
+        creds (credentials.WebserviceCredentials): The credentials to use.
 
     Returns:
-        _type_: _description_
+        Client: Zeep SOAP client for the FFIEC webservice.
     """
     
     # create a transport
@@ -339,7 +382,8 @@ def _client_factory(session, creds)-> Client:
     
 
 def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], rssd_id:str, series: str, output_type = "list", date_output_format ="string_original") -> Union[list, pd.DataFrame, pl.DataFrame]:
-    """Return time series data from the FFIEC webservice for a given reporting period and RSSD ID
+    """
+    Return time series data from the FFIEC webservice for a given reporting period and RSSD ID.
 
     Translates the input reporting period to a FFIEC-formatted date
     Transforms the output to a pandas dataframe if output_type is 'pandas', otherwise returns a list
@@ -365,6 +409,12 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
     Returns:
         list or pandas: Returns either a list of dicts or a pandas DataFrame
         
+    Raises:
+        ValueError: If input arguments are invalid or if no data is returned.
+        Exception: For other unexpected errors.
+
+    Example:
+        >>> df = collect_data(session, creds, '2024-12-31', '12345', 'call', output_type='polars')
     """
     _ = _output_type_validator(output_type)
     _ = _date_format_validator(date_output_format)
@@ -397,13 +447,27 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
     elif output_type == "pandas":
         return pd.DataFrame(processed_ret)
     elif output_type == "polars":
-        # Define the target schema for the Polars DataFrame.
-        # This helps with type consistency and explicit casting if needed.
-        # polars_schema = {
+
+        # This is the schema that we would use if we wanted to explicitly set the types of the columns,
+        # using python-based date types.
+        
+        # polars_schema_python_time = {
         #     "mdrm": pl.String,
         #     "rssd": pl.String,
         #     "quarter": pl.Date,    # Target Polars Date type
         #     "int_data": pl.Int64,   # Polars native nullable integer.
+        #     "float_data": pl.Float64,
+        #     "bool_data": pl.Boolean,
+        #     "str_data": pl.String,
+        #     "data_type": pl.String
+        # }
+        
+        # This is the schema we would use if we wanted to keep the original date format, which is usually MM/DD/YYYY
+        # polars_schema_original_date = {
+        #     "mdrm": pl.String,
+        #     "rssd": pl.String,
+        #     "quarter": pl.String,
+        #     "int_data": pl.Int64,
         #     "float_data": pl.Float64,
         #     "bool_data": pl.Boolean,
         #     "str_data": pl.String,
@@ -428,7 +492,7 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
         # _convert_any_date_to_python_format is assumed to return datetime.datetime.
         if 'quarter' in pandas_df.columns:
             
-                # if the requested date_output_format is python_format, then we need to convert the quarter to a datetime.date object, otherwise we can just use the quarter as is
+            # if the requested date_output_format is python_format, then we need to convert the quarter to a datetime.date object, otherwise we can just use the quarter as is
             if date_output_format == "python_format":
                 pandas_df['quarter'] = pandas_df['quarter'].apply(
                     lambda x: _convert_any_date_to_python_format(x).date() if pd.notna(x) else None
@@ -454,22 +518,12 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
         # Explicit .astype(str) here would convert None to the string "None", which is usually not desired.
         # If these columns might contain non-string/non-None data that needs to be stringified,
         # then specific handling or .astype(str) would be needed. Assuming clean input for now.
-        # Example if explicit string conversion is needed for 'data_type':
+
         if 'data_type' in pandas_df.columns:
             pandas_df['data_type'] = pandas_df['data_type'].astype(str) # Converts None to "None"
         if 'str_data' in pandas_df.columns:
             pandas_df['str_data'] = pandas_df['str_data'].astype(str) # Converts None to "None"
 
-        # # copy the pandas_df into a new variable
-        # pandas_df_copy = pandas_df.copy(deep=True)
-        
-        # # confirm that the pandas_df_copy is not empty
-        # if pandas_df_copy.empty:
-        #     raise ValueError("Pandas DataFrame is empty. Please check the input data and try again.")
-        
-        # # ensure that the pandas_df is a dataframe
-        # if not isinstance(pandas_df_copy, pd.DataFrame):
-        #     raise ValueError("Pandas DataFrame is not a dataframe. Please check the input data and try again.")
 
         pyarrow_table = pa.Table.from_pandas(pandas_df)
 
