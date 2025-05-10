@@ -1,1 +1,1 @@
-piccolo-theme
+sphinx-rtd-theme
