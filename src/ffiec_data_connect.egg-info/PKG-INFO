@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: ffiec-data-connect
-Version: 1.0.1
+Version: 1.0.6
 Summary: Wrapper for the FFIEC's Webservice API
 Home-page: https://github.com/call-report/ffiec-data-connect
 Author: Michael Handelman

@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='ffiec_data_connect',
     python_requires='>=3.11.0',
-    version='1.0.1',
+    version='1.0.6',
     license='MIT',
     description="Wrapper for the FFIEC's Webservice API",
     readme='README.md',
@@ -15,7 +15,7 @@ setup(
     project_urls={
     'Documentation': 'https://ffiec-data-connect.readthedocs.io/en/latest/',
     'Repo': 'https://github.com/call-report/ffiec-data-connect',
-    'Additional Info': 'http://call.report',
+    'Additional Info': 'http://call.report',    
     'Author': 'https://mikeh.dev',
 },
     long_description_content_type='text/markdown',

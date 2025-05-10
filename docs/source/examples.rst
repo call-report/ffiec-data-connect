@@ -3,6 +3,9 @@ Example Code
 
 This page provides practical examples for using the `ffiec_data_connect` package to access and analyze US bank regulatory data from the FFIEC webservice.
 
+**Python Notebook**
+An example Jupyter notebook is available in the `examples/` directory via this project's GitHub repository: https://github.com/call-report/ffiec-data-connect
+
 **Prerequisites:**
 - You must have an FFIEC webservice account (see :doc:`account_setup`).
 - Install the package: `pip install ffiec-data-connect`

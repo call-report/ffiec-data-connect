@@ -13,3 +13,7 @@ Version History
   - Added example python notebook
   - Enhanced documentation
   - Fixed other minor bugs
+
+* version 1.0.6 (2025-05-10)
+  - Moved example notebooks to separate directory in the repository
+  - Updates for sphinx documentation compilation
