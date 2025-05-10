@@ -3,3 +3,4 @@ xmltodict<0.15.0,>=0.14.0
 requests>=2.32.0
 pandas>=2.2.0
 polars>=1.29.0
+pyarrow>=22.0.0
