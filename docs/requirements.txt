@@ -1,1 +1,8 @@
+zeep
+pandas
+xmltodict
+requests
+polars
+pyarrow
+sphinx
 sphinx-rtd-theme
