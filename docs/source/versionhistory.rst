@@ -17,3 +17,4 @@ Version History
 * version 1.0.6 (2025-05-10)
   - Moved example notebooks to separate directory in the repository
   - Updates for sphinx documentation compilation
+  - Updated package metadata
