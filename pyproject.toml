@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ffiec_data_connect"
+version = "1.0.8"
+description = "Wrapper for the FFIEC's Webservice API"
+requires-python = ">=3.11.0"
+license = "MIT"
+authors = [
+  {name = "Michael Handelman", email = "m@mikeh.dev"}
+]
+keywords = [
+  "ffiec", "call report", "bank", "regulatory", "federal", "financial institution examination council"
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Office/Business :: Financial"
+]
+dependencies = [
+  "zeep",
+  "xmltodict",
+  "requests",
+  "pandas",
+  "polars",
+  "pyarrow"
+]
+
+[project.urls]
+Documentation = "https://ffiec-data-connect.readthedocs.io/en/latest/"
+Repo = "https://github.com/call-report/ffiec-data-connect"
+Additional-Info = "http://call.report"
+Author = "https://mikeh.dev"
