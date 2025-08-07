@@ -2,8 +2,9 @@
 
 - The FFIEC Webservice Python Connector library (`ffiec_data_connect`) downloads data from the FFIEC (Federal Financial Institution Examination Council) via the FFIEC's "webservice" interface. 
 
-- The library interfaces with the SOAP-based API published by FFIEC, normalizing dates and data, conducting transformations to permit immediate analysis of acquired data within a Python data science or scripted environment.
+- The library interfaces with the SOAP-based API published by FFIEC, normalizing dates and data, conducting transformations to permit immediate analysis of acquired data within a Python data science or scripted environment. (Software will update to new REST API in 4Q 2025)
 
+- This library is provided for public use, subject to the terms of the Mozilla Public License 2.0, by Civic Forge Solutions LLC
 
 ### Disclaimer
 
