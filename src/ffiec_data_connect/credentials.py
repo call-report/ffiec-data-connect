@@ -95,7 +95,7 @@ class WebserviceCredentials(object):
             return "WebserviceCredentials(status='not configured')"
         
         # Mask username for security - show only first and last character
-        masked_user = self._mask_sensitive_string(self.username) if hasattr(self, '_username') else "***"
+        masked_user = self._mask_sensitive_string(self.username) if hasattr(self, '_username') and self._username else "***"
         
         if self.credential_source == CredentialType.SET_FROM_INIT:
             return f"WebserviceCredentials(source='init', username='{masked_user}')"

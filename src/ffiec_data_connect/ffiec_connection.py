@@ -8,7 +8,7 @@ import threading
 import weakref
 from enum import Enum
 from typing import Optional, Dict, Any
-from ffiec_data_connect.exceptions import SessionError, ConnectionError, raise_exception as FFIECConnectionError
+from ffiec_data_connect.exceptions import SessionError, ConnectionError, raise_exception
 
 
 class ProxyProtocol(Enum):
@@ -272,10 +272,16 @@ class FFIECConnection(object):
             
             
             # if we are using a proxy, set the proxy host and port
-            session.proxies = {self.proxy_protocol.name: 'http://' + self.proxy_host + ':' + str(self.proxy_port)}
-            # if we have a username and password, set the proxy username and password
+            proxy_url = 'http://' + self.proxy_host + ':' + str(self.proxy_port)
+            
+            # if we have a username and password, include them in the URL
             if self.proxy_user_name is not None and self.proxy_password is not None:
-                session.proxies['http']['proxy_auth'] = (self._proxy_user_name, self.proxy_password)
+                proxy_url = f'http://{self._proxy_user_name}:{self.proxy_password}@{self.proxy_host}:{self.proxy_port}'
+            
+            session.proxies = {
+                'http': proxy_url,
+                'https': proxy_url
+            }
         
         # set the session and update config hash
         self._session = session
@@ -334,7 +340,7 @@ class FFIECConnection(object):
         
         return (
             f"FFIECConnection(\n"
-            f"  session_status={'active' if self.session is not None else 'inactive'},\n"
+            f"  session_status={'active' if self._session is not None else 'inactive'},\n"
             f"  proxy_enabled={self.use_proxy},\n"
             f"  proxy_host='{masked_host}',\n"
             f"  proxy_port={self.proxy_port},\n"
