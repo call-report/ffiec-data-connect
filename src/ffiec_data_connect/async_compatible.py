@@ -40,11 +40,12 @@ class RateLimiter:
     
     async def async_wait_if_needed(self) -> None:
         """Asynchronous rate limit wait."""
-        with self.lock:
-            elapsed = time.time() - self.last_call
-            if elapsed < self.min_interval:
-                await asyncio.sleep(self.min_interval - elapsed)
-            self.last_call = time.time()
+        # For async contexts, we need to be careful about blocking
+        # Use a simple approach to avoid threading issues in async
+        elapsed = time.time() - self.last_call
+        if elapsed < self.min_interval:
+            await asyncio.sleep(self.min_interval - elapsed)
+        self.last_call = time.time()
 
 
 class AsyncCompatibleClient:
