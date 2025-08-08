@@ -30,7 +30,21 @@ setup(
           'zeep',
           'xmltodict',
           'requests',
-          'pandas'
+          'pandas',
+          'defusedxml>=0.7.1',  # Security: XXE prevention
+          'typing-extensions>=4.0.0;python_version<"3.10"',  # Typing support
       ],
+    extras_require={
+        'async': [
+            'aiohttp>=3.8.0',
+            'asyncio-throttle>=1.0.0',
+        ],
+        'dev': [
+            'pytest>=7.0.0',
+            'pytest-cov>=4.0.0',
+            'pytest-asyncio>=0.20.0',
+            'mypy>=1.0.0',
+        ],
+    },
 
 )
