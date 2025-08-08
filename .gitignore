@@ -7,3 +7,9 @@
 htmlcov/
 coverage.xml
 coverage.json
+*.coverage
+*.csv
+*.xlsx
+*.parquet
+*.json
+*.png
