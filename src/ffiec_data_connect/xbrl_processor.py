@@ -1,15 +1,77 @@
 """Internal functions used to process XBRL data received from the FFIEC Webservice
+
+This module provides secure XML/XBRL processing with XXE attack prevention.
 """
 from itertools import chain
-import xmltodict
 from datetime import datetime
 import re
+from typing import Dict, List, Any, Optional
+
+# Use defusedxml for secure XML parsing (prevents XXE attacks)
+try:
+    import defusedxml.ElementTree as ET
+    from defusedxml import defuse_stdlib
+    # Defuse standard library XML modules
+    defuse_stdlib()
+    import xmltodict
+    SECURE_XML = True
+except ImportError:
+    # Fallback to standard library with warning
+    import xml.etree.ElementTree as ET
+    import xmltodict
+    import warnings
+    warnings.warn(
+        "defusedxml not installed - XML parsing may be vulnerable to XXE attacks. "
+        "Install with: pip install defusedxml",
+        SecurityWarning,
+        stacklevel=2
+    )
+    SECURE_XML = False
+
+from ffiec_data_connect.exceptions import XMLParsingError
 
 re_date = re.compile('[0-9]{4}\-[0-9]{2}\-[0-9]{2}')
 
-def _process_xml(data: bytes, output_date_format: str):
-    #data = zipfile_stream.open(first_file).read()
-    dict_data = xmltodict.parse(data.decode('utf-8'))['xbrl']
+def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
+    """Process XBRL XML data securely with XXE prevention.
+    
+    Args:
+        data: Raw XML bytes from FFIEC webservice
+        output_date_format: Format for date output ('string_original', 'string_yyyymmdd', 'python_format')
+    
+    Returns:
+        List of processed data dictionaries
+        
+    Raises:
+        XMLParsingError: If XML parsing fails
+    """
+    if not data:
+        raise XMLParsingError("Empty XML data received from FFIEC webservice")
+    
+    try:
+        # Secure XML parsing with XXE prevention
+        decoded_data = data.decode('utf-8')
+        
+        # Parse with xmltodict (which uses defused XML if available)
+        parsed_data = xmltodict.parse(decoded_data)
+        
+        if 'xbrl' not in parsed_data:
+            raise XMLParsingError(
+                "Invalid XBRL format: missing 'xbrl' root element",
+                xml_snippet=decoded_data[:500]
+            )
+        
+        dict_data = parsed_data['xbrl']
+        
+    except UnicodeDecodeError as e:
+        raise XMLParsingError(
+            f"Failed to decode XML data: {str(e)}. Data may be corrupted or in wrong encoding."
+        )
+    except Exception as e:
+        raise XMLParsingError(
+            f"Failed to parse XML/XBRL data: {str(e)}",
+            xml_snippet=data[:500].decode('utf-8', errors='ignore') if data else None
+        )
 
     keys_to_parse = list(filter(lambda x: 'cc:' in x, dict_data.keys())) + list(filter(lambda x: 'uc:' in x, dict_data.keys()))
     parsed_data = list(chain.from_iterable(filter(None,list(map(lambda x: _process_xbrl_item(x, dict_data[x], output_date_format),keys_to_parse,)))))
