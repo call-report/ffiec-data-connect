@@ -5,6 +5,8 @@
 
 import requests
 from enum import Enum
+from typing import Optional
+from ffiec_data_connect.exceptions import SessionError, ConnectionError as FFIECConnectionError
 
 
 class ProxyProtocol(Enum):
@@ -232,7 +234,19 @@ class FFIECConnection(object):
             
             # check that we have a hostname, port, and protocol. If not, raise an error
             if self.proxy_host is None or self.proxy_port is None or self.proxy_protocol is None:
-                raise()
+                missing = []
+                if self.proxy_host is None:
+                    missing.append("proxy_host")
+                if self.proxy_port is None:
+                    missing.append("proxy_port")
+                if self.proxy_protocol is None:
+                    missing.append("proxy_protocol")
+                
+                raise SessionError(
+                    f"Proxy is enabled but configuration is incomplete. Missing: {', '.join(missing)}. "
+                    "Please set all proxy parameters before enabling proxy.",
+                    session_state="proxy_incomplete"
+                )
             
             
             # if we are using a proxy, set the proxy host and port
@@ -276,27 +290,43 @@ class FFIECConnection(object):
 
 
     def __str__(self) -> str:
-        
-        """String representation of the HttpsConnection object
+        """String representation of the HttpsConnection object - masks sensitive data for security.
         
         Returns:
             str: the string representation of the HttpsConnection object
-        
         """
-        return f"""
-        HttpsConnection object properties:
+        # Mask sensitive proxy information
+        masked_host = self._mask_host(self.proxy_host) if self.proxy_host else "None"
+        masked_username = self._mask_string(self.proxy_user_name) if self.proxy_user_name else "None"
         
-        Https connection session is {'active' if self.session is not None else 'inactive'}
-        
-        
-        proxy hostname = {self.proxy_host}
-        proxy port = {self.proxy_port}
-        proxy protocol = {self.proxy_protocol}
-        is the proxy active? = {self.use_proxy}
-        proxy username = {self.proxy_user_name}
-        is proxy password set? = {self.proxy_password is not None}
-        
-        """
+        return (
+            f"FFIECConnection(\n"
+            f"  session_status={'active' if self.session is not None else 'inactive'},\n"
+            f"  proxy_enabled={self.use_proxy},\n"
+            f"  proxy_host='{masked_host}',\n"
+            f"  proxy_port={self.proxy_port},\n"
+            f"  proxy_protocol={self.proxy_protocol.name if self.proxy_protocol else 'None'},\n"
+            f"  proxy_username='{masked_username}',\n"
+            f"  proxy_password_set={self.proxy_password is not None}\n"
+            f")"
+        )
+    
+    def _mask_host(self, host: Optional[str]) -> str:
+        """Mask hostname, showing only domain."""
+        if not host:
+            return "***"
+        parts = host.split('.')
+        if len(parts) <= 2:
+            return "***." + parts[-1] if len(parts) > 1 else "***"
+        return "***." + '.'.join(parts[-2:])
+    
+    def _mask_string(self, value: Optional[str]) -> str:
+        """Mask sensitive string data."""
+        if not value:
+            return "***"
+        if len(value) <= 2:
+            return "*" * len(value)
+        return f"{value[0]}{'*' * (len(value) - 2)}{value[-1]}"
         
     
 

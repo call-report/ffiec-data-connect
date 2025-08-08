@@ -17,6 +17,7 @@ from zeep.wsse.username import UsernameToken
 from zeep.transports import Transport
 
 from ffiec_data_connect import constants, ffiec_connection
+from ffiec_data_connect.exceptions import CredentialError, ConnectionError
 
 class CredentialType(Enum):
     """Enumerated values that represent the methods through which credentials are provided to the FFIEC webservice via the package.
@@ -65,22 +66,45 @@ class WebserviceCredentials(object):
         else:
             # do we have a username and password?
             self.credential_source = CredentialType.NO_CREDENTIALS
-
-            raise ValueError("Username and password must be set to create a connection")
+            
+            # Provide helpful error message based on what's missing
+            missing = []
+            if not username and not username_env:
+                missing.append("username (set via argument or FFIEC_USERNAME env var)")
+            if not password and not password_env:
+                missing.append("password (set via argument or FFIEC_PASSWORD env var)")
+            
+            raise CredentialError(
+                f"Missing required credentials: {', '.join(missing)}. "
+                "Please provide credentials either as arguments or environment variables.",
+                credential_source="none"
+            )
         
         return
     
         
     def __str__(self) -> str:
-        """String representation of the credentials."""
+        """String representation of the credentials - masks sensitive data for security."""
         if self.credential_source  == CredentialType.NO_CREDENTIALS or self.credential_source == None:
-            return "No credentials set"
-        elif self.credential_source == CredentialType.SET_FROM_INIT:
-            return f"Credentials set from class initialization with username: {self.username}"         
+            return "WebserviceCredentials(status='not configured')"
+        
+        # Mask username for security - show only first and last character
+        masked_user = self._mask_sensitive_string(self.username) if hasattr(self, '_username') else "***"
+        
+        if self.credential_source == CredentialType.SET_FROM_INIT:
+            return f"WebserviceCredentials(source='init', username='{masked_user}')"
         elif self.credential_source == CredentialType.SET_FROM_ENV:
-            return f"Credentials set from environment variables with username: {self.username}"            
+            return f"WebserviceCredentials(source='environment', username='{masked_user}')"
         else:
-            return "Unknown credential source"
+            return "WebserviceCredentials(source='unknown')"
+    
+    def _mask_sensitive_string(self, value: str) -> str:
+        """Mask sensitive string data, showing only first and last character."""
+        if not value:
+            return "***"
+        if len(value) <= 2:
+            return "*" * len(value)
+        return f"{value[0]}{'*' * (len(value) - 2)}{value[-1]}"
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -107,11 +131,17 @@ class WebserviceCredentials(object):
     
         # check that we have a user name
         if self.username is None:
-            raise ValueError("Username must be set")
+            raise CredentialError(
+                "Username is not set. Please provide username via constructor or FFIEC_USERNAME environment variable.",
+                credential_source=str(self.credential_source)
+            )
         
         # check that we have a password
         if self.password is None:
-            raise ValueError("Password must be set")
+            raise CredentialError(
+                "Password is not set. Please provide password via constructor or FFIEC_PASSWORD environment variable.",
+                credential_source=str(self.credential_source)
+            )
         
         # we have a user name and password, so try to log in
         # create the token
@@ -146,12 +176,26 @@ class WebserviceCredentials(object):
                 
                         
         except Exception as e:
-            print(
-                "Credentials are invalid. Please check documentation for more information."
-            )
-            print("Credentials error: {}".format(e))
-            
-            raise(Exception("Credentials are invalid. Please check documentation for more information."))
+            # More descriptive error message
+            error_msg = str(e)
+            if "401" in error_msg or "unauthorized" in error_msg.lower():
+                raise CredentialError(
+                    "Authentication failed: Invalid username or password. "
+                    "Please verify your FFIEC credentials are correct.",
+                    credential_source=str(self.credential_source)
+                )
+            elif "connection" in error_msg.lower() or "timeout" in error_msg.lower():
+                raise ConnectionError(
+                    "Failed to connect to FFIEC webservice. "
+                    "Please check your internet connection and proxy settings.",
+                    url=constants.WebserviceConstants.base_url
+                )
+            else:
+                raise CredentialError(
+                    f"Failed to validate credentials: {error_msg}. "
+                    "Please refer to https://cdr.ffiec.gov/public/PWS/Home.aspx for account setup.",
+                    credential_source=str(self.credential_source)
+                )
         
         
     
