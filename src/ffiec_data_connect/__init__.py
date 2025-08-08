@@ -40,6 +40,12 @@ from ffiec_data_connect.config import (
     disable_legacy_mode
 )
 
+# SOAP client caching utilities
+from ffiec_data_connect.soap_cache import (
+    clear_soap_cache,
+    get_cache_stats
+)
+
 # Expose main classes for easier import
 __all__ = [
     # Core classes
@@ -76,6 +82,10 @@ __all__ = [
     'set_legacy_errors',
     'enable_legacy_mode',
     'disable_legacy_mode',
+    
+    # SOAP Caching
+    'clear_soap_cache',
+    'get_cache_stats',
     
     # Version
     '__version__'

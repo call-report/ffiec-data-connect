@@ -299,25 +299,19 @@ def _validate_rssd_id(rssd_id: str) -> int:
     
 def _return_client_session(session: requests.Session, creds: credentials.WebserviceCredentials) -> Client:
     
-    """Internal function to return a zeep client session
+    """Internal function to return a cached zeep client session for better performance.
     
     Args:
         session (requests.Session): the requests.Session object to use
         creds (credentials.WebserviceCredentials): the credentials to use
 
     Returns:
-        _type_: _description_
+        Client: Cached or newly created zeep Client instance
     """
     
-    # create a transport
-    transport = Transport(session=session)
-    
-    wsse = UsernameToken(creds.username, creds.password)
-                         
-    # create the client
-    soap_client = Client(constants.WebserviceConstants.base_url, wsse=wsse, transport=transport)
-    
-    return soap_client
+    # Use cached SOAP client for better performance and memory usage
+    from ffiec_data_connect.soap_cache import get_soap_client
+    return get_soap_client(creds, session)
 
 
 

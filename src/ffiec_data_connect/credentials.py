@@ -42,6 +42,8 @@ class WebserviceCredentials(object):
     """
     
     def __init__(self, username = None, password = None):
+        # Flag to track if credentials are initialized (for immutability)
+        self._initialized = False
 
         # collect the credentials from the environment variables
         # if the environment variables are not set, we will set the credentials from the arguments
@@ -53,6 +55,7 @@ class WebserviceCredentials(object):
             self.username = username
             self.password = password
             self.credential_source: CredentialType = CredentialType.SET_FROM_INIT
+            self._initialized = True  # Mark as initialized
             return
         
         # if not, check if we have the two environment variables
@@ -62,6 +65,7 @@ class WebserviceCredentials(object):
             self.username = username_env
             self.password = password_env
             self.credential_source: CredentialType = CredentialType.SET_FROM_ENV
+            self._initialized = True  # Mark as initialized
         
         else:
             # do we have a username and password?
@@ -150,21 +154,10 @@ class WebserviceCredentials(object):
             )
         
         # we have a user name and password, so try to log in
-        # create the token
-        wsse = UsernameToken(self.username, self.password)
-
         try:
-
-            # create a transport
-            transport = None
-            
-            if isinstance(session, requests.Session):
-                transport = Transport(session=session)                
-            elif isinstance(session, ffiec_connection.FFIECConnection):
-                transport = Transport(session=session.session)
-            
-            # create the client
-            soap_client = Client(constants.WebserviceConstants.base_url, wsse=wsse, transport=transport)
+            # Use cached SOAP client for better performance
+            from ffiec_data_connect.soap_cache import get_soap_client
+            soap_client = get_soap_client(self, session)
             
             print("Standby...testing your access.")    
             
@@ -226,10 +219,20 @@ class WebserviceCredentials(object):
         
         Args:
             username (str): the username to set in the WebserviceCredentials instance
+            
+        Raises:
+            RuntimeError: If credentials are already initialized (immutable)
         """
+        if getattr(self, '_initialized', False):
+            from ffiec_data_connect.exceptions import raise_exception, CredentialError
+            raise_exception(
+                CredentialError,
+                "Cannot modify username after initialization",
+                "Cannot modify username after initialization. WebserviceCredentials are immutable for security.",
+                credential_source=str(getattr(self, 'credential_source', 'unknown'))
+            )
  
         self._username = username
-        pass
     
     @property
     def password(self) -> str:
@@ -247,6 +250,17 @@ class WebserviceCredentials(object):
         
         Args:
             password (str): the password to set in the WebserviceCredentials instance
+            
+        Raises:
+            RuntimeError: If credentials are already initialized (immutable)
         """
+        if getattr(self, '_initialized', False):
+            from ffiec_data_connect.exceptions import raise_exception, CredentialError
+            raise_exception(
+                CredentialError,
+                "Cannot modify password after initialization",
+                "Cannot modify password after initialization. WebserviceCredentials are immutable for security.",
+                credential_source=str(getattr(self, 'credential_source', 'unknown'))
+            )
+        
         self._password = password
-        pass
