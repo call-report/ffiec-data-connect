@@ -30,7 +30,7 @@ except ImportError:
 
 from ffiec_data_connect.exceptions import XMLParsingError, raise_exception
 
-re_date = re.compile('[0-9]{4}\-[0-9]{2}\-[0-9]{2}')
+re_date = re.compile(r'[0-9]{4}-[0-9]{2}-[0-9]{2}')
 
 def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
     """Process XBRL XML data securely with XXE prevention.
@@ -53,18 +53,24 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
         )
     
     try:
-        # Secure XML parsing with XXE prevention
-        decoded_data = data.decode('utf-8')
-        
-        # Parse with xmltodict (which uses defused XML if available)
-        parsed_data = xmltodict.parse(decoded_data)
+        # Secure XML parsing with XXE prevention - optimize memory usage
+        # Try parsing directly from bytes first (more memory efficient)
+        try:
+            # Direct parsing from bytes avoids creating intermediate string
+            parsed_data = xmltodict.parse(data)
+        except (UnicodeDecodeError, TypeError):
+            # Fallback to string decoding only if direct parsing fails
+            decoded_data = data.decode('utf-8')
+            parsed_data = xmltodict.parse(decoded_data)
         
         if 'xbrl' not in parsed_data:
+            # Only decode snippet for error message if needed (memory efficient)
+            xml_snippet = data[:500].decode('utf-8', errors='ignore')
             raise_exception(
                 XMLParsingError,
                 "Invalid XBRL format",
                 "Invalid XBRL format: missing 'xbrl' root element",
-                xml_snippet=decoded_data[:500]
+                xml_snippet=xml_snippet
             )
         
         dict_data = parsed_data['xbrl']
@@ -83,50 +89,36 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
             xml_snippet=data[:500].decode('utf-8', errors='ignore') if data else None
         )
 
-    keys_to_parse = list(filter(lambda x: 'cc:' in x, dict_data.keys())) + list(filter(lambda x: 'uc:' in x, dict_data.keys()))
-    parsed_data = list(chain.from_iterable(filter(None,list(map(lambda x: _process_xbrl_item(x, dict_data[x], output_date_format),keys_to_parse,)))))
+    # Memory-optimized: use generator expressions and avoid intermediate lists
+    cc_keys = (key for key in dict_data.keys() if 'cc:' in key)
+    uc_keys = (key for key in dict_data.keys() if 'uc:' in key)
+    
+    # Process items efficiently and build result with single dict construction
     ret_data = []
-    for row in parsed_data:
-        new_dict = {}
-        new_dict.update({'mdrm':row['mdrm']})
-        new_dict.update({'rssd':row['rssd']})
-        new_dict.update({'quarter':row['quarter']})
-        if row['data_type'] == 'int':
-            new_dict.update({'int_data':int(row['value'])})
-            new_dict.update({'float_data':None})
-            new_dict.update({'bool_data':None})
-            new_dict.update({'str_data':None})
-            new_dict.update({'data_type':row['data_type']})
-
-        elif row['data_type'] == 'float':
-            new_dict.update({'int_data':None})
-            new_dict.update({'float_data':row['value']})
-            new_dict.update({'bool_data':None})
-            new_dict.update({'str_data':None})
-            new_dict.update({'data_type':row['data_type']})
-
-        elif row['data_type'] == 'str':
-            new_dict.update({'int_data':None})
-            new_dict.update({'float_data':None})
-            new_dict.update({'bool_data':None})
-            new_dict.update({'str_data':row['value']})
-            new_dict.update({'data_type':row['data_type']})
-
-        elif row['data_type'] == 'float':
-            new_dict.update({'int_data':None})
-            new_dict.update({'float_data':row['value']})
-            new_dict.update({'bool_data':None})
-            new_dict.update({'data_type':row['data_type']})
-            new_dict.update({'str_data':None})
-
-        elif row['data_type'] == 'bool':
-            new_dict.update({'int_data':None})
-            new_dict.update({'float_data':None})
-            new_dict.update({'bool_data':row['value']})
-            new_dict.update({'data_type':row['data_type']})
-            new_dict.update({'str_data':None})
-
-        ret_data.append(new_dict)
+    for key in chain(cc_keys, uc_keys):
+        processed_items = _process_xbrl_item(key, dict_data[key], output_date_format)
+        if processed_items:  # Only process if not None/empty
+            # Handle both single items and lists
+            items_to_process = processed_items if isinstance(processed_items, list) else [processed_items]
+            
+            for row in items_to_process:
+                if row:  # Skip None/empty rows
+                    data_type = row.get('data_type')
+                    value = row.get('value')
+                    
+                    # Build dict efficiently in single operation - avoid multiple update() calls
+                    new_dict = {
+                        'mdrm': row['mdrm'],
+                        'rssd': row['rssd'], 
+                        'quarter': row['quarter'],
+                        'data_type': data_type,
+                        # Set data fields based on type - only one will be non-None
+                        'int_data': int(value) if data_type == 'int' else None,
+                        'float_data': value if data_type == 'float' else None,
+                        'bool_data': value if data_type == 'bool' else None,
+                        'str_data': value if data_type == 'str' else None
+                    }
+                    ret_data.append(new_dict)
     
     return ret_data
 
