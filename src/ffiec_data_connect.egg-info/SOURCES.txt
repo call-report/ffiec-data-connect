@@ -4,6 +4,8 @@ pyproject.toml
 setup.cfg
 setup.py
 src/ffiec_data_connect/__init__.py
+src/ffiec_data_connect/async_compatible.py
+src/ffiec_data_connect/config.py
 src/ffiec_data_connect/constants.py
 src/ffiec_data_connect/credentials.py
 src/ffiec_data_connect/datahelpers.py

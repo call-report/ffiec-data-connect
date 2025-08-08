@@ -4,7 +4,34 @@ This module provides custom exceptions with detailed error messages
 to improve debugging and user experience.
 """
 
-from typing import Optional, Any
+from typing import Optional, Any, Type
+
+
+def raise_exception(
+    exception_class: Type[Exception], 
+    legacy_message: str,
+    *args,
+    **kwargs
+) -> None:
+    """Raise an exception with legacy compatibility support.
+    
+    If legacy mode is enabled, raises ValueError with the legacy message.
+    Otherwise, raises the specific exception class.
+    
+    Args:
+        exception_class: The specific exception class to raise
+        legacy_message: Message to use for ValueError in legacy mode
+        *args: Arguments for the specific exception
+        **kwargs: Keyword arguments for the specific exception
+    """
+    from ffiec_data_connect.config import use_legacy_errors
+    
+    if use_legacy_errors():
+        # Legacy mode - raise ValueError with simple message
+        raise ValueError(legacy_message)
+    else:
+        # New mode - raise specific exception with context
+        raise exception_class(*args, **kwargs)
 
 
 class FFIECError(Exception):

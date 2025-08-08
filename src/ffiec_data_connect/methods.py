@@ -14,7 +14,7 @@ from zeep import Client, Settings
 from zeep.wsse.username import UsernameToken
 from zeep.transports import Transport
 from ffiec_data_connect import datahelpers, credentials, constants, xbrl_processor, ffiec_connection
-from ffiec_data_connect.exceptions import ValidationError, NoDataError, ConnectionError as FFIECConnectionError
+from ffiec_data_connect.exceptions import ValidationError, NoDataError, ConnectionError as FFIECConnectionError, raise_exception
 
 # global date regex
 quarterStringRegex = r"^[1-4](q|Q)([0-9]{4})$"
@@ -170,7 +170,9 @@ def _output_type_validator(output_type: str) -> bool:
     """
     valid_types = ['list', 'pandas']
     if output_type not in valid_types:
-        raise ValidationError(
+        raise_exception(
+            ValidationError,
+            f"Invalid output_type: {output_type}",
             field="output_type",
             value=output_type,
             expected=f"one of {valid_types}"
@@ -191,7 +193,9 @@ def _date_format_validator(date_format: str) -> bool:
     """
     valid_formats = ['string_original', 'string_yyyymmdd', 'python_format']
     if date_format not in valid_formats:
-        raise ValidationError(
+        raise_exception(
+            ValidationError,
+            f"Invalid date_format: {date_format}",
             field="date_format",
             value=date_format,
             expected=f"one of {valid_formats}"
@@ -212,7 +216,9 @@ def _credentials_validator(creds: credentials.WebserviceCredentials) -> bool:
         ValidationError: If credentials are invalid
     """
     if not isinstance(creds, credentials.WebserviceCredentials):
-        raise ValidationError(
+        raise_exception(
+            ValidationError,
+            "Invalid credentials type",
             field="credentials",
             value=type(creds).__name__,
             expected="WebserviceCredentials instance"
@@ -236,7 +242,9 @@ def _session_validator(session: requests.Session) -> bool:
     elif isinstance(session, requests.Session):
         return True
     else:
-        raise ValidationError(
+        raise_exception(
+            ValidationError,
+            "Invalid session type",
             field="session",
             value=type(session).__name__,
             expected="requests.Session or FFIECConnection instance"
@@ -255,7 +263,9 @@ def _validate_rssd_id(rssd_id: str) -> int:
         ValidationError: If RSSD ID is invalid
     """
     if not rssd_id:
-        raise ValidationError(
+        raise_exception(
+            ValidationError,
+            "RSSD ID is empty",
             field="rssd_id",
             value=rssd_id,
             expected="non-empty numeric string"
@@ -266,7 +276,9 @@ def _validate_rssd_id(rssd_id: str) -> int:
     
     # Check if it's numeric
     if not rssd_id.isdigit():
-        raise ValidationError(
+        raise_exception(
+            ValidationError,
+            f"RSSD ID must be numeric: {rssd_id}",
             field="rssd_id",
             value=rssd_id,
             expected="numeric string (digits only)"
@@ -275,7 +287,9 @@ def _validate_rssd_id(rssd_id: str) -> int:
     # Convert to int and validate range
     rssd_int = int(rssd_id)
     if rssd_int <= 0 or rssd_int > 99999999:  # Max 8 digits for RSSD
-        raise ValidationError(
+        raise_exception(
+            ValidationError,
+            f"RSSD ID out of range: {rssd_id}",
             field="rssd_id",
             value=rssd_id,
             expected="positive integer between 1 and 99999999"
@@ -350,7 +364,9 @@ def collect_reporting_periods(session: requests.Session, creds: credentials.Webs
     
     # did we return anything? if not, raise an error
     if ret is None or len(ret) == 0:
-        raise NoDataError(
+        raise_exception(
+            NoDataError,
+            "No reporting periods available",
             reporting_period=None,
             rssd_id=None
         )

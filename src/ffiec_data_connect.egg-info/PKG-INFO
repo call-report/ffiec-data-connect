@@ -1,6 +1,6 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: ffiec-data-connect
-Version: 0.2.7
+Version: 0.3.0
 Summary: Wrapper for the FFIEC's Webservice API
 Home-page: https://github.com/call-report/ffiec-data-connect
 Author: Michael Handelman
@@ -14,13 +14,41 @@ Keywords: ffiec call report bank regulatory
 Requires-Python: >3.9.0
 Description-Content-Type: text/markdown
 License-File: LICENSE.txt
+Requires-Dist: zeep
+Requires-Dist: xmltodict
+Requires-Dist: requests
+Requires-Dist: pandas
+Requires-Dist: defusedxml>=0.7.1
+Requires-Dist: typing-extensions>=4.0.0; python_version < "3.10"
+Provides-Extra: async
+Requires-Dist: aiohttp>=3.8.0; extra == "async"
+Requires-Dist: asyncio-throttle>=1.0.0; extra == "async"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.20.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # FFIEC Data Connector
 
 - The FFIEC Webservice Python Connector library (`ffiec_data_connect`) downloads data from the FFIEC (Federal Financial Institution Examination Council) via the FFIEC's "webservice" interface. 
 
-- The library interfaces with the SOAP-based API published by FFIEC, normalizing dates and data, conducting transformations to permit immediate analysis of acquired data within a Python data science or scripted environment.
+- The library interfaces with the SOAP-based API published by FFIEC, normalizing dates and data, conducting transformations to permit immediate analysis of acquired data within a Python data science or scripted environment. (Software will update to new REST API in 4Q 2025)
 
+- This library is provided for public use, subject to the terms of the Mozilla Public License 2.0, by Civic Forge Solutions LLC
 
 ### Disclaimer
 
@@ -46,6 +74,25 @@ Data returned from the Webservice may be returned as a native Python data struct
 1. To run this Quick Start, you must have an account on the FFIEC Webservice at https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true
 2. After you create an account, verify your password, and complete the sign-in process, log into the public web interface here: https://cdr.ffiec.gov/Public/PWS/Login.aspx
 3. When you login, go to the "Account Details" tab. On this screen, look for the _Security Token_. This token is the password that you will use for the login credentials for ffiec-data-connect, __not the password__.
+
+## Troubleshooting and Helpful Info
+
+- General issues with certificates and authentication: Multiple users have reported issues running the library on Windows-based python installations. The issues arise from libraries that have dependencies on Windows platform-specific SSL authentication libraries. Unfortunately, there are no universal fixes to these issues, as each Windows-based installation can be unique. If you are unable to operate the library in Windows, I advise utilizing a service such as Google Colab or finding a Linux-based or Mac-based machine instead.
+
+- Seeing the `ValueError: Invalid Format String` error? Make sure you are running version >= 0.2.7. If running earlier versions in Windows, an incompatibility with the `strptime` library prevents parsing of valid date strings. A workaround is present in more recent versions of the library. To install the latest version, you may type `pip install ffiec-data-connect==0.2.7` at the commend line.
+
+- The FFIEC Webservice throttles requests. As per the Webservice:
+
+```
+Currently, the PWS will allow a limited number of downloads (approximately 2500 per hour). 
+
+If the download limit has been reached within one hour, the user will have to wait until the next hour to continue with the next download.
+```
+
+A back-off function is recommended if your anticipated downloads would be greater than this limit.
+
+
+## Sample Code
 
 Sample code to login and collect reporting periods:
 

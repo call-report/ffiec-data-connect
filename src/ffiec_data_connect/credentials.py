@@ -17,7 +17,7 @@ from zeep.wsse.username import UsernameToken
 from zeep.transports import Transport
 
 from ffiec_data_connect import constants, ffiec_connection
-from ffiec_data_connect.exceptions import CredentialError, ConnectionError
+from ffiec_data_connect.exceptions import CredentialError, ConnectionError, raise_exception
 
 class CredentialType(Enum):
     """Enumerated values that represent the methods through which credentials are provided to the FFIEC webservice via the package.
@@ -74,7 +74,9 @@ class WebserviceCredentials(object):
             if not password and not password_env:
                 missing.append("password (set via argument or FFIEC_PASSWORD env var)")
             
-            raise CredentialError(
+            raise_exception(
+                CredentialError,
+                f"Missing required credentials: {', '.join(missing)}",
                 f"Missing required credentials: {', '.join(missing)}. "
                 "Please provide credentials either as arguments or environment variables.",
                 credential_source="none"
@@ -131,14 +133,18 @@ class WebserviceCredentials(object):
     
         # check that we have a user name
         if self.username is None:
-            raise CredentialError(
+            raise_exception(
+                CredentialError,
+                "Username is not set",
                 "Username is not set. Please provide username via constructor or FFIEC_USERNAME environment variable.",
                 credential_source=str(self.credential_source)
             )
         
         # check that we have a password
         if self.password is None:
-            raise CredentialError(
+            raise_exception(
+                CredentialError,
+                "Password is not set",
                 "Password is not set. Please provide password via constructor or FFIEC_PASSWORD environment variable.",
                 credential_source=str(self.credential_source)
             )
@@ -179,19 +185,25 @@ class WebserviceCredentials(object):
             # More descriptive error message
             error_msg = str(e)
             if "401" in error_msg or "unauthorized" in error_msg.lower():
-                raise CredentialError(
+                raise_exception(
+                    CredentialError,
+                    "Authentication failed",
                     "Authentication failed: Invalid username or password. "
                     "Please verify your FFIEC credentials are correct.",
                     credential_source=str(self.credential_source)
                 )
             elif "connection" in error_msg.lower() or "timeout" in error_msg.lower():
-                raise ConnectionError(
+                raise_exception(
+                    ConnectionError,
+                    "Failed to connect to FFIEC webservice",
                     "Failed to connect to FFIEC webservice. "
                     "Please check your internet connection and proxy settings.",
                     url=constants.WebserviceConstants.base_url
                 )
             else:
-                raise CredentialError(
+                raise_exception(
+                    CredentialError,
+                    f"Failed to validate credentials: {error_msg}",
                     f"Failed to validate credentials: {error_msg}. "
                     "Please refer to https://cdr.ffiec.gov/public/PWS/Home.aspx for account setup.",
                     credential_source=str(self.credential_source)

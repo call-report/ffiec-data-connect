@@ -32,6 +32,14 @@ from ffiec_data_connect.exceptions import (
 # New async-compatible client
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 
+# Configuration for legacy compatibility
+from ffiec_data_connect.config import (
+    use_legacy_errors,
+    set_legacy_errors,
+    enable_legacy_mode,
+    disable_legacy_mode
+)
+
 # Expose main classes for easier import
 __all__ = [
     # Core classes
@@ -62,6 +70,12 @@ __all__ = [
     
     # Utilities
     'RateLimiter',
+    
+    # Configuration
+    'use_legacy_errors',
+    'set_legacy_errors',
+    'enable_legacy_mode',
+    'disable_legacy_mode',
     
     # Version
     '__version__'

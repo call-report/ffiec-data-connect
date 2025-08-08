@@ -8,7 +8,7 @@ import threading
 import weakref
 from enum import Enum
 from typing import Optional, Dict, Any
-from ffiec_data_connect.exceptions import SessionError, ConnectionError as FFIECConnectionError
+from ffiec_data_connect.exceptions import SessionError, ConnectionError, raise_exception as FFIECConnectionError
 
 
 class ProxyProtocol(Enum):
@@ -218,7 +218,9 @@ class FFIECConnection(object):
         """
         with self._lock:
             if use_proxy_opt and (self._proxy_host is None or self._proxy_port is None or self._proxy_protocol is None):
-                raise SessionError(
+                raise_exception(
+                    SessionError,
+                    "Cannot enable proxy without complete configuration",
                     "Cannot enable proxy without complete configuration. "
                     "Please set proxy_host, proxy_port, and proxy_protocol first.",
                     session_state="proxy_incomplete"
@@ -260,7 +262,9 @@ class FFIECConnection(object):
                 if self.proxy_protocol is None:
                     missing.append("proxy_protocol")
                 
-                raise SessionError(
+                raise_exception(
+                    SessionError,
+                    f"Proxy is enabled but configuration is incomplete. Missing: {', '.join(missing)}",
                     f"Proxy is enabled but configuration is incomplete. Missing: {', '.join(missing)}. "
                     "Please set all proxy parameters before enabling proxy.",
                     session_state="proxy_incomplete"

@@ -28,7 +28,7 @@ except ImportError:
     )
     SECURE_XML = False
 
-from ffiec_data_connect.exceptions import XMLParsingError
+from ffiec_data_connect.exceptions import XMLParsingError, raise_exception
 
 re_date = re.compile('[0-9]{4}\-[0-9]{2}\-[0-9]{2}')
 
@@ -46,7 +46,11 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
         XMLParsingError: If XML parsing fails
     """
     if not data:
-        raise XMLParsingError("Empty XML data received from FFIEC webservice")
+        raise_exception(
+            XMLParsingError,
+            "Empty XML data received",
+            "Empty XML data received from FFIEC webservice"
+        )
     
     try:
         # Secure XML parsing with XXE prevention
@@ -56,7 +60,9 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
         parsed_data = xmltodict.parse(decoded_data)
         
         if 'xbrl' not in parsed_data:
-            raise XMLParsingError(
+            raise_exception(
+                XMLParsingError,
+                "Invalid XBRL format",
                 "Invalid XBRL format: missing 'xbrl' root element",
                 xml_snippet=decoded_data[:500]
             )
@@ -64,11 +70,15 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
         dict_data = parsed_data['xbrl']
         
     except UnicodeDecodeError as e:
-        raise XMLParsingError(
+        raise_exception(
+            XMLParsingError,
+            f"Failed to decode XML data: {str(e)}",
             f"Failed to decode XML data: {str(e)}. Data may be corrupted or in wrong encoding."
         )
     except Exception as e:
-        raise XMLParsingError(
+        raise_exception(
+            XMLParsingError,
+            f"Failed to parse XML/XBRL data: {str(e)}",
             f"Failed to parse XML/XBRL data: {str(e)}",
             xml_snippet=data[:500].decode('utf-8', errors='ignore') if data else None
         )
