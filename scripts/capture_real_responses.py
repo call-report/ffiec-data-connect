@@ -23,7 +23,6 @@ import time
 from pathlib import Path
 from datetime import datetime, date
 from typing import Dict, List, Any, Optional
-import hashlib
 import re
 
 # Add parent directory to path for imports
@@ -57,8 +56,6 @@ class ResponseCapture:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Create subdirectories
-        (self.output_dir / "raw").mkdir(exist_ok=True)
-        (self.output_dir / "sanitized").mkdir(exist_ok=True)
         (self.output_dir / "vcr_cassettes").mkdir(exist_ok=True)
         
         print(f"📁 Output directory: {self.output_dir.absolute()}")
@@ -84,13 +81,14 @@ class ResponseCapture:
                 output_type="list"
             )
             
-            # Save raw response
-            raw_file = self.output_dir / "raw" / "reporting_periods.json"
-            with open(raw_file, 'w') as f:
+            # Save reporting periods
+            periods_file = self.output_dir / "reporting_periods.json"
+            with open(periods_file, 'w') as f:
                 json.dump({
                     "timestamp": datetime.now().isoformat(),
                     "periods": periods,
-                    "count": len(periods)
+                    "count": len(periods),
+                    "source": "FFIEC CDR"
                 }, f, indent=2)
             
             print(f"✅ Captured {len(periods)} reporting periods")
@@ -108,7 +106,7 @@ class ResponseCapture:
             sample_rssds: List of RSSD IDs to capture data for
         
         Returns:
-            Dictionary of captured responses
+            Dictionary of captured responses (real public FFIEC data)
         """
         captured_data = {}
         
@@ -121,156 +119,73 @@ class ResponseCapture:
             period_data = {}
             
             for rssd_id in sample_rssds:
-                try:
-                    print(f"  Fetching {rssd_id} for {period}...")
-                    
-                    # Add delay to respect rate limits
-                    time.sleep(1)
-                    
-                    data = collect_data(
-                        session=self.connection.session,
-                        creds=self.credentials,
-                        rssd_id=rssd_id,
-                        reporting_period=period,
-                        output_type="dict"
-                    )
-                    
-                    if data:
-                        period_data[rssd_id] = data
-                        print(f"    ✅ Got {len(data)} data points")
-                    else:
-                        print(f"    ⚠️  No data returned")
+                bank_data = {}
+                
+                # Collect both Call Report and UBPR data for comprehensive fixtures
+                for series in ["call", "ubpr"]:
+                    try:
+                        print(f"  Fetching {rssd_id} ({series.upper()}) for {period}...")
                         
-                except Exception as e:
-                    print(f"    ❌ Failed: {e}")
-                    period_data[rssd_id] = {"error": str(e)}
+                        # Add delay to respect rate limits
+                        time.sleep(1)
+                        
+                        data = collect_data(
+                            session=self.connection.session,
+                            creds=self.credentials,
+                            reporting_period=period,
+                            rssd_id=rssd_id,
+                            series=series,
+                            output_type="list"  # Keep as list to preserve original structure
+                        )
+                        
+                        if data:
+                            bank_data[series] = data
+                            print(f"    ✅ Got {len(data)} {series.upper()} data points")
+                        else:
+                            print(f"    ⚠️  No {series.upper()} data returned")
+                            bank_data[series] = []
+                            
+                    except Exception as e:
+                        print(f"    ❌ {series.upper()} failed: {e}")
+                        bank_data[series] = {"error": str(e)}
+                
+                # Store both series for this bank
+                period_data[rssd_id] = bank_data
             
             captured_data[period] = period_data
         
         return captured_data
     
-    def sanitize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Sanitize captured data to remove sensitive information.
+    def save_fixtures(self, real_data: Dict[str, Any]) -> None:
+        """Save real FFIEC data as test fixtures."""
         
-        Args:
-            data: Raw captured data
-            
-        Returns:
-            Sanitized data safe for test fixtures
-        """
-        sanitized = {}
-        
-        for period, period_data in data.items():
-            sanitized_period = {}
-            
-            for rssd_id, bank_data in period_data.items():
-                if isinstance(bank_data, dict) and "error" not in bank_data:
-                    sanitized_bank = self._sanitize_bank_data(bank_data, rssd_id)
-                    sanitized_period[rssd_id] = sanitized_bank
-                else:
-                    # Keep error data as-is for testing error scenarios
-                    sanitized_period[rssd_id] = bank_data
-            
-            sanitized[period] = sanitized_period
-        
-        return sanitized
-    
-    def _sanitize_bank_data(self, bank_data: List[Dict], original_rssd: str) -> List[Dict]:
-        """Sanitize individual bank data records."""
-        sanitized_records = []
-        
-        for record in bank_data:
-            sanitized_record = record.copy()
-            
-            # Replace actual RSSD with consistent test RSSD
-            test_rssd = self._generate_test_rssd(original_rssd)
-            if 'rssd' in sanitized_record:
-                sanitized_record['rssd'] = test_rssd
-            
-            # Scramble actual financial values while preserving data types and structure
-            if 'int_data' in sanitized_record and sanitized_record['int_data'] is not None:
-                sanitized_record['int_data'] = self._scramble_numeric_value(
-                    sanitized_record['int_data'], is_int=True
-                )
-            
-            if 'float_data' in sanitized_record and sanitized_record['float_data'] is not None:
-                sanitized_record['float_data'] = self._scramble_numeric_value(
-                    sanitized_record['float_data'], is_int=False
-                )
-            
-            # Keep MDRM codes and structure intact (not sensitive)
-            # Keep quarters and dates intact (public information)
-            
-            sanitized_records.append(sanitized_record)
-        
-        return sanitized_records
-    
-    def _generate_test_rssd(self, original_rssd: str) -> str:
-        """Generate consistent test RSSD ID from original."""
-        # Create deterministic but different RSSD for testing
-        hash_obj = hashlib.md5(f"test_{original_rssd}".encode())
-        hash_hex = hash_obj.hexdigest()
-        
-        # Convert to 8-digit number (typical RSSD format)
-        test_number = int(hash_hex[:8], 16) % 99999999 + 10000000
-        return str(test_number)
-    
-    def _scramble_numeric_value(self, value: float, is_int: bool = False) -> float:
-        """Scramble numeric value while preserving magnitude and type."""
-        if value == 0:
-            return 0
-        
-        # Preserve sign and rough magnitude
-        sign = 1 if value >= 0 else -1
-        abs_value = abs(value)
-        
-        # Get magnitude (power of 10)
-        magnitude = len(str(int(abs_value))) if abs_value >= 1 else 0
-        
-        # Create scrambled value of similar magnitude
-        hash_input = f"scramble_{value}_{magnitude}".encode()
-        hash_obj = hashlib.md5(hash_input)
-        hash_int = int(hash_obj.hexdigest()[:8], 16)
-        
-        # Create value of similar magnitude
-        if magnitude > 0:
-            scrambled = hash_int % (10 ** magnitude)
-            if scrambled == 0:
-                scrambled = 10 ** (magnitude - 1)
-        else:
-            scrambled = hash_int % 1000 + 1  # Small positive number
-        
-        result = sign * scrambled
-        return int(result) if is_int else float(result)
-    
-    def save_fixtures(self, sanitized_data: Dict[str, Any]) -> None:
-        """Save sanitized data as test fixtures."""
-        
-        # Save complete fixture
-        fixture_file = self.output_dir / "sanitized" / "sample_bank_data.json"
+        # Save complete fixture with real public data
+        fixture_file = self.output_dir / "real_ffiec_data.json"
         with open(fixture_file, 'w') as f:
             json.dump({
                 "metadata": {
                     "generated": datetime.now().isoformat(),
-                    "description": "Sanitized FFIEC bank data for testing",
-                    "note": "All sensitive data has been scrambled while preserving structure"
+                    "description": "Real FFIEC bank data for testing",
+                    "note": "Authentic public banking data from FFIEC webservice",
+                    "data_source": "FFIEC Central Data Repository"
                 },
-                "data": sanitized_data
+                "data": real_data
             }, f, indent=2)
         
         print(f"💾 Saved complete fixture: {fixture_file}")
         
         # Save individual period fixtures for targeted testing
-        for period, period_data in sanitized_data.items():
-            period_file = self.output_dir / "sanitized" / f"period_{period.replace('-', '_')}.json"
+        for period, period_data in real_data.items():
+            period_file = self.output_dir / f"period_{period.replace('-', '_')}.json"
             with open(period_file, 'w') as f:
                 json.dump({
                     "period": period,
                     "banks": period_data,
-                    "generated": datetime.now().isoformat()
+                    "generated": datetime.now().isoformat(),
+                    "source": "FFIEC CDR"
                 }, f, indent=2)
         
-        print(f"💾 Saved {len(sanitized_data)} individual period fixtures")
+        print(f"💾 Saved {len(real_data)} individual period fixtures")
     
     def create_sample_responses(self) -> Dict[str, Any]:
         """Create sample response structures for different scenarios."""
@@ -322,7 +237,7 @@ class ResponseCapture:
             ]
         }
         
-        sample_file = self.output_dir / "sanitized" / "sample_responses.json"
+        sample_file = self.output_dir / "sample_responses.json"
         with open(sample_file, 'w') as f:
             json.dump({
                 "metadata": {
@@ -426,13 +341,9 @@ Examples:
         
         raw_data = capture.capture_sample_bank_data(periods, args.sample_banks)
         
-        # Sanitize data
-        print("🔒 Sanitizing captured data...")
-        sanitized_data = capture.sanitize_data(raw_data)
-        
-        # Save fixtures
+        # Save fixtures (no sanitization needed - data is public)
         print("💾 Saving test fixtures...")
-        capture.save_fixtures(sanitized_data)
+        capture.save_fixtures(raw_data)
         
         print("✅ Response capture completed successfully!")
         print(f"   Fixtures saved to: {capture.output_dir.absolute()}")

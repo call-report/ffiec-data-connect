@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://cdr.ffiec.gov/public/services" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://cdr.ffiec.gov/public/services" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Data retrieval web service of the FFIEC CDR Public Data Distribution.</wsdl:documentation>
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cdr.ffiec.gov/public/services">
+      <s:element name="TestUserAccess">
+        <s:complexType />
+      </s:element>
+      <s:element name="TestUserAccessResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="TestUserAccessResult" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RetrieveReportingPeriods">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="dataSeries" type="tns:ReportingDataSeriesName" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:simpleType name="ReportingDataSeriesName">
+        <s:restriction base="s:string">
+          <s:enumeration value="Call" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="RetrieveReportingPeriodsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RetrieveReportingPeriodsResult" type="tns:ArrayOfString" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfString">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" nillable="true" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="RetrievePanelOfReporters">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="dataSeries" type="tns:ReportingDataSeriesName" />
+            <s:element minOccurs="0" maxOccurs="1" name="reportingPeriodEndDate" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RetrievePanelOfReportersResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RetrievePanelOfReportersResult" type="tns:ArrayOfReportingFinancialInstitution" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfReportingFinancialInstitution">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ReportingFinancialInstitution" type="tns:ReportingFinancialInstitution" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ReportingFinancialInstitution">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID_RSSD" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="FDICCertNumber" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="OCCChartNumber" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="OTSDockNumber" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="PrimaryABARoutNumber" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="State" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="City" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Address" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ZIP" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="FilingType" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="HasFiledForReportingPeriod" type="s:boolean" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="RetrieveFilersSubmissionDateTime">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="dataSeries" type="tns:ReportingDataSeriesName" />
+            <s:element minOccurs="0" maxOccurs="1" name="reportingPeriodEndDate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="lastUpdateDateTime" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RetrieveFilersSubmissionDateTimeResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RetrieveFilersSubmissionDateTimeResult" type="tns:ArrayOfRetrieveFilersDateTime" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfRetrieveFilersDateTime">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="RetrieveFilersDateTime" type="tns:RetrieveFilersDateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="RetrieveFilersDateTime">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ID_RSSD" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="DateTime" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="RetrieveFilersSinceDate">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="dataSeries" type="tns:ReportingDataSeriesName" />
+            <s:element minOccurs="0" maxOccurs="1" name="reportingPeriodEndDate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="lastUpdateDateTime" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RetrieveFilersSinceDateResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RetrieveFilersSinceDateResult" type="tns:ArrayOfInt" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfInt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="int" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="RetrieveFacsimile">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="dataSeries" type="tns:ReportingDataSeriesName" />
+            <s:element minOccurs="0" maxOccurs="1" name="reportingPeriodEndDate" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="fiIDType" type="tns:FinancialInstitutionIDType" />
+            <s:element minOccurs="1" maxOccurs="1" name="fiID" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="facsimileFormat" type="tns:FacsimileFormat" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:simpleType name="FinancialInstitutionIDType">
+        <s:restriction base="s:string">
+          <s:enumeration value="ID_RSSD" />
+          <s:enumeration value="FDICCertNumber" />
+          <s:enumeration value="OCCChartNumber" />
+          <s:enumeration value="OTSDockNumber" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="FacsimileFormat">
+        <s:restriction base="s:string">
+          <s:enumeration value="PDF" />
+          <s:enumeration value="XBRL" />
+          <s:enumeration value="SDF" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="RetrieveFacsimileResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RetrieveFacsimileResult" type="s:base64Binary" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RetrieveUBPRReportingPeriods">
+        <s:complexType />
+      </s:element>
+      <s:element name="RetrieveUBPRReportingPeriodsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RetrieveUBPRReportingPeriodsResult" type="tns:ArrayOfString" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RetrieveUBPRXBRLFacsimile">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="reportingPeriodEndDate" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="fiIDType" type="tns:FinancialInstitutionIDType" />
+            <s:element minOccurs="1" maxOccurs="1" name="fiID" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RetrieveUBPRXBRLFacsimileResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="RetrieveUBPRXBRLFacsimileResult" type="s:base64Binary" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="TestUserAccessSoapIn">
+    <wsdl:part name="parameters" element="tns:TestUserAccess" />
+  </wsdl:message>
+  <wsdl:message name="TestUserAccessSoapOut">
+    <wsdl:part name="parameters" element="tns:TestUserAccessResponse" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveReportingPeriodsSoapIn">
+    <wsdl:part name="parameters" element="tns:RetrieveReportingPeriods" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveReportingPeriodsSoapOut">
+    <wsdl:part name="parameters" element="tns:RetrieveReportingPeriodsResponse" />
+  </wsdl:message>
+  <wsdl:message name="RetrievePanelOfReportersSoapIn">
+    <wsdl:part name="parameters" element="tns:RetrievePanelOfReporters" />
+  </wsdl:message>
+  <wsdl:message name="RetrievePanelOfReportersSoapOut">
+    <wsdl:part name="parameters" element="tns:RetrievePanelOfReportersResponse" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveFilersSubmissionDateTimeSoapIn">
+    <wsdl:part name="parameters" element="tns:RetrieveFilersSubmissionDateTime" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveFilersSubmissionDateTimeSoapOut">
+    <wsdl:part name="parameters" element="tns:RetrieveFilersSubmissionDateTimeResponse" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveFilersSinceDateSoapIn">
+    <wsdl:part name="parameters" element="tns:RetrieveFilersSinceDate" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveFilersSinceDateSoapOut">
+    <wsdl:part name="parameters" element="tns:RetrieveFilersSinceDateResponse" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveFacsimileSoapIn">
+    <wsdl:part name="parameters" element="tns:RetrieveFacsimile" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveFacsimileSoapOut">
+    <wsdl:part name="parameters" element="tns:RetrieveFacsimileResponse" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveUBPRReportingPeriodsSoapIn">
+    <wsdl:part name="parameters" element="tns:RetrieveUBPRReportingPeriods" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveUBPRReportingPeriodsSoapOut">
+    <wsdl:part name="parameters" element="tns:RetrieveUBPRReportingPeriodsResponse" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveUBPRXBRLFacsimileSoapIn">
+    <wsdl:part name="parameters" element="tns:RetrieveUBPRXBRLFacsimile" />
+  </wsdl:message>
+  <wsdl:message name="RetrieveUBPRXBRLFacsimileSoapOut">
+    <wsdl:part name="parameters" element="tns:RetrieveUBPRXBRLFacsimileResponse" />
+  </wsdl:message>
+  <wsdl:portType name="RetrievalServiceSoap">
+    <wsdl:operation name="TestUserAccess">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Method to test user account access privileges.</wsdl:documentation>
+      <wsdl:input message="tns:TestUserAccessSoapIn" />
+      <wsdl:output message="tns:TestUserAccessSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveReportingPeriods">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Retrieve Reporting Periods method.</wsdl:documentation>
+      <wsdl:input message="tns:RetrieveReportingPeriodsSoapIn" />
+      <wsdl:output message="tns:RetrieveReportingPeriodsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="RetrievePanelOfReporters">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Retrieves the Financial Institutions in a Panel of Reporters for a given reporting period.</wsdl:documentation>
+      <wsdl:input message="tns:RetrievePanelOfReportersSoapIn" />
+      <wsdl:output message="tns:RetrievePanelOfReportersSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFilersSubmissionDateTime">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Retrieves the ID RSSDs and DateTime of the reporters who have filed after a given date for a given reporting period.</wsdl:documentation>
+      <wsdl:input message="tns:RetrieveFilersSubmissionDateTimeSoapIn" />
+      <wsdl:output message="tns:RetrieveFilersSubmissionDateTimeSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFilersSinceDate">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Retrieves the ID RSSDs of the reporters who have filed after a given date for a given reporting period.</wsdl:documentation>
+      <wsdl:input message="tns:RetrieveFilersSinceDateSoapIn" />
+      <wsdl:output message="tns:RetrieveFilersSinceDateSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFacsimile">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Retrieve Facsimile method.</wsdl:documentation>
+      <wsdl:input message="tns:RetrieveFacsimileSoapIn" />
+      <wsdl:output message="tns:RetrieveFacsimileSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveUBPRReportingPeriods">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Retrieve UBPR Reporting Periods web method.</wsdl:documentation>
+      <wsdl:input message="tns:RetrieveUBPRReportingPeriodsSoapIn" />
+      <wsdl:output message="tns:RetrieveUBPRReportingPeriodsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveUBPRXBRLFacsimile">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Retrieve UBPR XBRL Facsimile web method.</wsdl:documentation>
+      <wsdl:input message="tns:RetrieveUBPRXBRLFacsimileSoapIn" />
+      <wsdl:output message="tns:RetrieveUBPRXBRLFacsimileSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="RetrievalServiceSoap" type="tns:RetrievalServiceSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="TestUserAccess">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/TestUserAccess" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveReportingPeriods">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveReportingPeriods" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrievePanelOfReporters">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/RetrievePanelOfReporters" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFilersSubmissionDateTime">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveFilersSubmissionDateTime" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFilersSinceDate">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveFilersSinceDate" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFacsimile">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveFacsimile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveUBPRReportingPeriods">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveUBPRReportingPeriods" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveUBPRXBRLFacsimile">
+      <soap:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveUBPRXBRLFacsimile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="RetrievalServiceSoap12" type="tns:RetrievalServiceSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="TestUserAccess">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/TestUserAccess" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveReportingPeriods">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveReportingPeriods" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrievePanelOfReporters">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/RetrievePanelOfReporters" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFilersSubmissionDateTime">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveFilersSubmissionDateTime" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFilersSinceDate">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveFilersSinceDate" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveFacsimile">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveFacsimile" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveUBPRReportingPeriods">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveUBPRReportingPeriods" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RetrieveUBPRXBRLFacsimile">
+      <soap12:operation soapAction="http://cdr.ffiec.gov/public/services/RetrieveUBPRXBRLFacsimile" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="RetrievalService">
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Data retrieval web service of the FFIEC CDR Public Data Distribution.</wsdl:documentation>
+    <wsdl:port name="RetrievalServiceSoap" binding="tns:RetrievalServiceSoap">
+      <soap:address location="https://cdr.ffiec.gov/public/pws/webservices/retrievalservice.asmx" />
+    </wsdl:port>
+    <wsdl:port name="RetrievalServiceSoap12" binding="tns:RetrievalServiceSoap12">
+      <soap12:address location="https://cdr.ffiec.gov/public/pws/webservices/retrievalservice.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
