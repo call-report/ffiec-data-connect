@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Sample SOAP response for RetrieveReportingPeriods operation.
+This shows available reporting periods for Call Report data.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+        <RetrieveReportingPeriodsResponse xmlns="http://ffiec.gov/webservices">
+            <RetrieveReportingPeriodsResult>
+[
+  {
+    "Reporting Period Begin Date": "10/1/2023",
+    "Reporting Period End Date": "12/31/2023",
+    "Period": "4Q2023"
+  },
+  {
+    "Reporting Period Begin Date": "7/1/2023", 
+    "Reporting Period End Date": "9/30/2023",
+    "Period": "3Q2023"
+  },
+  {
+    "Reporting Period Begin Date": "4/1/2023",
+    "Reporting Period End Date": "6/30/2023", 
+    "Period": "2Q2023"
+  },
+  {
+    "Reporting Period Begin Date": "1/1/2023",
+    "Reporting Period End Date": "3/31/2023",
+    "Period": "1Q2023"
+  },
+  {
+    "Reporting Period Begin Date": "10/1/2022",
+    "Reporting Period End Date": "12/31/2022",
+    "Period": "4Q2022"
+  },
+  {
+    "Reporting Period Begin Date": "7/1/2022",
+    "Reporting Period End Date": "9/30/2022",
+    "Period": "3Q2022"
+  },
+  {
+    "Reporting Period Begin Date": "4/1/2022",
+    "Reporting Period End Date": "6/30/2022",
+    "Period": "2Q2022"
+  },
+  {
+    "Reporting Period Begin Date": "1/1/2022",
+    "Reporting Period End Date": "3/31/2022", 
+    "Period": "1Q2022"
+  },
+  {
+    "Reporting Period Begin Date": "10/1/2021",
+    "Reporting Period End Date": "12/31/2021",
+    "Period": "4Q2021"
+  },
+  {
+    "Reporting Period Begin Date": "7/1/2021",
+    "Reporting Period End Date": "9/30/2021",
+    "Period": "3Q2021"
+  }
+]
+            </RetrieveReportingPeriodsResult>
+        </RetrieveReportingPeriodsResponse>
+    </soap:Body>
+</soap:Envelope>

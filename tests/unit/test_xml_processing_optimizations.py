@@ -5,6 +5,7 @@ Tests that XML processing improvements work correctly and are more efficient.
 """
 
 import pytest
+import numpy as np
 from unittest.mock import patch, Mock
 
 from ffiec_data_connect.xbrl_processor import _process_xml
@@ -50,7 +51,7 @@ class TestXMLProcessingOptimizations:
                 mock_parse.assert_called_once_with(sample_xml)
                 assert len(result) == 1
                 assert result[0]['int_data'] == 1000000
-                assert result[0]['float_data'] is None
+                assert np.isnan(result[0]['float_data'])
     
     def test_xml_parsing_fallback_to_string(self):
         """Test fallback to string decoding if bytes parsing fails."""
@@ -119,16 +120,16 @@ class TestXMLProcessingOptimizations:
                 # Integer item
                 int_item = next(item for item in result if item['mdrm'] == 'RCON0010')
                 assert int_item['int_data'] == 1000000
-                assert int_item['float_data'] is None
-                assert int_item['bool_data'] is None
+                assert np.isnan(int_item['float_data'])
+                assert np.isnan(int_item['bool_data'])
                 assert int_item['str_data'] is None
                 assert int_item['data_type'] == 'int'
                 
                 # Float item
                 float_item = next(item for item in result if item['mdrm'] == 'UBPR4107')
                 assert float_item['float_data'] == 12.50
-                assert float_item['int_data'] is None
-                assert float_item['bool_data'] is None
+                assert np.isnan(float_item['int_data'])
+                assert np.isnan(float_item['bool_data'])
                 assert float_item['str_data'] is None
                 assert float_item['data_type'] == 'float'
     
@@ -272,19 +273,19 @@ class TestDataTypeHandling:
                 # Check each data type is handled correctly
                 str_item = next(item for item in result if item['mdrm'] == 'ITEM1')
                 assert str_item['str_data'] == 'test'
-                assert all(str_item[f] is None for f in ['int_data', 'float_data', 'bool_data'])
+                assert np.isnan(str_item['int_data']) and np.isnan(str_item['float_data']) and np.isnan(str_item['bool_data'])
                 
                 int_item = next(item for item in result if item['mdrm'] == 'ITEM2')
                 assert int_item['int_data'] == 123
-                assert all(int_item[f] is None for f in ['str_data', 'float_data', 'bool_data'])
+                assert int_item['str_data'] is None and np.isnan(int_item['float_data']) and np.isnan(int_item['bool_data'])
                 
                 float_item = next(item for item in result if item['mdrm'] == 'ITEM3')
                 assert float_item['float_data'] == 12.5
-                assert all(float_item[f] is None for f in ['str_data', 'int_data', 'bool_data'])
+                assert float_item['str_data'] is None and np.isnan(float_item['int_data']) and np.isnan(float_item['bool_data'])
                 
                 bool_item = next(item for item in result if item['mdrm'] == 'ITEM4')
-                assert bool_item['bool_data'] is True
-                assert all(bool_item[f] is None for f in ['str_data', 'int_data', 'float_data'])
+                assert bool_item['bool_data'] == True  # Use == for numpy bool comparison
+                assert bool_item['str_data'] is None and np.isnan(bool_item['int_data']) and np.isnan(bool_item['float_data'])
 
 
 if __name__ == "__main__":

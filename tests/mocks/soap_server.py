@@ -36,20 +36,28 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
             # Log the call
             self._log_request(post_data)
             
-            # Parse SOAP request
-            soap_action = self._extract_soap_action(post_data)
-            parameters = self._extract_parameters(post_data)
+            # Try to parse SOAP request - this will fail for invalid XML
+            try:
+                soap_action = self._extract_soap_action(post_data)
+                parameters = self._extract_parameters(post_data)
+            except Exception:
+                # Invalid XML or malformed SOAP
+                self._send_error_response("Invalid SOAP request")
+                return
             
             # Check for configured error responses
-            error_key = f"{soap_action}_{parameters.get('rssd_id', '')}"
+            error_key = f"{soap_action}_{parameters.get('fi_id', '')}"
             if error_key in self.error_responses:
                 self._send_error_response(self.error_responses[error_key])
                 return
             
-            # Add configured delay
-            delay_key = f"{soap_action}_{parameters.get('rssd_id', '')}"
+            # Add configured delay - check both fi_id and rssd_id patterns
+            delay_key = f"{soap_action}_{parameters.get('fi_id', '')}"
+            alt_delay_key = f"{soap_action}_"
             if delay_key in self.response_delays:
                 time.sleep(self.response_delays[delay_key])
+            elif alt_delay_key in self.response_delays:
+                time.sleep(self.response_delays[alt_delay_key])
             
             # Generate response based on real FFIEC SOAP operations
             if soap_action == "TestUserAccess":
@@ -87,7 +95,7 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
     def _log_request(self, post_data: str) -> None:
         """Log the SOAP request for analysis."""
         self.call_history.append({
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now().isoformat(),
             'method': self.command,
             'path': self.path,
             'headers': dict(self.headers),
@@ -97,30 +105,28 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
     
     def _extract_soap_action(self, soap_request: str) -> str:
         """Extract SOAP action from the request."""
-        try:
-            # Look for SOAPAction header first (FFIEC uses this)
-            soap_action = self.headers.get('SOAPAction', '').strip('"')
-            if soap_action:
-                # FFIEC actions are like "http://cdr.ffiec.gov/public/services/RetrieveFacsimile"
-                return soap_action.split('/')[-1] if '/' in soap_action else soap_action
-            
-            # Parse XML to find the action in SOAP body
-            root = ET.fromstring(soap_request)
-            
-            # Look for FFIEC namespace elements
-            namespaces = {'soap': 'http://schemas.xmlsoap.org/soap/envelope/',
-                         'ffiec': 'http://cdr.ffiec.gov/public/services'}
-            
-            # Find the first element in the Body
-            for elem in root.iter():
-                if elem.tag.endswith('}Body') or elem.tag == 'Body':
-                    for child in elem:
-                        tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-                        return tag_name
-            
-            return "UnknownAction"
-        except:
-            return "UnknownAction"
+        # Look for SOAPAction header first (FFIEC uses this)
+        soap_action = self.headers.get('SOAPAction', '').strip('"')
+        if soap_action:
+            # FFIEC actions are like "http://cdr.ffiec.gov/public/services/RetrieveFacsimile"
+            return soap_action.split('/')[-1] if '/' in soap_action else soap_action
+        
+        # Parse XML to find the action in SOAP body
+        # This will raise an exception for invalid XML
+        root = ET.fromstring(soap_request)
+        
+        # Look for FFIEC namespace elements
+        namespaces = {'soap': 'http://schemas.xmlsoap.org/soap/envelope/',
+                     'ffiec': 'http://cdr.ffiec.gov/public/services'}
+        
+        # Find the first element in the Body
+        for elem in root.iter():
+            if elem.tag.endswith('}Body') or elem.tag == 'Body':
+                for child in elem:
+                    tag_name = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                    return tag_name
+        
+        return "UnknownAction"
     
     def _extract_parameters(self, soap_request: str) -> Dict[str, str]:
         """Extract parameters from FFIEC SOAP request."""
@@ -236,7 +242,7 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <soap:Body>
         <RetrieveReportingPeriodsResponse xmlns="http://cdr.ffiec.gov/public/services">
-            <RetrieveReportingPeriodsResult>
+            <RetrieveReportingPeriodsResult xmlns:a="http://cdr.ffiec.gov/public/services">
                 {periods_xml}
             </RetrieveReportingPeriodsResult>
         </RetrieveReportingPeriodsResponse>
@@ -378,7 +384,7 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
             <faultstring>{error_message}</faultstring>
             <detail>
                 <ErrorCode>MOCK_ERROR</ErrorCode>
-                <Timestamp>{datetime.utcnow().isoformat()}</Timestamp>
+                <Timestamp>{datetime.now().isoformat()}</Timestamp>
             </detail>
         </soap:Fault>
     </soap:Body>
@@ -485,7 +491,7 @@ class MockFFIECServer:
         
         Args:
             action: SOAP action name
-            rssd_id: RSSD ID for the request
+            rssd_id: RSSD ID for the request (can be empty string for general delays)
             delay: Delay in seconds
         """
         key = f"{action}_{rssd_id}"

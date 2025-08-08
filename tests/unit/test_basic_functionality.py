@@ -50,12 +50,20 @@ class TestSecurity:
     
     def test_descriptive_errors(self):
         """Test that errors provide helpful context."""
-        with pytest.raises(CredentialError) as exc_info:
-            WebserviceCredentials()  # No credentials provided
+        from ffiec_data_connect.config import use_legacy_errors
+        
+        if use_legacy_errors():
+            # In legacy mode, should raise ValueError  
+            with pytest.raises(ValueError) as exc_info:
+                WebserviceCredentials()  # No credentials provided
+        else:
+            # In new mode, should raise CredentialError
+            with pytest.raises(CredentialError) as exc_info:
+                WebserviceCredentials()  # No credentials provided
         
         error = exc_info.value
         assert "FFIEC_USERNAME" in str(error)
-        assert "environment variable" in str(error)
+        assert "env var" in str(error)
 
 
 class TestThreadSafety:
@@ -126,17 +134,35 @@ class TestValidation:
         assert _validate_rssd_id(" 67890 ") == 67890  # Strips whitespace
         
         # Invalid IDs
-        with pytest.raises(ValidationError) as exc_info:
-            _validate_rssd_id("abc123")
-        assert "numeric string" in str(exc_info.value)
+        from ffiec_data_connect.config import use_legacy_errors
         
-        with pytest.raises(ValidationError) as exc_info:
-            _validate_rssd_id("")
-        assert "non-empty" in str(exc_info.value)
+        if use_legacy_errors():
+            # In legacy mode, should raise ValueError
+            with pytest.raises(ValueError) as exc_info:
+                _validate_rssd_id("abc123")
+            assert "numeric" in str(exc_info.value)
+            
+            with pytest.raises(ValueError) as exc_info:
+                _validate_rssd_id("")
+            assert "empty" in str(exc_info.value)
+        else:
+            # In new mode, should raise ValidationError
+            with pytest.raises(ValidationError) as exc_info:
+                _validate_rssd_id("abc123")
+            assert "numeric string" in str(exc_info.value)
+            
+            with pytest.raises(ValidationError) as exc_info:
+                _validate_rssd_id("")
+            assert "non-empty" in str(exc_info.value)
         
-        with pytest.raises(ValidationError) as exc_info:
-            _validate_rssd_id("999999999")  # Too large
-        assert "between 1 and 99999999" in str(exc_info.value)
+        if use_legacy_errors():
+            with pytest.raises(ValueError) as exc_info:
+                _validate_rssd_id("999999999")  # Too large
+            assert "out of range" in str(exc_info.value)
+        else:
+            with pytest.raises(ValidationError) as exc_info:
+                _validate_rssd_id("999999999")  # Too large
+            assert "between 1 and 99999999" in str(exc_info.value)
 
 
 class TestAsyncCapabilities:

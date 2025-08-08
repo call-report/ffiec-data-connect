@@ -7,7 +7,16 @@ The methods contained in this module are utilized to call and collect data from 
 import re
 import requests
 import pandas as pd
+import numpy as np
 from typing import Union
+
+# Polars import - optional for direct XBRL to polars conversion
+try:
+    import polars as pl
+    POLARS_AVAILABLE = True
+except ImportError:
+    POLARS_AVAILABLE = False
+    pl = None
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from zeep import Client, Settings
@@ -168,7 +177,7 @@ def _output_type_validator(output_type: str) -> bool:
     Raises:
         ValidationError: If output_type is invalid
     """
-    valid_types = ['list', 'pandas']
+    valid_types = ['list', 'pandas', 'polars']
     if output_type not in valid_types:
         raise_exception(
             ValidationError,
@@ -405,7 +414,7 @@ def _client_factory(session, creds)-> Client:
         raise Exception("Invalid session. Must be a FFIECConnection or requests.Session instance")
     
 
-def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], rssd_id:str, series: str, output_type = "list", date_output_format ="string_original") -> Union[list, pd.DataFrame]:
+def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Session], creds: credentials.WebserviceCredentials, reporting_period: Union[str, datetime], rssd_id:str, series: str, output_type = "list", date_output_format ="string_original"):
     """Return time series data from the FFIEC webservice for a given reporting period and RSSD ID
 
     Translates the input reporting period to a FFIEC-formatted date
@@ -426,11 +435,11 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
         reporting_period (str or datetime): Reporting period.
         rssd_id (str): The RSSD ID of the entity for which you want to retrieve data.
         series (str): `call` or `ubpr`
-        output_type (str): `list` or `pandas`
+        output_type (str): `list`, `pandas`, or `polars`
         date_output_format (str): `string_original`, `string_yyyymmdd`, or `python_format`
 
     Returns:
-        list or pandas: Returns either a list of dicts or a pandas DataFrame
+        list, pandas DataFrame, or polars DataFrame: Returns data in the specified format
         
     """
     _ = _output_type_validator(output_type)
@@ -460,7 +469,71 @@ def collect_data(session: Union[ffiec_connection.FFIECConnection, requests.Sessi
     if output_type == "list":
         return processed_ret
     elif output_type == "pandas":
-        return pd.DataFrame(processed_ret)
+        df = pd.DataFrame(processed_ret)
+        # Ensure proper dtypes with nullable support for pandas DataFrame
+        if 'int_data' in df.columns:
+            df['int_data'] = df['int_data'].astype('Int64')  # Nullable integer
+        if 'float_data' in df.columns:
+            df['float_data'] = df['float_data'].astype('float64')  # Regular float (supports NaN)
+        if 'bool_data' in df.columns:
+            df['bool_data'] = df['bool_data'].astype('boolean')  # Nullable boolean
+        if 'str_data' in df.columns:
+            df['str_data'] = df['str_data'].astype('string')  # Pandas string dtype
+        return df
+    elif output_type == "polars":
+        if not POLARS_AVAILABLE:
+            raise_exception(
+                ValidationError,
+                "Polars not available",
+                field="output_type",
+                value="polars",
+                expected="polars package must be installed: pip install polars"
+            )
+        
+        # Create polars DataFrame directly from processed XBRL data
+        # This preserves maximum precision by avoiding pandas conversion
+        if not processed_ret:
+            # Return empty DataFrame with correct schema
+            schema = {
+                'mdrm': pl.Utf8,
+                'rssd': pl.Utf8, 
+                'quarter': pl.Utf8,
+                'data_type': pl.Utf8,
+                'int_data': pl.Int64,
+                'float_data': pl.Float64,
+                'bool_data': pl.Boolean,
+                'str_data': pl.Utf8
+            }
+            return pl.DataFrame([], schema=schema)
+        
+        # Convert numpy types to native Python types for polars compatibility
+        polars_data = []
+        for row in processed_ret:
+            polars_row = {
+                'mdrm': row['mdrm'],
+                'rssd': row['rssd'],
+                'quarter': row['quarter'], 
+                'data_type': row['data_type'],
+                'int_data': None if np.isnan(row['int_data']) else int(row['int_data']),
+                'float_data': None if np.isnan(row['float_data']) else float(row['float_data']),
+                'bool_data': None if np.isnan(row['bool_data']) else bool(row['bool_data']),
+                'str_data': row['str_data']
+            }
+            polars_data.append(polars_row)
+        
+        # Create DataFrame with explicit schema to ensure correct types
+        schema = {
+            'mdrm': pl.Utf8,
+            'rssd': pl.Utf8,
+            'quarter': pl.Utf8, 
+            'data_type': pl.Utf8,
+            'int_data': pl.Int64,
+            'float_data': pl.Float64,
+            'bool_data': pl.Boolean,
+            'str_data': pl.Utf8
+        }
+        
+        return pl.DataFrame(polars_data, schema=schema)
     
     return processed_ret
     

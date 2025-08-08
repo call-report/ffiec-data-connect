@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Sample XBRL document representing Call Report data structure.
+This is a simplified example showing typical Call Report elements.
+-->
+<xbrl xmlns="http://www.xbrl.org/2003/instance"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xmlns:call="http://ffiec.gov/taxonomy/call"
+      xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+      xmlns:xbrli="http://www.xbrl.org/2003/instance"
+      xsi:schemaLocation="http://www.xbrl.org/2003/instance http://www.xbrl.org/2003/xbrl-instance-2003-12-31.xsd">
+
+    <!-- Context Definitions -->
+    <context id="instant_2023-12-31">
+        <entity>
+            <identifier scheme="http://ffiec.gov/rssd">123456</identifier>
+        </entity>
+        <period>
+            <instant>2023-12-31</instant>
+        </period>
+    </context>
+    
+    <context id="period_2023-Q4">
+        <entity>
+            <identifier scheme="http://ffiec.gov/rssd">123456</identifier>
+        </entity>
+        <period>
+            <startDate>2023-10-01</startDate>
+            <endDate>2023-12-31</endDate>
+        </period>
+    </context>
+
+    <!-- Unit Definitions -->
+    <unit id="USD">
+        <measure>iso4217:USD</measure>
+    </unit>
+    
+    <unit id="shares">
+        <measure>call:shares</measure>
+    </unit>
+    
+    <unit id="pure">
+        <measure>call:pure</measure>
+    </unit>
+
+    <!-- Balance Sheet Items (as of reporting date) -->
+    
+    <!-- Assets -->
+    <call:TotalAssets contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">5450000000</call:TotalAssets>
+    <call:CashAndBalancesDueFromDepositoryInstitutions contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">325000000</call:CashAndBalancesDueFromDepositoryInstitutions>
+    <call:SecuritiesHeldToMaturity contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">890000000</call:SecuritiesHeldToMaturity>
+    <call:SecuritiesAvailableForSale contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">750000000</call:SecuritiesAvailableForSale>
+    
+    <!-- Loans -->
+    <call:TotalLoansAndLeases contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">3245000000</call:TotalLoansAndLeases>
+    <call:LoansSecuredByRealEstate contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">2150000000</call:LoansSecuredByRealEstate>
+    <call:CommercialAndIndustrialLoans contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">685000000</call:CommercialAndIndustrialLoans>
+    <call:ConsumerLoans contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">410000000</call:ConsumerLoans>
+    <call:AllowanceForLoanAndLeaseLosses contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">-35000000</call:AllowanceForLoanAndLeaseLosses>
+    
+    <!-- Other Assets -->
+    <call:PremisesAndFixedAssets contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">145000000</call:PremisesAndFixedAssets>
+    <call:GoodwillAndOtherIntangibleAssets contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">85000000</call:GoodwillAndOtherIntangibleAssets>
+    <call:OtherAssets contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">225000000</call:OtherAssets>
+    
+    <!-- Liabilities -->
+    <call:TotalLiabilities contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">4895000000</call:TotalLiabilities>
+    
+    <!-- Deposits -->
+    <call:TotalDeposits contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">4325000000</call:TotalDeposits>
+    <call:NoninterestBearingDeposits contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">1250000000</call:NoninterestBearingDeposits>
+    <call:InterestBearingDeposits contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">3075000000</call:InterestBearingDeposits>
+    <call:TimeDepositsOver100000 contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">890000000</call:TimeDepositsOver100000>
+    
+    <!-- Other Liabilities -->
+    <call:FederalFundsPurchasedAndSecuritiesSoldUnderAgreementsToRepurchase contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">235000000</call:FederalFundsPurchasedAndSecuritiesSoldUnderAgreementsToRepurchase>
+    <call:OtherBorrowedMoney contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">185000000</call:OtherBorrowedMoney>
+    <call:SubordinatedNotesAndDebentures contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">75000000</call:SubordinatedNotesAndDebentures>
+    <call:OtherLiabilities contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">75000000</call:OtherLiabilities>
+    
+    <!-- Equity Capital -->
+    <call:TotalEquityCapital contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">555000000</call:TotalEquityCapital>
+    <call:CommonStock contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">50000000</call:CommonStock>
+    <call:SurplusExcludingAdditionalPaidInCapital contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">125000000</call:SurplusExcludingAdditionalPaidInCapital>
+    <call:RetainedEarnings contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">385000000</call:RetainedEarnings>
+    <call:AccumulatedOtherComprehensiveIncome contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">-5000000</call:AccumulatedOtherComprehensiveIncome>
+    
+    <!-- Income Statement Items (for the quarter) -->
+    <call:TotalInterestIncome contextRef="period_2023-Q4" unitRef="USD" decimals="-3">175000000</call:TotalInterestIncome>
+    <call:TotalInterestExpense contextRef="period_2023-Q4" unitRef="USD" decimals="-3">85000000</call:TotalInterestExpense>
+    <call:NetInterestIncome contextRef="period_2023-Q4" unitRef="USD" decimals="-3">90000000</call:NetInterestIncome>
+    
+    <call:ProvisionForLoanAndLeaseLosses contextRef="period_2023-Q4" unitRef="USD" decimals="-3">8500000</call:ProvisionForLoanAndLeaseLosses>
+    <call:NetInterestIncomeAfterProvision contextRef="period_2023-Q4" unitRef="USD" decimals="-3">81500000</call:NetInterestIncomeAfterProvision>
+    
+    <call:TotalNoninterestIncome contextRef="period_2023-Q4" unitRef="USD" decimals="-3">25000000</call:TotalNoninterestIncome>
+    <call:ServiceChargesOnDepositAccounts contextRef="period_2023-Q4" unitRef="USD" decimals="-3">8500000</call:ServiceChargesOnDepositAccounts>
+    <call:TradingRevenue contextRef="period_2023-Q4" unitRef="USD" decimals="-3">2500000</call:TradingRevenue>
+    <call:OtherNoninterestIncome contextRef="period_2023-Q4" unitRef="USD" decimals="-3">14000000</call:OtherNoninterestIncome>
+    
+    <call:TotalNoninterestExpense contextRef="period_2023-Q4" unitRef="USD" decimals="-3">65000000</call:TotalNoninterestExpense>
+    <call:SalariesAndEmployeeBenefits contextRef="period_2023-Q4" unitRef="USD" decimals="-3">35000000</call:SalariesAndEmployeeBenefits>
+    <call:PremisesAndFixedAssetExpenses contextRef="period_2023-Q4" unitRef="USD" decimals="-3">8500000</call:PremisesAndFixedAssetExpenses>
+    <call:OtherNoninterestExpense contextRef="period_2023-Q4" unitRef="USD" decimals="-3">21500000</call:OtherNoninterestExpense>
+    
+    <call:IncomeBeforeIncomeTaxes contextRef="period_2023-Q4" unitRef="USD" decimals="-3">41500000</call:IncomeBeforeIncomeTaxes>
+    <call:IncomeTaxExpense contextRef="period_2023-Q4" unitRef="USD" decimals="-3">9500000</call:IncomeTaxExpense>
+    <call:NetIncome contextRef="period_2023-Q4" unitRef="USD" decimals="-3">32000000</call:NetIncome>
+    
+    <!-- Capital Ratios (regulatory) -->
+    <call:Tier1CapitalRatio contextRef="instant_2023-12-31" unitRef="pure" decimals="2">0.125</call:Tier1CapitalRatio>
+    <call:TotalRiskBasedCapitalRatio contextRef="instant_2023-12-31" unitRef="pure" decimals="2">0.145</call:TotalRiskBasedCapitalRatio>
+    <call:LeverageRatio contextRef="instant_2023-12-31" unitRef="pure" decimals="2">0.095</call:LeverageRatio>
+    
+    <!-- Performance Ratios -->
+    <call:ReturnOnAssets contextRef="period_2023-Q4" unitRef="pure" decimals="4">0.0115</call:ReturnOnAssets>
+    <call:ReturnOnEquity contextRef="period_2023-Q4" unitRef="pure" decimals="4">0.0958</call:ReturnOnEquity>
+    <call:NetInterestMargin contextRef="period_2023-Q4" unitRef="pure" decimals="4">0.0342</call:NetInterestMargin>
+    <call:EfficiencyRatio contextRef="period_2023-Q4" unitRef="pure" decimals="4">0.5830</call:EfficiencyRatio>
+    
+    <!-- Asset Quality -->
+    <call:NoncurrentLoansAndLeases contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">45000000</call:NoncurrentLoansAndLeases>
+    <call:ChargeOffs contextRef="period_2023-Q4" unitRef="USD" decimals="-3">6500000</call:ChargeOffs>
+    <call:Recoveries contextRef="period_2023-Q4" unitRef="USD" decimals="-3">2500000</call:Recoveries>
+    <call:NetChargeOffs contextRef="period_2023-Q4" unitRef="USD" decimals="-3">4000000</call:NetChargeOffs>
+    
+    <!-- Off-Balance Sheet Items -->
+    <call:UnusedCommitments contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">850000000</call:UnusedCommitments>
+    <call:StandbyLettersOfCredit contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">125000000</call:StandbyLettersOfCredit>
+    <call:DerivativeNotionalAmounts contextRef="instant_2023-12-31" unitRef="USD" decimals="-3">2350000000</call:DerivativeNotionalAmounts>
+    
+    <!-- Regulatory Information -->
+    <call:InstitutionName contextRef="instant_2023-12-31">First National Bank of Example City</call:InstitutionName>
+    <call:CertificateNumber contextRef="instant_2023-12-31">12345</call:CertificateNumber>
+    <call:OTSNumber contextRef="instant_2023-12-31" xsi:nil="true"/>
+    <call:FDICRegion contextRef="instant_2023-12-31">5</call:FDICRegion>
+    <call:FederalReserveDistrict contextRef="instant_2023-12-31">7</call:FederalReserveDistrict>
+    
+    <!-- Geographic Information -->
+    <call:MainOfficeCity contextRef="instant_2023-12-31">Example City</call:MainOfficeCity>
+    <call:MainOfficeState contextRef="instant_2023-12-31">TX</call:MainOfficeState>
+    <call:MainOfficeZipCode contextRef="instant_2023-12-31">75201</call:MainOfficeZipCode>
+    
+</xbrl>

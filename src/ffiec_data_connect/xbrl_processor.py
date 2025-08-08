@@ -6,6 +6,7 @@ from itertools import chain
 from datetime import datetime
 import re
 from typing import Dict, List, Any, Optional
+import numpy as np
 
 # Use defusedxml for secure XML parsing (prevents XXE attacks)
 try:
@@ -107,16 +108,17 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
                     value = row.get('value')
                     
                     # Build dict efficiently in single operation - avoid multiple update() calls
+                    # Use numpy types for consistent data type handling throughout pipeline
                     new_dict = {
                         'mdrm': row['mdrm'],
                         'rssd': row['rssd'], 
                         'quarter': row['quarter'],
                         'data_type': data_type,
-                        # Set data fields based on type - only one will be non-None
-                        'int_data': int(value) if data_type == 'int' else None,
-                        'float_data': value if data_type == 'float' else None,
-                        'bool_data': value if data_type == 'bool' else None,
-                        'str_data': value if data_type == 'str' else None
+                        # Set data fields based on type using numpy types - only one will be non-NaN
+                        'int_data': np.int64(value) if data_type == 'int' else np.nan,
+                        'float_data': np.float64(value) if data_type == 'float' else np.nan,
+                        'bool_data': np.bool_(value) if data_type == 'bool' else np.nan,
+                        'str_data': str(value) if data_type == 'str' else None
                     }
                     ret_data.append(new_dict)
     

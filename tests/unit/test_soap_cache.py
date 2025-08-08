@@ -152,6 +152,9 @@ class TestSOAPClientCache:
                 creds1 = WebserviceCredentials()
                 session = Mock()
                 session.headers = {}
+                # Mock the session.session attribute for Transport
+                session.session = Mock()
+                session.session.headers = {}
                 config1 = SOAPClientConfig.from_credentials_and_session(creds1, session)
                 
             with patch.dict('os.environ', {'FFIEC_USERNAME': 'user2', 'FFIEC_PASSWORD': 'pass2'}):

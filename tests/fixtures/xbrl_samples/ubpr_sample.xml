@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Sample XBRL document representing UBPR (Uniform Bank Performance Report) data structure.
+This focuses on performance ratios and peer group comparisons.
+-->
+<xbrl xmlns="http://www.xbrl.org/2003/instance"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xmlns:ubpr="http://ffiec.gov/taxonomy/ubpr"
+      xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+      xmlns:xbrli="http://www.xbrl.org/2003/instance"
+      xsi:schemaLocation="http://www.xbrl.org/2003/instance http://www.xbrl.org/2003/xbrl-instance-2003-12-31.xsd">
+
+    <!-- Context Definitions -->
+    <context id="current_period">
+        <entity>
+            <identifier scheme="http://ffiec.gov/rssd">123456</identifier>
+        </entity>
+        <period>
+            <startDate>2023-10-01</startDate>
+            <endDate>2023-12-31</endDate>
+        </period>
+    </context>
+    
+    <context id="peer_group_current">
+        <entity>
+            <identifier scheme="http://ffiec.gov/peer-group">1</identifier>
+            <segment>
+                <ubpr:PeerGroupDimension>
+                    <ubpr:PeerGroupAssetSize>1000000000-10000000000</ubpr:PeerGroupAssetSize>
+                </ubpr:PeerGroupDimension>
+            </segment>
+        </entity>
+        <period>
+            <startDate>2023-10-01</startDate>
+            <endDate>2023-12-31</endDate>
+        </period>
+    </context>
+
+    <!-- Unit Definitions -->
+    <unit id="percentage">
+        <measure>ubpr:percentage</measure>
+    </unit>
+    
+    <unit id="pure">
+        <measure>ubpr:pure</measure>
+    </unit>
+    
+    <unit id="USD">
+        <measure>iso4217:USD</measure>
+    </unit>
+    
+    <unit id="basis_points">
+        <measure>ubpr:basisPoints</measure>
+    </unit>
+
+    <!-- Profitability Metrics -->
+    
+    <!-- Return on Assets (Annualized) -->
+    <ubpr:ReturnOnAssets contextRef="current_period" unitRef="percentage" decimals="2">1.15</ubpr:ReturnOnAssets>
+    <ubpr:ReturnOnAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">1.02</ubpr:ReturnOnAssets>
+    
+    <!-- Return on Equity (Annualized) -->
+    <ubpr:ReturnOnEquity contextRef="current_period" unitRef="percentage" decimals="2">9.58</ubpr:ReturnOnEquity>
+    <ubpr:ReturnOnEquity contextRef="peer_group_current" unitRef="percentage" decimals="2">8.75</ubpr:ReturnOnEquity>
+    
+    <!-- Net Interest Margin -->
+    <ubpr:NetInterestMargin contextRef="current_period" unitRef="percentage" decimals="2">3.42</ubpr:NetInterestMargin>
+    <ubpr:NetInterestMargin contextRef="peer_group_current" unitRef="percentage" decimals="2">3.18</ubpr:NetInterestMargin>
+    
+    <!-- Efficiency Ratio -->
+    <ubpr:EfficiencyRatio contextRef="current_period" unitRef="percentage" decimals="2">58.3</ubpr:EfficiencyRatio>
+    <ubpr:EfficiencyRatio contextRef="peer_group_current" unitRef="percentage" decimals="2">62.1</ubpr:EfficiencyRatio>
+    
+    <!-- Yield and Cost Analysis -->
+    
+    <!-- Yield on Total Loans -->
+    <ubpr:YieldOnTotalLoans contextRef="current_period" unitRef="percentage" decimals="2">5.85</ubpr:YieldOnTotalLoans>
+    <ubpr:YieldOnTotalLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">5.72</ubpr:YieldOnTotalLoans>
+    
+    <!-- Yield on Securities -->
+    <ubpr:YieldOnSecurities contextRef="current_period" unitRef="percentage" decimals="2">2.45</ubpr:YieldOnSecurities>
+    <ubpr:YieldOnSecurities contextRef="peer_group_current" unitRef="percentage" decimals="2">2.38</ubpr:YieldOnSecurities>
+    
+    <!-- Cost of Total Deposits -->
+    <ubpr:CostOfTotalDeposits contextRef="current_period" unitRef="percentage" decimals="2">1.85</ubpr:CostOfTotalDeposits>
+    <ubpr:CostOfTotalDeposits contextRef="peer_group_current" unitRef="percentage" decimals="2">1.92</ubpr:CostOfTotalDeposits>
+    
+    <!-- Cost of Interest Bearing Deposits -->
+    <ubpr:CostOfInterestBearingDeposits contextRef="current_period" unitRef="percentage" decimals="2">2.45</ubpr:CostOfInterestBearingDeposits>
+    <ubpr:CostOfInterestBearingDeposits contextRef="peer_group_current" unitRef="percentage" decimals="2">2.58</ubpr:CostOfInterestBearingDeposits>
+    
+    <!-- Asset Quality Metrics -->
+    
+    <!-- Noncurrent Loans to Total Loans -->
+    <ubpr:NoncurrentLoansToTotalLoans contextRef="current_period" unitRef="percentage" decimals="2">1.38</ubpr:NoncurrentLoansToTotalLoans>
+    <ubpr:NoncurrentLoansToTotalLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">1.52</ubpr:NoncurrentLoansToTotalLoans>
+    
+    <!-- Net Charge-offs to Average Total Loans -->
+    <ubpr:NetChargeoffsToAverageTotalLoans contextRef="current_period" unitRef="percentage" decimals="2">0.49</ubpr:NetChargeoffsToAverageTotalLoans>
+    <ubpr:NetChargeoffsToAverageTotalLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">0.55</ubpr:NetChargeoffsToAverageTotalLoans>
+    
+    <!-- Allowance for Loan Losses to Total Loans -->
+    <ubpr:AllowanceForLoanLossesToTotalLoans contextRef="current_period" unitRef="percentage" decimals="2">1.08</ubpr:AllowanceForLoanLossesToTotalLoans>
+    <ubpr:AllowanceForLoanLossesToTotalLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">1.15</ubpr:AllowanceForLoanLossesToTotalLoans>
+    
+    <!-- Coverage Ratio (Allowance to Noncurrent Loans) -->
+    <ubpr:AllowanceToNoncurrentLoans contextRef="current_period" unitRef="percentage" decimals="2">78.3</ubpr:AllowanceToNoncurrentLoans>
+    <ubpr:AllowanceToNoncurrentLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">75.8</ubpr:AllowanceToNoncurrentLoans>
+    
+    <!-- Capital Adequacy -->
+    
+    <!-- Tier 1 Capital Ratio -->
+    <ubpr:Tier1CapitalRatio contextRef="current_period" unitRef="percentage" decimals="2">12.5</ubpr:Tier1CapitalRatio>
+    <ubpr:Tier1CapitalRatio contextRef="peer_group_current" unitRef="percentage" decimals="2">11.8</ubpr:Tier1CapitalRatio>
+    
+    <!-- Total Risk-Based Capital Ratio -->
+    <ubpr:TotalRiskBasedCapitalRatio contextRef="current_period" unitRef="percentage" decimals="2">14.5</ubpr:TotalRiskBasedCapitalRatio>
+    <ubpr:TotalRiskBasedCapitalRatio contextRef="peer_group_current" unitRef="percentage" decimals="2">13.9</ubpr:TotalRiskBasedCapitalRatio>
+    
+    <!-- Leverage Ratio -->
+    <ubpr:LeverageRatio contextRef="current_period" unitRef="percentage" decimals="2">9.5</ubpr:LeverageRatio>
+    <ubpr:LeverageRatio contextRef="peer_group_current" unitRef="percentage" decimals="2">8.9</ubpr:LeverageRatio>
+    
+    <!-- Equity to Assets -->
+    <ubpr:EquityToAssets contextRef="current_period" unitRef="percentage" decimals="2">10.2</ubpr:EquityToAssets>
+    <ubpr:EquityToAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">9.8</ubpr:EquityToAssets>
+    
+    <!-- Liquidity Metrics -->
+    
+    <!-- Loans to Deposits -->
+    <ubpr:LoansToDeposits contextRef="current_period" unitRef="percentage" decimals="2">75.1</ubpr:LoansToDeposits>
+    <ubpr:LoansToDeposits contextRef="peer_group_current" unitRef="percentage" decimals="2">78.3</ubpr:LoansToDeposits>
+    
+    <!-- Securities to Assets -->
+    <ubpr:SecuritiesToAssets contextRef="current_period" unitRef="percentage" decimals="2">30.1</ubpr:SecuritiesToAssets>
+    <ubpr:SecuritiesToAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">27.8</ubpr:SecuritiesToAssets>
+    
+    <!-- Cash and Due from Banks to Assets -->
+    <ubpr:CashAndDueFromBanksToAssets contextRef="current_period" unitRef="percentage" decimals="2">6.0</ubpr:CashAndDueFromBanksToAssets>
+    <ubpr:CashAndDueFromBanksToAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">5.8</ubpr:CashAndDueFromBanksToAssets>
+    
+    <!-- Deposit Composition -->
+    
+    <!-- Noninterest Bearing Deposits to Total Deposits -->
+    <ubpr:NoninterestBearingDepositsToTotalDeposits contextRef="current_period" unitRef="percentage" decimals="2">28.9</ubpr:NoninterestBearingDepositsToTotalDeposits>
+    <ubpr:NoninterestBearingDepositsToTotalDeposits contextRef="peer_group_current" unitRef="percentage" decimals="2">25.2</ubpr:NoninterestBearingDepositsToTotalDeposits>
+    
+    <!-- Time Deposits over $250k to Total Deposits -->
+    <ubpr:TimeDepositsOver250kToTotalDeposits contextRef="current_period" unitRef="percentage" decimals="2">15.8</ubpr:TimeDepositsOver250kToTotalDeposits>
+    <ubpr:TimeDepositsOver250kToTotalDeposits contextRef="peer_group_current" unitRef="percentage" decimals="2">18.5</ubpr:TimeDepositsOver250kToTotalDeposits>
+    
+    <!-- Loan Portfolio Composition -->
+    
+    <!-- Real Estate Loans to Total Loans -->
+    <ubpr:RealEstateLoansToTotalLoans contextRef="current_period" unitRef="percentage" decimals="2">66.2</ubpr:RealEstateLoansToTotalLoans>
+    <ubpr:RealEstateLoansToTotalLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">68.8</ubpr:RealEstateLoansToTotalLoans>
+    
+    <!-- Commercial and Industrial Loans to Total Loans -->
+    <ubpr:CommercialAndIndustrialLoansToTotalLoans contextRef="current_period" unitRef="percentage" decimals="2">21.1</ubpr:CommercialAndIndustrialLoansToTotalLoans>
+    <ubpr:CommercialAndIndustrialLoansToTotalLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">19.5</ubpr:CommercialAndIndustrialLoansToTotalLoans>
+    
+    <!-- Consumer Loans to Total Loans -->
+    <ubpr:ConsumerLoansToTotalLoans contextRef="current_period" unitRef="percentage" decimals="2">12.6</ubpr:ConsumerLoansToTotalLoans>
+    <ubpr:ConsumerLoansToTotalLoans contextRef="peer_group_current" unitRef="percentage" decimals="2">11.7</ubpr:ConsumerLoansToTotalLoans>
+    
+    <!-- Growth Rates (Year-over-Year) -->
+    
+    <!-- Asset Growth -->
+    <ubpr:AssetGrowthRate contextRef="current_period" unitRef="percentage" decimals="2">8.5</ubpr:AssetGrowthRate>
+    <ubpr:AssetGrowthRate contextRef="peer_group_current" unitRef="percentage" decimals="2">6.2</ubpr:AssetGrowthRate>
+    
+    <!-- Loan Growth -->
+    <ubpr:LoanGrowthRate contextRef="current_period" unitRef="percentage" decimals="2">12.3</ubpr:LoanGrowthRate>
+    <ubpr:LoanGrowthRate contextRef="peer_group_current" unitRef="percentage" decimals="2">9.8</ubpr:LoanGrowthRate>
+    
+    <!-- Deposit Growth -->
+    <ubpr:DepositGrowthRate contextRef="current_period" unitRef="percentage" decimals="2">6.8</ubpr:DepositGrowthRate>
+    <ubpr:DepositGrowthRate contextRef="peer_group_current" unitRef="percentage" decimals="2">5.1</ubpr:DepositGrowthRate>
+    
+    <!-- Fee Income Analysis -->
+    
+    <!-- Noninterest Income to Total Revenue -->
+    <ubpr:NoninterestIncomeToTotalRevenue contextRef="current_period" unitRef="percentage" decimals="2">21.7</ubpr:NoninterestIncomeToTotalRevenue>
+    <ubpr:NoninterestIncomeToTotalRevenue contextRef="peer_group_current" unitRef="percentage" decimals="2">23.5</ubpr:NoninterestIncomeToTotalRevenue>
+    
+    <!-- Service Charges to Total Revenue -->
+    <ubpr:ServiceChargesToTotalRevenue contextRef="current_period" unitRef="percentage" decimals="2">7.4</ubpr:ServiceChargesToTotalRevenue>
+    <ubpr:ServiceChargesToTotalRevenue contextRef="peer_group_current" unitRef="percentage" decimals="2">8.2</ubpr:ServiceChargesToTotalRevenue>
+    
+    <!-- Operating Expense Analysis -->
+    
+    <!-- Personnel Expense to Average Assets -->
+    <ubpr:PersonnelExpenseToAverageAssets contextRef="current_period" unitRef="percentage" decimals="2">2.55</ubpr:PersonnelExpenseToAverageAssets>
+    <ubpr:PersonnelExpenseToAverageAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">2.68</ubpr:PersonnelExpenseToAverageAssets>
+    
+    <!-- Occupancy Expense to Average Assets -->
+    <ubpr:OccupancyExpenseToAverageAssets contextRef="current_period" unitRef="percentage" decimals="2">0.62</ubpr:OccupancyExpenseToAverageAssets>
+    <ubpr:OccupancyExpenseToAverageAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">0.68</ubpr:OccupancyExpenseToAverageAssets>
+    
+    <!-- Other Operating Expense to Average Assets -->
+    <ubpr:OtherOperatingExpenseToAverageAssets contextRef="current_period" unitRef="percentage" decimals="2">1.57</ubpr:OtherOperatingExpenseToAverageAssets>
+    <ubpr:OtherOperatingExpenseToAverageAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">1.72</ubpr:OtherOperatingExpenseToAverageAssets>
+    
+    <!-- Credit Quality Trends -->
+    
+    <!-- Provision for Loan Losses to Average Assets -->
+    <ubpr:ProvisionToAverageAssets contextRef="current_period" unitRef="percentage" decimals="2">0.62</ubpr:ProvisionToAverageAssets>
+    <ubpr:ProvisionToAverageAssets contextRef="peer_group_current" unitRef="percentage" decimals="2">0.68</ubpr:ProvisionToAverageAssets>
+    
+    <!-- Provision Coverage (Provision to Net Charge-offs) -->
+    <ubpr:ProvisionCoverageRatio contextRef="current_period" unitRef="percentage" decimals="2">125.8</ubpr:ProvisionCoverageRatio>
+    <ubpr:ProvisionCoverageRatio contextRef="peer_group_current" unitRef="percentage" decimals="2">118.5</ubpr:ProvisionCoverageRatio>
+    
+    <!-- Peer Group Information -->
+    <ubpr:PeerGroupNumber contextRef="current_period">1</ubpr:PeerGroupNumber>
+    <ubpr:PeerGroupDescription contextRef="current_period">Banks with assets between $1B and $10B</ubpr:PeerGroupDescription>
+    <ubpr:NumberOfBanksInPeerGroup contextRef="current_period">485</ubpr:NumberOfBanksInPeerGroup>
+    
+    <!-- Ranking within Peer Group (percentile) -->
+    <ubpr:ROAPercentileRank contextRef="current_period" unitRef="pure" decimals="1">75.2</ubpr:ROAPercentileRank>
+    <ubpr:ROEPercentileRank contextRef="current_period" unitRef="pure" decimals="1">72.8</ubpr:ROEPercentileRank>
+    <ubpr:EfficiencyRatioPercentileRank contextRef="current_period" unitRef="pure" decimals="1">68.5</ubpr:EfficiencyRatioPercentileRank>
+    
+</xbrl>
