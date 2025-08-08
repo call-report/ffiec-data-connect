@@ -90,17 +90,17 @@ class WebserviceCredentials(object):
     
         
     def __str__(self) -> str:
-        """String representation of the credentials - masks sensitive data for security."""
+        """String representation of the credentials - shows username but masks password for security."""
         if self.credential_source  == CredentialType.NO_CREDENTIALS or self.credential_source == None:
             return "WebserviceCredentials(status='not configured')"
         
-        # Mask username for security - show only first and last character
-        masked_user = self._mask_sensitive_string(self.username) if hasattr(self, '_username') and self._username else "***"
+        # Show username plainly - usernames are not sensitive data
+        username_display = self.username if hasattr(self, '_username') and self._username else "not_set"
         
         if self.credential_source == CredentialType.SET_FROM_INIT:
-            return f"WebserviceCredentials(source='init', username='{masked_user}')"
+            return f"WebserviceCredentials(source='init', username='{username_display}')"
         elif self.credential_source == CredentialType.SET_FROM_ENV:
-            return f"WebserviceCredentials(source='environment', username='{masked_user}')"
+            return f"WebserviceCredentials(source='environment', username='{username_display}')"
         else:
             return "WebserviceCredentials(source='unknown')"
     

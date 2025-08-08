@@ -98,7 +98,7 @@ class AsyncCompatibleClient:
             reporting_period: Reporting period (e.g., "2020-03-31" or "1Q2020")
             rssd_id: RSSD ID of the institution
             series: Data series ("call" or "ubpr")
-            output_type: Output format ("list" or "pandas")
+            output_type: Output format ("list", "pandas", or "polars")
             date_output_format: Date format in output
             
         Returns:
@@ -123,7 +123,7 @@ class AsyncCompatibleClient:
         
         Args:
             series: Data series ("call" or "ubpr")
-            output_type: Output format ("list" or "pandas")
+            output_type: Output format ("list", "pandas", or "polars")
             date_output_format: Date format in output
             
         Returns:
