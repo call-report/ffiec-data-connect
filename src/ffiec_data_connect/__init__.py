@@ -6,7 +6,7 @@ with support for both synchronous and asynchronous operations.
 """
 
 # Version
-__version__ = "0.3.0"
+__version__ = "1.0.0"
 
 # Core imports - maintain backward compatibility
 from ffiec_data_connect.credentials import WebserviceCredentials, CredentialType
