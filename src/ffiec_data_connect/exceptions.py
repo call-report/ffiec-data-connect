@@ -4,20 +4,17 @@ This module provides custom exceptions with detailed error messages
 to improve debugging and user experience.
 """
 
-from typing import Optional, Any, Type
+from typing import Any, Optional, Type
 
 
 def raise_exception(
-    exception_class: Type[Exception], 
-    legacy_message: str,
-    *args,
-    **kwargs
+    exception_class: Type[Exception], legacy_message: str, *args, **kwargs
 ) -> None:
     """Raise an exception with legacy compatibility support.
-    
+
     If legacy mode is enabled, raises ValueError with the legacy message.
     Otherwise, raises the specific exception class.
-    
+
     Args:
         exception_class: The specific exception class to raise
         legacy_message: Message to use for ValueError in legacy mode
@@ -25,7 +22,7 @@ def raise_exception(
         **kwargs: Keyword arguments for the specific exception
     """
     from ffiec_data_connect.config import use_legacy_errors
-    
+
     if use_legacy_errors():
         # Legacy mode - raise ValueError with simple message
         raise ValueError(legacy_message)
@@ -36,12 +33,12 @@ def raise_exception(
 
 class FFIECError(Exception):
     """Base exception for all FFIEC Data Connect errors"""
-    
+
     def __init__(self, message: str, details: Optional[dict] = None):
         self.message = message
         self.details = details or {}
         super().__init__(self.message)
-    
+
     def __str__(self) -> str:
         if self.details:
             return f"{self.message} | Details: {self.details}"
@@ -50,8 +47,10 @@ class FFIECError(Exception):
 
 class NoDataError(FFIECError):
     """Raised when no data is returned from the FFIEC webservice"""
-    
-    def __init__(self, rssd_id: Optional[str] = None, reporting_period: Optional[str] = None):
+
+    def __init__(
+        self, rssd_id: Optional[str] = None, reporting_period: Optional[str] = None
+    ):
         message = "No data returned from FFIEC webservice"
         details = {}
         if rssd_id:
@@ -63,7 +62,7 @@ class NoDataError(FFIECError):
 
 class CredentialError(FFIECError):
     """Raised when there are issues with credentials"""
-    
+
     def __init__(self, message: str, credential_source: Optional[str] = None):
         details = {}
         if credential_source:
@@ -73,21 +72,19 @@ class CredentialError(FFIECError):
 
 class ValidationError(FFIECError):
     """Raised when input validation fails"""
-    
+
     def __init__(self, field: str, value: Any, expected: str):
         message = f"Validation failed for field '{field}'"
-        details = {
-            "field": field,
-            "provided_value": str(value),
-            "expected": expected
-        }
+        details = {"field": field, "provided_value": str(value), "expected": expected}
         super().__init__(message, details)
 
 
 class ConnectionError(FFIECError):
     """Raised when connection to FFIEC webservice fails"""
-    
-    def __init__(self, message: str, url: Optional[str] = None, status_code: Optional[int] = None):
+
+    def __init__(
+        self, message: str, url: Optional[str] = None, status_code: Optional[int] = None
+    ):
         details = {}
         if url:
             details["url"] = url
@@ -98,7 +95,7 @@ class ConnectionError(FFIECError):
 
 class RateLimitError(FFIECError):
     """Raised when API rate limit is exceeded"""
-    
+
     def __init__(self, retry_after: Optional[int] = None):
         message = "FFIEC API rate limit exceeded"
         details = {}
@@ -110,21 +107,22 @@ class RateLimitError(FFIECError):
 
 class XMLParsingError(FFIECError):
     """Raised when XML/XBRL parsing fails"""
-    
+
     def __init__(self, message: str, xml_snippet: Optional[str] = None):
         details = {}
         if xml_snippet:
             # Truncate for security
-            details["xml_snippet"] = xml_snippet[:200] + "..." if len(xml_snippet) > 200 else xml_snippet
+            details["xml_snippet"] = (
+                xml_snippet[:200] + "..." if len(xml_snippet) > 200 else xml_snippet
+            )
         super().__init__(message, details)
 
 
 class SessionError(FFIECError):
     """Raised when there are session management issues"""
-    
+
     def __init__(self, message: str, session_state: Optional[str] = None):
         details = {}
         if session_state:
             details["session_state"] = session_state
         super().__init__(message, details)
-

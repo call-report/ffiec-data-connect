@@ -1,13 +1,19 @@
-.PHONY: build test-publish publish test coverage coverage-html coverage-fast clean
+.PHONY: format lint type-check test test-fast coverage build clean check-all install-dev help
 
-build:
-	python setup.py sdist
+# Quality checks (run in order)
+format:
+	python -m black src/ tests/
+	python -m isort src/ tests/
 
-test-publish:
-	twine upload -r testpypi dist/*
+lint:
+	python -m flake8 src/ tests/
 
-publish:
-	twine upload dist/*
+type-check:
+	python -m mypy src/
+
+# Combined quality check target
+check-all: format lint type-check test
+	@echo "✅ All quality checks passed!"
 
 # Testing targets
 test:
@@ -15,6 +21,9 @@ test:
 
 test-fast:
 	python -m pytest tests/unit/test_credentials.py tests/unit/test_ffiec_connection.py -v
+
+test-all:
+	python -m pytest tests/ -v
 
 # Coverage targets
 coverage:
@@ -35,6 +44,22 @@ coverage-html:
 	python -m pytest tests/unit/test_credentials.py tests/unit/test_ffiec_connection.py --cov=src/ffiec_data_connect --cov-report=html --cov-config=.coveragerc
 	@echo "📊 HTML coverage report: htmlcov/index.html"
 
+# Development setup
+install-dev:
+	pip install -e ".[dev,docs,notebook,polars]"
+
+# Build targets
+build:
+	python -m build
+
+test-publish:
+	python -m twine check dist/*
+	python -m twine upload --repository testpypi dist/*
+
+publish:
+	python -m twine check dist/*
+	python -m twine upload dist/*
+
 # Cleanup
 clean:
 	rm -rf build/ dist/ *.egg-info/ htmlcov/ .coverage coverage.xml coverage.json
@@ -44,12 +69,28 @@ clean:
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  build          - Build distribution package"
+	@echo ""
+	@echo "Quality Checks:"
+	@echo "  format         - Format code with black and isort"
+	@echo "  lint           - Run flake8 linting"
+	@echo "  type-check     - Run mypy type checking"
+	@echo "  check-all      - Run all quality checks in sequence"
+	@echo ""
+	@echo "Testing:"
 	@echo "  test           - Run all unit tests"
 	@echo "  test-fast      - Run core module tests only"
+	@echo "  test-all       - Run all tests (unit + integration)"
 	@echo "  coverage       - Run standard coverage analysis"
 	@echo "  coverage-fast  - Run fast coverage with HTML report"
 	@echo "  coverage-full  - Run comprehensive coverage with all reports"
 	@echo "  coverage-html  - Generate HTML coverage report for core modules"
+	@echo ""
+	@echo "Build & Deploy:"
+	@echo "  build          - Build distribution packages"
+	@echo "  test-publish   - Publish to TestPyPI"
+	@echo "  publish        - Publish to PyPI"
+	@echo ""
+	@echo "Development:"
+	@echo "  install-dev    - Install package in development mode with all dependencies"
 	@echo "  clean          - Remove build artifacts and coverage files"
 	@echo "  help           - Show this help message"

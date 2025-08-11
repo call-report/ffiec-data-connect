@@ -4,29 +4,29 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ffiec-data-connect"
-version = "1.0.0"
+version = "1.0.0rc1"
 authors = [
     {name = "Civic Forge Solutions LLC", email = "support@civicforge.com"},
 ]
 description = "Secure, thread-safe Python wrapper for FFIEC webservice API with async support"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Office/Business :: Financial",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Database",
     "Typing :: Typed",
 ]
+license = "MPL-2.0"
 keywords = [
     "ffiec", 
     "banking", 
@@ -59,6 +59,7 @@ dev = [
     "isort>=5.10.0",
     "flake8>=5.0.0",
     "mypy>=1.0.0",
+    "types-requests>=2.25.0",
     "sphinx>=5.0.0",
     "sphinx-rtd-theme>=1.0.0",
     "coverage>=7.0.0",
@@ -86,8 +87,6 @@ all = [
 "Repository" = "https://github.com/civic-forge/ffiec-data-connect"
 "Bug Tracker" = "https://github.com/civic-forge/ffiec-data-connect/issues"
 "Changelog" = "https://github.com/civic-forge/ffiec-data-connect/blob/main/CHANGELOG.md"
-
-license = "MPL-2.0"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -155,7 +154,7 @@ precision = 2
 # Black code formatting
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py310', 'py311', 'py312', 'py313']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -187,7 +186,7 @@ src_paths = ["src", "tests"]
 
 # MyPy type checking
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

@@ -4,15 +4,16 @@ Pytest configuration and shared fixtures for FFIEC Data Connect tests.
 This module provides common test fixtures and configuration for the test suite.
 """
 
-import pytest
 import os
 import warnings
-from unittest.mock import Mock, patch
 from typing import Generator
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import for fixture creation
 import ffiec_data_connect
-from ffiec_data_connect import WebserviceCredentials, FFIECConnection
+from ffiec_data_connect import FFIECConnection, WebserviceCredentials
 from ffiec_data_connect.config import Config
 
 
@@ -28,14 +29,18 @@ def reset_config_after_test():
 def suppress_deprecation_warnings():
     """Suppress deprecation warnings for legacy mode in tests where they're not relevant."""
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, module="ffiec_data_connect")
+        warnings.filterwarnings(
+            "ignore", category=DeprecationWarning, module="ffiec_data_connect"
+        )
         yield
 
 
 @pytest.fixture
 def mock_credentials() -> WebserviceCredentials:
     """Create mock credentials for testing without real auth."""
-    with patch.dict(os.environ, {'FFIEC_USERNAME': 'testuser', 'FFIEC_PASSWORD': 'testpass'}):
+    with patch.dict(
+        os.environ, {"FFIEC_USERNAME": "testuser", "FFIEC_PASSWORD": "testpass"}
+    ):
         return WebserviceCredentials()
 
 
@@ -90,6 +95,7 @@ def legacy_mode_disabled():
 def mock_session():
     """Create a mock requests session for testing."""
     from unittest.mock import Mock
+
     session = Mock()
     session.get.return_value.status_code = 200
     session.post.return_value.status_code = 200
@@ -102,7 +108,10 @@ def mock_soap_client():
     mock_client = Mock()
     mock_client.service.TestUserAccess.return_value = True
     mock_client.service.RetrieveReportingPeriods.return_value = [
-        "2023-03-31", "2023-06-30", "2023-09-30", "2023-12-31"
+        "2023-03-31",
+        "2023-06-30",
+        "2023-09-30",
+        "2023-12-31",
     ]
     mock_client.service.RetrieveFacsimile.return_value = b"mock xbrl data"
     return mock_client
@@ -112,11 +121,12 @@ def mock_soap_client():
 def test_data_dir():
     """Path to test data directory."""
     import pathlib
+
     return pathlib.Path(__file__).parent / "fixtures"
 
 
 # Configure pytest-asyncio for async tests
-pytest_plugins = ['pytest_asyncio']
+pytest_plugins = ["pytest_asyncio"]
 
 
 def pytest_configure(config):
@@ -124,15 +134,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests"
-    )
-    config.addinivalue_line(
-        "markers", "security: marks tests as security-related"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests")
+    config.addinivalue_line("markers", "security: marks tests as security-related")
     config.addinivalue_line(
         "markers", "race_condition: marks tests for race condition scenarios"
     )
@@ -152,7 +156,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.unit)
         elif "integration" in str(item.fspath):
             item.add_marker(pytest.mark.integration)
-        
+
         # Auto-mark async tests
         if "async" in item.name or "async" in str(item.fspath):
             item.add_marker(pytest.mark.async_test)
@@ -162,7 +166,7 @@ def pytest_collection_modifyitems(config, items):
 def pytest_sessionstart(session):
     """Called after the Session object has been created."""
     print("\n🧪 Starting FFIEC Data Connect test suite...")
-    
+
     # Ensure clean state for tests
     Config.reset()
 
