@@ -6,13 +6,12 @@ This module provides secure XML/XBRL processing with XXE attack prevention.
 import re
 from datetime import datetime
 from itertools import chain
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 
 # Use defusedxml for secure XML parsing (prevents XXE attacks)
 try:
-    import defusedxml.ElementTree as ET
     from defusedxml import defuse_stdlib
 
     # Defuse standard library XML modules
@@ -23,14 +22,13 @@ try:
 except ImportError:
     # Fallback to standard library with warning
     import warnings
-    import xml.etree.ElementTree as ET
 
     import xmltodict
 
     warnings.warn(
         "defusedxml not installed - XML parsing may be vulnerable to XXE attacks. "
         "Install with: pip install defusedxml",
-        SecurityWarning,
+        UserWarning,
         stacklevel=2,
     )
     SECURE_XML = False
@@ -159,7 +157,7 @@ def _create_ffiec_date_from_datetime(indate: datetime) -> str:
 def _process_xbrl_item(name, items, date_format):
     # incoming is a data dictionary
     results = []
-    if type(items) != list:
+    if not isinstance(items, list):
         items = [items]
     for j, item in enumerate(items):
         context = item.get("@contextRef")

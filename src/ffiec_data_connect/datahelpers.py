@@ -114,7 +114,7 @@ def _normalize_output_from_reporter_panel(row: dict) -> dict:
 
     # process HasFiledForReportingPeriod
     if "HasFiledForReportingPeriod" in row_keys:
-        if type(row["HasFiledForReportingPeriod"]) == bool:
+        if isinstance(row["HasFiledForReportingPeriod"], bool):
             new_row["has_filed_for_reporting_period"] = row[
                 "HasFiledForReportingPeriod"
             ]

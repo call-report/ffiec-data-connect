@@ -9,11 +9,9 @@ import asyncio
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from ffiec_data_connect import credentials, ffiec_connection, methods
-from ffiec_data_connect.exceptions import RateLimitError
 
 
 class RateLimiter:
@@ -401,7 +399,7 @@ class AsyncCompatibleClient:
             for conn in self._connection_cache.values():
                 try:
                     conn.close()
-                except:
+                except Exception:
                     pass
             self._connection_cache.clear()
 

@@ -345,9 +345,7 @@ class TestDataTypeHandling:
                 )
 
                 bool_item = next(item for item in result if item["mdrm"] == "ITEM4")
-                assert (
-                    bool_item["bool_data"] == True
-                )  # Use == for numpy bool comparison
+                assert bool_item["bool_data"] is True  # Use is for boolean comparison
                 assert (
                     bool_item["str_data"] is None
                     and np.isnan(bool_item["int_data"])

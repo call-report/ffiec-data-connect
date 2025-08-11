@@ -7,15 +7,11 @@ Credentials may be input via environment variables, or passing them as arguments
 """
 
 import os
-import sys
 from enum import Enum
 
 import requests
-from zeep import Client, Settings
-from zeep.transports import Transport
-from zeep.wsse.username import UsernameToken
 
-from ffiec_data_connect import constants, ffiec_connection
+from ffiec_data_connect import constants
 from ffiec_data_connect.exceptions import (
     ConnectionError,
     CredentialError,
@@ -98,7 +94,7 @@ class WebserviceCredentials(object):
         """String representation of the credentials - shows username but masks password for security."""
         if (
             self.credential_source == CredentialType.NO_CREDENTIALS
-            or self.credential_source == None
+            or self.credential_source is None
         ):
             return "WebserviceCredentials(status='not configured')"
 

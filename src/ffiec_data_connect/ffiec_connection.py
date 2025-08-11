@@ -6,11 +6,11 @@
 import threading
 import weakref
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import requests
 
-from ffiec_data_connect.exceptions import ConnectionError, SessionError, raise_exception
+from ffiec_data_connect.exceptions import SessionError, raise_exception
 
 
 class ProxyProtocol(Enum):
@@ -91,7 +91,7 @@ class FFIECConnection(object):
             if self._session is not None:
                 try:
                     self._session.close()
-                except:
+                except Exception:
                     pass  # Ignore errors during cleanup
             self._session = session
         return
@@ -249,7 +249,7 @@ class FFIECConnection(object):
         if self._session is not None:
             try:
                 self._session.close()
-            except:
+            except Exception:
                 pass  # Ignore errors during cleanup
 
         # create a new requests session
@@ -389,7 +389,7 @@ class FFIECConnection(object):
             if self._session is not None:
                 try:
                     self._session.close()
-                except:
+                except Exception:
                     pass  # Ignore errors during cleanup
                 self._session = None
                 self._config_hash = None
@@ -416,5 +416,5 @@ class FFIECConnection(object):
         for instance in list(cls._instances):
             try:
                 instance.close()
-            except:
+            except Exception:
                 pass  # Ignore errors during cleanup

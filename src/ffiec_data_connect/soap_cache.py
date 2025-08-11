@@ -172,7 +172,7 @@ class SOAPClientCache:
                 client.transport.session, "close"
             ):
                 client.transport.session.close()
-        except:
+        except Exception:
             pass  # Ignore cleanup errors
 
         # Remove from cache
@@ -189,7 +189,7 @@ class SOAPClientCache:
                         client.transport.session, "close"
                     ):
                         client.transport.session.close()
-                except:
+                except Exception:
                     pass
 
             self._cache.clear()
@@ -213,7 +213,7 @@ class SOAPClientCache:
         for cache in list(cls._instances):
             try:
                 cache.clear()
-            except:
+            except Exception:
                 pass
 
 

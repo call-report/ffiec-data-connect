@@ -175,13 +175,13 @@ class TestCredentialImmutability:
             try:
                 creds.username = "hacker"
                 errors.append("Username modification succeeded - SECURITY ISSUE")
-            except:
+            except Exception:
                 pass  # Expected
 
             try:
                 creds.password = "hacked"
                 errors.append("Password modification succeeded - SECURITY ISSUE")
-            except:
+            except Exception:
                 pass  # Expected
 
         # Try modifications from multiple threads

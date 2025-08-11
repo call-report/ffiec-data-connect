@@ -22,18 +22,14 @@ except ImportError:
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from zeep import Client, Settings
-from zeep.transports import Transport
-from zeep.wsse.username import UsernameToken
+from zeep import Client
 
 from ffiec_data_connect import (
-    constants,
     credentials,
     datahelpers,
     ffiec_connection,
     xbrl_processor,
 )
-from ffiec_data_connect.exceptions import ConnectionError as FFIECConnectionError
 from ffiec_data_connect.exceptions import (
     NoDataError,
     ValidationError,
@@ -400,10 +396,10 @@ def collect_reporting_periods(
     _ = _credentials_validator(creds)
     _ = _session_validator(session)
 
-    ## we have a session and valid credentials, so try to log in
+    # we have a session and valid credentials, so try to log in
     client = _client_factory(session, creds)
 
-    ## scope ret outside the if statement
+    # scope ret outside the if statement
     ret = None
 
     if series == "call":
@@ -453,7 +449,7 @@ def _client_factory(session, creds) -> Client:
     Returns:
         Client: _description_
     """
-    ## we have a session and valid credentials, so try to log in
+    # we have a session and valid credentials, so try to log in
     if isinstance(session, ffiec_connection.FFIECConnection):
         return _return_client_session(session.session, creds)
     elif isinstance(session, requests.Session):
@@ -512,7 +508,7 @@ def collect_data(
     # Validate and convert RSSD ID with descriptive error
     rssd_id_int = _validate_rssd_id(rssd_id)
 
-    ## scope ret outside the if statement
+    # scope ret outside the if statement
     ret = None
 
     if series == "call":
@@ -718,7 +714,7 @@ def collect_filers_submission_date_time(
             )
         )
 
-    ## we have a session and valid credentials, so try to log in
+    # we have a session and valid credentials, so try to log in
     client = _client_factory(session, creds)
 
     # convert our input dates to the ffiec input date format

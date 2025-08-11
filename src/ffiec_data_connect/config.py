@@ -6,7 +6,6 @@ backward compatibility settings.
 """
 
 import os
-from typing import Optional
 
 
 class Config:

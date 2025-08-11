@@ -246,7 +246,7 @@ class TestValidators:
         for i in range(1000):
             try:
                 _validate_rssd_id(f"{i:08d}")
-            except:
+            except Exception:
                 pass
 
         current, peak = tracemalloc.get_traced_memory()
@@ -675,7 +675,7 @@ class TestMemoryLeakPrevention:
                 _convert_any_date_to_ffiec_format("2023-12-31")
                 _convert_any_date_to_ffiec_format("20231231")
                 _convert_any_date_to_ffiec_format("12/31/2023")
-            except:
+            except Exception:
                 pass
 
             if i % 1000 == 0:
@@ -970,7 +970,7 @@ class TestConcurrentAccess:
                     # Test some that should fail
                     try:
                         _validate_rssd_id("invalid")
-                    except:
+                    except Exception:
                         pass
 
             except Exception as e:

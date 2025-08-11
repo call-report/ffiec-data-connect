@@ -162,7 +162,7 @@ class TestMockFFIECServer:
             try:
                 decoded = base64.b64decode(result.text)
                 assert b"xbrl" in decoded.lower()
-            except:
+            except Exception:
                 pytest.fail("Result should be valid base64-encoded XBRL")
 
     def test_retrieve_ubpr_facsimile_operation(self):
