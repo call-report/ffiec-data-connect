@@ -1,0 +1,39 @@
+# Include essential files
+include README.md
+include LICENSE
+include CHANGELOG.md
+include pyproject.toml
+
+# Include package metadata
+include src/ffiec_data_connect/py.typed
+
+# Include documentation
+recursive-include docs *.rst *.py *.png *.md
+include docs/Makefile
+include docs/make.bat
+
+# Include demo notebook (users will want this)
+include ffiec_data_connect_demo.ipynb
+
+# Exclude development files
+exclude setup.cfg
+exclude .gitignore
+exclude .coveragerc
+exclude Makefile
+
+# Exclude entire dev directory
+prune dev
+
+# Exclude test files from distribution
+prune tests
+
+# Exclude build artifacts
+prune build
+prune dist
+prune htmlcov
+prune *.egg-info
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *~
+global-exclude *.so
+global-exclude .DS_Store

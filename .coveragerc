@@ -1,0 +1,142 @@
+[run]
+# Source code directory to measure
+source = src/ffiec_data_connect
+
+# Branches to measure (for branch coverage)
+branch = True
+
+# Parallel processing support for concurrent tests
+parallel = True
+
+# Include patterns are not needed when source is specified
+# include = 
+#     src/ffiec_data_connect/*.py
+#     src/ffiec_data_connect/**/*.py
+
+# Exclude patterns (don't measure test files, examples, etc.)
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */.*
+    setup.py
+    */site-packages/*
+    */dist-packages/*
+    */build/*
+    */examples/*
+    */scripts/*
+
+# Context settings for better reporting
+context = '${COVERAGE_CONTEXT:-default}'
+
+# Data file location
+data_file = .coverage
+
+[report]
+# Minimum coverage percentage to pass (temporarily lowered while building test coverage)
+fail_under = 30
+
+# Show missing lines in report
+show_missing = True
+
+# Skip covered lines in report (focus on gaps)
+skip_covered = False
+
+# Skip empty files
+skip_empty = True
+
+# Precision for percentage display
+precision = 1
+
+# Sort results by coverage percentage (lowest first)
+sort = Cover
+
+# Exclude specific lines from coverage measurement
+exclude_lines =
+    # Standard pragma for intentionally uncovered code
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if 0:
+    if False:
+    if __name__ .__main__.:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about type checking imports
+    if TYPE_CHECKING:
+    
+    # Don't complain about platform specific code
+    if sys.platform
+    
+    # Don't complain about deprecated code warnings
+    warnings\.warn
+    
+    # Don't complain about pass statements
+    pass
+    
+    # Don't complain about ellipsis in stubs
+    \.\.\.
+
+# Ignore specific error codes
+ignore_errors = True
+
+[html]
+# HTML report output directory
+directory = htmlcov
+
+# Title for HTML report
+title = FFIEC Data Connect - Test Coverage Report
+
+# Show contexts in HTML report
+show_contexts = True
+
+# Skip empty files in HTML report
+skip_empty = True
+
+# Skip covered files in HTML report (focus on gaps)
+skip_covered = False
+
+# Extra CSS for better HTML report styling (disabled - file not found)
+# extra_css = coverage-custom.css
+
+[xml]
+# XML report output file (for CI/CD integration)
+output = coverage.xml
+
+[json]
+# JSON report output file (for programmatic analysis)
+output = coverage.json
+
+# Include pretty formatting
+pretty_print = True
+
+# Show contexts in JSON report
+show_contexts = True
+
+[paths]
+# Path mapping for different environments
+source =
+    src/ffiec_data_connect
+    */site-packages/ffiec_data_connect
+    */lib/python*/site-packages/ffiec_data_connect
+    */lib64/python*/site-packages/ffiec_data_connect
+    */Lib/site-packages/ffiec_data_connect
+
+[coverage:paths]
+# Additional path mappings for CI environments
+source =
+    src/
+    /usr/src/app/src/
+    /app/src/
+    C:\src\
+    /home/runner/work/*/src/

@@ -1,20 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Example Code &mdash; FFIEC Webservice Python Connector 0.1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <title>Example Code &mdash; FFIEC Data Connect 1.0.0rc1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=77c1c56c"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -27,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> FFIEC Webservice Python Connector
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -60,15 +65,15 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">FFIEC Webservice Python Connector</a>
+          <a href="index.html">FFIEC Data Connect</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Example Code</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Example Code</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -79,12 +84,12 @@
            <div itemprop="articleBody">
              
   <section id="example-code">
-<h1>Example Code<a class="headerlink" href="#example-code" title="Permalink to this headline"></a></h1>
+<h1>Example Code<a class="headerlink" href="#example-code" title="Link to this heading"></a></h1>
 <section id="loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">
-<h2>Loading credentials and starting a connection to the FFIEC Webservice<a class="headerlink" href="#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice" title="Permalink to this headline"></a></h2>
+<h2>Loading credentials and starting a connection to the FFIEC Webservice<a class="headerlink" href="#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice" title="Link to this heading"></a></h2>
 <p>When using the package, credentials to the Webservice may be loaded from environment variables, or through the instantiation of the <cite>WebserviceCredentials</cite> class.</p>
 <p>The following example shows how to load credentials from instantiation (note that the username and password included are placeholders):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">ffiec_connection</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">ffiec_connection</span>
 
 
 <span class="n">creds</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">WebserviceCredentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;user1234&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password1234&quot;</span><span class="p">)</span>
@@ -94,12 +99,12 @@
 </div>
 </section>
 <section id="collecting-the-reporting-periods">
-<h2>Collecting the reporting periods<a class="headerlink" href="#collecting-the-reporting-periods" title="Permalink to this headline"></a></h2>
+<h2>Collecting the reporting periods<a class="headerlink" href="#collecting-the-reporting-periods" title="Link to this heading"></a></h2>
 <p>The following example shows how to collect the reporting periods from the FFIEC Webservice.</p>
 <p>These reporting periods may be utilized for subsequent queries to the FFIEC Webservice, and to determine when new reporting periods are available for query.</p>
 <p>Output is returned as a list of dates in the format of mm/dd/YYYY, which is the “native” format of the FFIEC Webservice.</p>
 <p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span>
 
 <span class="n">reporting_periods</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_reporting_periods</span><span class="p">(</span>
     <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
@@ -115,7 +120,7 @@
 </div>
 </section>
 <section id="collect-the-list-of-filers-for-a-particular-reporting-period">
-<h2>Collect the list of filers for a particular reporting period<a class="headerlink" href="#collect-the-list-of-filers-for-a-particular-reporting-period" title="Permalink to this headline"></a></h2>
+<h2>Collect the list of filers for a particular reporting period<a class="headerlink" href="#collect-the-list-of-filers-for-a-particular-reporting-period" title="Link to this heading"></a></h2>
 <blockquote>
 <div><p>The following example shows how to collect the list of filers for a particular reporting period.</p>
 <p>This list of filers may be utilized for subsequent queries to the FFIEC Webservice, and to determine which filers are available for query.</p>
@@ -123,7 +128,7 @@
 <p>Note that due to the nature of the FFIEC Webservice, the list of filers may be very large. As a result, the wall time for this query may be very long, depending on the size of the list of filers, the speed of the connection, and the server load of the FFIEC Webservice.</p>
 <p><cite>A data dictionary for the output is provided below the output</cite></p>
 <p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span>
 
 <span class="n">filers</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_filers_on_reporting_period</span><span class="p">(</span>
     <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
@@ -160,12 +165,12 @@
 <span class="s1">&#39;has_filed_for_reporting_period&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}]</span>
 </pre></div>
 </div>
-<table class="colwidths-given docutils align-default" id="id1">
-<caption><span class="caption-text">Output Fields</span><a class="headerlink" href="#id1" title="Permalink to this table"></a></caption>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Output Fields</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
 <colgroup>
-<col style="width: 21%" />
-<col style="width: 7%" />
-<col style="width: 71%" />
+<col style="width: 21.4%" />
+<col style="width: 7.1%" />
+<col style="width: 71.4%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Field</p></th>
@@ -223,13 +228,13 @@
 </div></blockquote>
 </section>
 <section id="collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">
-<h2>Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.<a class="headerlink" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date" title="Permalink to this headline"></a></h2>
+<h2>Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.<a class="headerlink" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date" title="Link to this heading"></a></h2>
 <blockquote>
 <div><p>The following example shows how to collect the rssd IDs of all filers who have filed for a particular reporting period, since a particular date.</p>
 <p>This method is useful for determining how many filers have completed their reporting for the reporting period.</p>
 <p>Filers may also re-submit their filings for the reporting period, so this method may also be useful for determining which and how many filers have re-submitted.</p>
 <p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span>
 
 <span class="n">last_filing_date_time</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_filers_submission_date_time</span><span class="p">(</span>
     <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
@@ -252,13 +257,13 @@
 </div></blockquote>
 </section>
 <section id="collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">
-<h2>Collect the list of rssd(s) that have filed in a reporting period since a particular date.<a class="headerlink" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date" title="Permalink to this headline"></a></h2>
+<h2>Collect the list of rssd(s) that have filed in a reporting period since a particular date.<a class="headerlink" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date" title="Link to this heading"></a></h2>
 <blockquote>
 <div><p>The following example shows how to collect the list of rssd(s) that have filed in a reporting period since a particular date.</p>
 <p>This list of rssd(s) may be utilized for subsequent queries to the FFIEC Webservice, and to determine which rssd(s) have filed for the reporting period.</p>
 <p>The difference between this example and the prior example is that this example only returns a list of RSSDs, not a list of RSSDs and the RSSD’s last filing date and time.</p>
 <p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span>
 
 <span class="n">inst_list</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_filers_since_date</span><span class="p">(</span>
     <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
@@ -275,13 +280,13 @@
 </div></blockquote>
 </section>
 <section id="collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">
-<h2>Collect the time series data associated with a particular rssd and reporting period.<a class="headerlink" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period" title="Permalink to this headline"></a></h2>
+<h2>Collect the time series data associated with a particular rssd and reporting period.<a class="headerlink" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period" title="Link to this heading"></a></h2>
 <blockquote>
 <div><p>With the metadata collected from the earlier examples, the following example shows how to collect the time series data associated with a particular rssd and reporting period.</p>
 <p>There are two time series that may be collected: “Call [Report]” and “UBPR” (Universal Bank Performance Report) data. Call Report data reflects the rolling data submissions of banks submitting their <cite>FFIEC 031</cite>, <cite>FFIEC 041</cite>, and <cite>FFIEC 051</cite> filings. UBPR data is released en masse for all banks mid-month, each month.</p>
 <p>(For more information on these reports and data, visit <a class="reference external" href="https://call.report">https://call.report</a>)</p>
 <p>This code example assumes that a <cite>FFIECConnection</cite> object named <code class="docutils literal notranslate"><span class="pre">conn</span></code> and <cite>WebserviceCredentials</cite> object named <code class="docutils literal notranslate"><span class="pre">creds</span></code> has been instantiated. (See previous example)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ffiec_data_connect</span> <span class="kn">import</span> <span class="n">methods</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span>
 
 <span class="n">time_series</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
     <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>
@@ -312,12 +317,12 @@
 <span class="s1">&#39;data_type&#39;</span><span class="p">:</span> <span class="s1">&#39;int&#39;</span><span class="p">}]</span>
 </pre></div>
 </div>
-<table class="colwidths-given docutils align-default" id="id2">
-<caption><span class="caption-text">Output Fields</span><a class="headerlink" href="#id2" title="Permalink to this table"></a></caption>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Output Fields</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
 <colgroup>
-<col style="width: 21%" />
-<col style="width: 7%" />
-<col style="width: 71%" />
+<col style="width: 21.4%" />
+<col style="width: 7.1%" />
+<col style="width: 71.4%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Field</p></th>
@@ -388,7 +393,7 @@ with the data type indicating which field within the dict/Series contains the da
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Michael Handelman.</p>
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

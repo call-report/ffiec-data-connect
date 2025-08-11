@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:tns="http://ffiec.gov/webservices"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  targetNamespace="http://ffiec.gov/webservices"
+                  elementFormDefault="qualified">
+
+    <!-- Type Definitions -->
+    <wsdl:types>
+        <xsd:schema targetNamespace="http://ffiec.gov/webservices" elementFormDefault="qualified">
+            
+            <!-- Common Types -->
+            <xsd:simpleType name="SeriesType">
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="call"/>
+                    <xsd:enumeration value="ubpr"/>
+                    <xsd:enumeration value="sdi"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            
+            <xsd:simpleType name="OutputType">
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="list"/>
+                    <xsd:enumeration value="pandas"/>
+                    <xsd:enumeration value="json"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            
+            <xsd:simpleType name="DateOutputFormat">
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="string_original"/>
+                    <xsd:enumeration value="datetime"/>
+                    <xsd:enumeration value="iso"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            
+            <!-- RetrieveData Operation -->
+            <xsd:element name="RetrieveData">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="UserID" type="xsd:string"/>
+                        <xsd:element name="Password" type="xsd:string"/>
+                        <xsd:element name="ReportingPeriod" type="xsd:string"/>
+                        <xsd:element name="IdRssd" type="xsd:string"/>
+                        <xsd:element name="Series" type="tns:SeriesType" minOccurs="0" default="call"/>
+                        <xsd:element name="OutputType" type="tns:OutputType" minOccurs="0" default="list"/>
+                        <xsd:element name="DateOutputFormat" type="tns:DateOutputFormat" minOccurs="0" default="string_original"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <xsd:element name="RetrieveDataResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="RetrieveDataResult" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- RetrieveReportingPeriods Operation -->
+            <xsd:element name="RetrieveReportingPeriods">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="UserID" type="xsd:string"/>
+                        <xsd:element name="Password" type="xsd:string"/>
+                        <xsd:element name="Series" type="tns:SeriesType" minOccurs="0" default="call"/>
+                        <xsd:element name="OutputType" type="tns:OutputType" minOccurs="0" default="list"/>
+                        <xsd:element name="DateOutputFormat" type="tns:DateOutputFormat" minOccurs="0" default="string_original"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <xsd:element name="RetrieveReportingPeriodsResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="RetrieveReportingPeriodsResult" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- RetrievePanelOfReporters Operation -->
+            <xsd:element name="RetrievePanelOfReporters">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="UserID" type="xsd:string"/>
+                        <xsd:element name="Password" type="xsd:string"/>
+                        <xsd:element name="Series" type="tns:SeriesType" minOccurs="0" default="call"/>
+                        <xsd:element name="OutputType" type="tns:OutputType" minOccurs="0" default="list"/>
+                        <xsd:element name="DateOutputFormat" type="tns:DateOutputFormat" minOccurs="0" default="string_original"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <xsd:element name="RetrievePanelOfReportersResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="RetrievePanelOfReportersResult" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <!-- RetrieveFacsimile Operation -->
+            <xsd:element name="RetrieveFacsimile">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="UserID" type="xsd:string"/>
+                        <xsd:element name="Password" type="xsd:string"/>
+                        <xsd:element name="ReportingPeriod" type="xsd:string"/>
+                        <xsd:element name="IdRssd" type="xsd:string"/>
+                        <xsd:element name="Series" type="tns:SeriesType" minOccurs="0" default="call"/>
+                        <xsd:element name="FacsimileType" type="xsd:string" minOccurs="0" default="PDF"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+            <xsd:element name="RetrieveFacsimileResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="RetrieveFacsimileResult" type="xsd:base64Binary"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            
+        </xsd:schema>
+    </wsdl:types>
+
+    <!-- Message Definitions -->
+    <wsdl:message name="RetrieveDataSoapIn">
+        <wsdl:part name="parameters" element="tns:RetrieveData"/>
+    </wsdl:message>
+    <wsdl:message name="RetrieveDataSoapOut">
+        <wsdl:part name="parameters" element="tns:RetrieveDataResponse"/>
+    </wsdl:message>
+    
+    <wsdl:message name="RetrieveReportingPeriodsSoapIn">
+        <wsdl:part name="parameters" element="tns:RetrieveReportingPeriods"/>
+    </wsdl:message>
+    <wsdl:message name="RetrieveReportingPeriodsSoapOut">
+        <wsdl:part name="parameters" element="tns:RetrieveReportingPeriodsResponse"/>
+    </wsdl:message>
+    
+    <wsdl:message name="RetrievePanelOfReportersSoapIn">
+        <wsdl:part name="parameters" element="tns:RetrievePanelOfReporters"/>
+    </wsdl:message>
+    <wsdl:message name="RetrievePanelOfReportersSoapOut">
+        <wsdl:part name="parameters" element="tns:RetrievePanelOfReportersResponse"/>
+    </wsdl:message>
+    
+    <wsdl:message name="RetrieveFacsimileSoapIn">
+        <wsdl:part name="parameters" element="tns:RetrieveFacsimile"/>
+    </wsdl:message>
+    <wsdl:message name="RetrieveFacsimileSoapOut">
+        <wsdl:part name="parameters" element="tns:RetrieveFacsimileResponse"/>
+    </wsdl:message>
+
+    <!-- Port Type Definition -->
+    <wsdl:portType name="FFIECWebServiceSoap">
+        <wsdl:operation name="RetrieveData">
+            <wsdl:documentation>Retrieve banking data for a specific institution and reporting period</wsdl:documentation>
+            <wsdl:input message="tns:RetrieveDataSoapIn"/>
+            <wsdl:output message="tns:RetrieveDataSoapOut"/>
+        </wsdl:operation>
+        
+        <wsdl:operation name="RetrieveReportingPeriods">
+            <wsdl:documentation>Retrieve available reporting periods for a data series</wsdl:documentation>
+            <wsdl:input message="tns:RetrieveReportingPeriodsSoapIn"/>
+            <wsdl:output message="tns:RetrieveReportingPeriodsSoapOut"/>
+        </wsdl:operation>
+        
+        <wsdl:operation name="RetrievePanelOfReporters">
+            <wsdl:documentation>Retrieve list of institutions reporting for a specific series</wsdl:documentation>
+            <wsdl:input message="tns:RetrievePanelOfReportersSoapIn"/>
+            <wsdl:output message="tns:RetrievePanelOfReportersSoapOut"/>
+        </wsdl:operation>
+        
+        <wsdl:operation name="RetrieveFacsimile">
+            <wsdl:documentation>Retrieve facsimile (PDF) of regulatory report</wsdl:documentation>
+            <wsdl:input message="tns:RetrieveFacsimileSoapIn"/>
+            <wsdl:output message="tns:RetrieveFacsimileSoapOut"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <!-- Binding Definition -->
+    <wsdl:binding name="FFIECWebServiceSoap" type="tns:FFIECWebServiceSoap">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+        
+        <wsdl:operation name="RetrieveData">
+            <soap:operation soapAction="http://ffiec.gov/webservices/RetrieveData" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        
+        <wsdl:operation name="RetrieveReportingPeriods">
+            <soap:operation soapAction="http://ffiec.gov/webservices/RetrieveReportingPeriods" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        
+        <wsdl:operation name="RetrievePanelOfReporters">
+            <soap:operation soapAction="http://ffiec.gov/webservices/RetrievePanelOfReporters" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        
+        <wsdl:operation name="RetrieveFacsimile">
+            <soap:operation soapAction="http://ffiec.gov/webservices/RetrieveFacsimile" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+
+    <!-- Service Definition -->
+    <wsdl:service name="FFIECWebService">
+        <wsdl:documentation>FFIEC Central Data Repository Web Service</wsdl:documentation>
+        <wsdl:port name="FFIECWebServiceSoap" binding="tns:FFIECWebServiceSoap">
+            <soap:address location="https://cdr.ffiec.gov/webservice/FFIECWebService.asmx"/>
+        </wsdl:port>
+    </wsdl:service>
+
+</wsdl:definitions>

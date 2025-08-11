@@ -1,20 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FFIEC Account Setup Instructions &mdash; FFIEC Webservice Python Connector 0.1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <title>FFIEC Account Setup Instructions &mdash; FFIEC Data Connect 1.0.0rc1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=77c1c56c"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -27,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> FFIEC Webservice Python Connector
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -56,15 +61,15 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">FFIEC Webservice Python Connector</a>
+          <a href="index.html">FFIEC Data Connect</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>FFIEC Account Setup Instructions</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">FFIEC Account Setup Instructions</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/account_setup.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -75,9 +80,9 @@
            <div itemprop="articleBody">
              
   <section id="ffiec-account-setup-instructions">
-<h1>FFIEC Account Setup Instructions<a class="headerlink" href="#ffiec-account-setup-instructions" title="Permalink to this headline"></a></h1>
+<h1>FFIEC Account Setup Instructions<a class="headerlink" href="#ffiec-account-setup-instructions" title="Link to this heading"></a></h1>
 <section id="prerequisites-for-ffiec-data-connect-package">
-<h2>Prerequisites for ffiec_data_connect package<a class="headerlink" href="#prerequisites-for-ffiec-data-connect-package" title="Permalink to this headline"></a></h2>
+<h2>Prerequisites for ffiec_data_connect package<a class="headerlink" href="#prerequisites-for-ffiec-data-connect-package" title="Link to this heading"></a></h2>
 <p>To utilize the <cite>ffiec_data_connect</cite> package, you must create an account with the Federal Financial Institution Examination Council (FFIEC)’s Webservice portal.</p>
 <p>There is no cost for the account, nor are there any apparent maximum limits for the total amount of data downloaded. Users are advised to read the terms of service and privacy policy before applying for a user name and utilizing the service.</p>
 <p>However, there are unpublished rate limits. When utilizing the package, it is recommended to utilize retry logic, in the event
@@ -85,14 +90,15 @@ that the rate limit is exceeded.</p>
 <p>Please note that support for use of the FFIEC accounts is provided by the FFIEC, and is not provided by the <cite>ffiec_data_connect</cite> package repository.</p>
 </section>
 <section id="how-to-create-an-account">
-<h2>How to create an account<a class="headerlink" href="#how-to-create-an-account" title="Permalink to this headline"></a></h2>
+<h2>How to create an account<a class="headerlink" href="#how-to-create-an-account" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
 <li><p>Visit the website at <a class="reference external" href="https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true">https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true</a></p></li>
 <li><p>Complete the fields requested</p></li>
 <li><p>Receive an email with a link to activate your account</p></li>
 <li><p>Start using the <cite>ffiec_data_connect</cite> package!</p></li>
 </ol>
-<a class="reference internal image-reference" href="_images/create_account.png"><img alt="Screen shot of FFIEC account creation page" src="_images/create_account.png" style="width: 400px;" /></a>
+<a class="reference internal image-reference" href="_images/create_account.png"><img alt="Screen shot of FFIEC account creation page" src="_images/create_account.png" style="width: 400px;" />
+</a>
 </section>
 </section>
 
@@ -107,7 +113,7 @@ that the rate limit is exceeded.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Michael Handelman.</p>
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

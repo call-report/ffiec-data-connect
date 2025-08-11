@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Sample SOAP response for RetrieveData operation.
+This represents typical Call Report data returned by the FFIEC web service.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+        <RetrieveDataResponse xmlns="http://ffiec.gov/webservices">
+            <RetrieveDataResult>
+[
+  {
+    "IDRSSD": "123456",
+    "Financial Institution Name": "First National Bank of Example City",
+    "Reporting Period Begin Date": "10/1/2023",
+    "Reporting Period End Date": "12/31/2023",
+    "RCFD2170": "5450000",
+    "RCFD2170 Description": "Total assets",
+    "RCFD1400": "3245000", 
+    "RCFD1400 Description": "Total loans and lease financing receivables",
+    "RCFD2200": "4325000",
+    "RCFD2200 Description": "Total deposits",
+    "RCFD3210": "555000",
+    "RCFD3210 Description": "Total equity capital",
+    "RIAD4340": "32000",
+    "RIAD4340 Description": "Net income (loss) attributable to bank",
+    "RCFD0390": "325000",
+    "RCFD0390 Description": "Cash and balances due from depository institutions",
+    "RCFD1754": "890000",
+    "RCFD1754 Description": "Securities held to maturity",
+    "RCFD1773": "750000", 
+    "RCFD1773 Description": "Securities available for sale",
+    "RCFD1410": "2150000",
+    "RCFD1410 Description": "Loans secured by real estate",
+    "RCFD1766": "685000",
+    "RCFD1766 Description": "Commercial and industrial loans",
+    "RCFD1975": "410000",
+    "RCFD1975 Description": "Consumer loans",
+    "RCFD3123": "35000",
+    "RCFD3123 Description": "Allowance for loan and lease losses",
+    "RCFD2948": "1250000",
+    "RCFD2948 Description": "Noninterest-bearing deposits",
+    "RCFD6636": "3075000",
+    "RCFD6636 Description": "Interest-bearing deposits",
+    "RCFD2604": "890000",
+    "RCFD2604 Description": "Time deposits of $250,000 or more",
+    "RIAD4107": "175000",
+    "RIAD4107 Description": "Total interest income",
+    "RIAD4073": "85000",
+    "RIAD4073 Description": "Total interest expense",
+    "RIAD4074": "90000",
+    "RIAD4074 Description": "Net interest income",
+    "RIAD4230": "8500",
+    "RIAD4230 Description": "Provision for loan and lease losses",
+    "RIAD4079": "25000",
+    "RIAD4079 Description": "Total noninterest income",
+    "RIAD4093": "65000",
+    "RIAD4093 Description": "Total noninterest expense",
+    "RIAD5416": "35000",
+    "RIAD5416 Description": "Salaries and employee benefits",
+    "RIAD4217": "8500",
+    "RIAD4217 Description": "Premises and fixed assets expenses",
+    "RIAD4301": "41500",
+    "RIAD4301 Description": "Income (loss) before income taxes",
+    "RIAD4302": "9500",
+    "RIAD4302 Description": "Income tax expense (benefit)",
+    "RCFD3792": "45000",
+    "RCFD3792 Description": "Noncurrent loans and leases",
+    "RIAD4635": "6500",
+    "RIAD4635 Description": "Charge-offs",
+    "RIAD4605": "2500",
+    "RIAD4605 Description": "Recoveries",
+    "RIADB511": "850000",
+    "RIADB511 Description": "Unused commitments",
+    "RCFD3814": "125000",
+    "RCFD3814 Description": "Standby letters of credit"
+  }
+]
+            </RetrieveDataResult>
+        </RetrieveDataResponse>
+    </soap:Body>
+</soap:Envelope>

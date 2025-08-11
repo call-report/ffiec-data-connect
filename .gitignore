@@ -3,4 +3,13 @@
 *__pycache__*
 .DS_Store
 .pytest_cache
-.pytest_cache
+.pytest_cache.coverage
+htmlcov/
+coverage.xml
+coverage.json
+*.coverage
+*.csv
+*.xlsx
+*.parquet
+*.json
+*.png

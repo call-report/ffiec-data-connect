@@ -1,20 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FFIEC Webservice Data Connector &mdash; FFIEC Webservice Python Connector 0.1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <title>FFIEC Webservice Data Connector &mdash; FFIEC Data Connect 1.0.0rc1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=77c1c56c"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -27,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> FFIEC Webservice Python Connector
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -55,15 +60,15 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">FFIEC Webservice Python Connector</a>
+          <a href="index.html">FFIEC Data Connect</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>FFIEC Webservice Data Connector</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">FFIEC Webservice Data Connector</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -74,19 +79,144 @@
            <div itemprop="articleBody">
              
   <section id="ffiec-webservice-data-connector">
-<h1>FFIEC Webservice Data Connector<a class="headerlink" href="#ffiec-webservice-data-connector" title="Permalink to this headline"></a></h1>
+<h1>FFIEC Webservice Data Connector<a class="headerlink" href="#ffiec-webservice-data-connector" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="ffiec_data_connect.html">ffiec_data_connect package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.constants">ffiec_data_connect.constants module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.credentials">ffiec_data_connect.credentials module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.constants">ffiec_data_connect.constants module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.constants.WebserviceConstants"><code class="docutils literal notranslate"><span class="pre">WebserviceConstants</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.constants.WebserviceConstants.base_url"><code class="docutils literal notranslate"><span class="pre">WebserviceConstants.base_url</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.credentials">ffiec_data_connect.credentials module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.CredentialType"><code class="docutils literal notranslate"><span class="pre">CredentialType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.CredentialType.NO_CREDENTIALS"><code class="docutils literal notranslate"><span class="pre">CredentialType.NO_CREDENTIALS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.CredentialType.SET_FROM_ENV"><code class="docutils literal notranslate"><span class="pre">CredentialType.SET_FROM_ENV</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.CredentialType.SET_FROM_INIT"><code class="docutils literal notranslate"><span class="pre">CredentialType.SET_FROM_INIT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.password"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials.password</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.test_credentials"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials.test_credentials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.username"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials.username</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.datahelpers">ffiec_data_connect.datahelpers module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.exceptions">ffiec_data_connect.exceptions module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.ffiec_connection">ffiec_data_connect.ffiec_connection module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.methods">ffiec_data_connect.methods module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.exceptions">ffiec_data_connect.exceptions module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.ConnectionError"><code class="docutils literal notranslate"><span class="pre">ConnectionError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.CredentialError"><code class="docutils literal notranslate"><span class="pre">CredentialError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.FFIECError"><code class="docutils literal notranslate"><span class="pre">FFIECError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.NoDataError"><code class="docutils literal notranslate"><span class="pre">NoDataError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.RateLimitError"><code class="docutils literal notranslate"><span class="pre">RateLimitError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.SessionError"><code class="docutils literal notranslate"><span class="pre">SessionError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.ValidationError"><code class="docutils literal notranslate"><span class="pre">ValidationError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.XMLParsingError"><code class="docutils literal notranslate"><span class="pre">XMLParsingError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.exceptions.raise_exception"><code class="docutils literal notranslate"><span class="pre">raise_exception()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.ffiec_connection">ffiec_data_connect.ffiec_connection module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection"><code class="docutils literal notranslate"><span class="pre">FFIECConnection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.cleanup_all"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.cleanup_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.close"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_host"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_host</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_password"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_password</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_port"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_port</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_protocol"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_protocol</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_user_name"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_user_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.session"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.session</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.test_connection"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.test_connection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.use_proxy"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.use_proxy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.ProxyProtocol"><code class="docutils literal notranslate"><span class="pre">ProxyProtocol</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.ProxyProtocol.HTTP"><code class="docutils literal notranslate"><span class="pre">ProxyProtocol.HTTP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.ProxyProtocol.HTTPS"><code class="docutils literal notranslate"><span class="pre">ProxyProtocol.HTTPS</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.methods">ffiec_data_connect.methods module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_data"><code class="docutils literal notranslate"><span class="pre">collect_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_filers_on_reporting_period"><code class="docutils literal notranslate"><span class="pre">collect_filers_on_reporting_period()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_filers_since_date"><code class="docutils literal notranslate"><span class="pre">collect_filers_since_date()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_filers_submission_date_time"><code class="docutils literal notranslate"><span class="pre">collect_filers_submission_date_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_reporting_periods"><code class="docutils literal notranslate"><span class="pre">collect_reporting_periods()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect.xbrl_processor">ffiec_data_connect.xbrl_processor module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ffiec_data_connect.html#module-ffiec_data_connect">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.close"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_batch_async"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.collect_batch_async()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_data"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.collect_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_data_async"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.collect_data_async()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_data_parallel"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.collect_data_parallel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_reporting_periods"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.collect_reporting_periods()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_time_series"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.collect_time_series()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_time_series_async"><code class="docutils literal notranslate"><span class="pre">AsyncCompatibleClient.collect_time_series_async()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ConnectionError"><code class="docutils literal notranslate"><span class="pre">ConnectionError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.CredentialError"><code class="docutils literal notranslate"><span class="pre">CredentialError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.CredentialType"><code class="docutils literal notranslate"><span class="pre">CredentialType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.CredentialType.NO_CREDENTIALS"><code class="docutils literal notranslate"><span class="pre">CredentialType.NO_CREDENTIALS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.CredentialType.SET_FROM_ENV"><code class="docutils literal notranslate"><span class="pre">CredentialType.SET_FROM_ENV</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.CredentialType.SET_FROM_INIT"><code class="docutils literal notranslate"><span class="pre">CredentialType.SET_FROM_INIT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection"><code class="docutils literal notranslate"><span class="pre">FFIECConnection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.cleanup_all"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.cleanup_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.close"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_host"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_host</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_password"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_password</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_port"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_port</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_protocol"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_protocol</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_user_name"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.proxy_user_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.session"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.session</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.test_connection"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.test_connection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.use_proxy"><code class="docutils literal notranslate"><span class="pre">FFIECConnection.use_proxy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.FFIECError"><code class="docutils literal notranslate"><span class="pre">FFIECError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.NoDataError"><code class="docutils literal notranslate"><span class="pre">NoDataError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ProxyProtocol"><code class="docutils literal notranslate"><span class="pre">ProxyProtocol</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ProxyProtocol.HTTP"><code class="docutils literal notranslate"><span class="pre">ProxyProtocol.HTTP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ProxyProtocol.HTTPS"><code class="docutils literal notranslate"><span class="pre">ProxyProtocol.HTTPS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.RateLimitError"><code class="docutils literal notranslate"><span class="pre">RateLimitError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.RateLimiter"><code class="docutils literal notranslate"><span class="pre">RateLimiter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.RateLimiter.async_wait_if_needed"><code class="docutils literal notranslate"><span class="pre">RateLimiter.async_wait_if_needed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.RateLimiter.wait_if_needed"><code class="docutils literal notranslate"><span class="pre">RateLimiter.wait_if_needed()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.SessionError"><code class="docutils literal notranslate"><span class="pre">SessionError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.ValidationError"><code class="docutils literal notranslate"><span class="pre">ValidationError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.password"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials.password</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.test_credentials"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials.test_credentials()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.username"><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials.username</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.XMLParsingError"><code class="docutils literal notranslate"><span class="pre">XMLParsingError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.clear_soap_cache"><code class="docutils literal notranslate"><span class="pre">clear_soap_cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.collect_data"><code class="docutils literal notranslate"><span class="pre">collect_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.collect_filers_on_reporting_period"><code class="docutils literal notranslate"><span class="pre">collect_filers_on_reporting_period()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.collect_filers_since_date"><code class="docutils literal notranslate"><span class="pre">collect_filers_since_date()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.collect_filers_submission_date_time"><code class="docutils literal notranslate"><span class="pre">collect_filers_submission_date_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.collect_reporting_periods"><code class="docutils literal notranslate"><span class="pre">collect_reporting_periods()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.disable_legacy_mode"><code class="docutils literal notranslate"><span class="pre">disable_legacy_mode()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.enable_legacy_mode"><code class="docutils literal notranslate"><span class="pre">enable_legacy_mode()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.get_cache_stats"><code class="docutils literal notranslate"><span class="pre">get_cache_stats()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.set_legacy_errors"><code class="docutils literal notranslate"><span class="pre">set_legacy_errors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ffiec_data_connect.html#ffiec_data_connect.use_legacy_errors"><code class="docutils literal notranslate"><span class="pre">use_legacy_errors()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -104,7 +234,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Michael Handelman.</p>
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

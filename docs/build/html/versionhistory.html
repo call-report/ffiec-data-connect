@@ -1,20 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Version History &mdash; FFIEC Webservice Python Connector 0.1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <title>Version History &mdash; FFIEC Data Connect 1.0.0rc1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=77c1c56c"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -27,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> FFIEC Webservice Python Connector
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -42,7 +47,13 @@
 <li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Version History</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Version History</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#version-1-0-0-production-ready">Version 1.0.0 - Production Ready</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-3-0">Version 0.3.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-2-0">Version 0.2.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-1-0">Version 0.1.0</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
 </ul>
 
@@ -52,15 +63,15 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">FFIEC Webservice Python Connector</a>
+          <a href="index.html">FFIEC Data Connect</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Version History</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Version History</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/versionhistory.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -71,11 +82,90 @@
            <div itemprop="articleBody">
              
   <section id="version-history">
-<h1>Version History<a class="headerlink" href="#version-history" title="Permalink to this headline"></a></h1>
+<h1>Version History<a class="headerlink" href="#version-history" title="Link to this heading"></a></h1>
+<section id="version-1-0-0-production-ready">
+<h2>Version 1.0.0 - Production Ready<a class="headerlink" href="#version-1-0-0-production-ready" title="Link to this heading"></a></h2>
+<p>Date: 2025-01-XX</p>
+<p><strong>🎉 Major Release - Enterprise Grade</strong></p>
+<p>This is a transformative release that elevates FFIEC Data Connect to enterprise-grade with comprehensive security, performance, and reliability improvements.</p>
+<p><strong>🚀 New Features</strong></p>
 <ul class="simple">
-<li><p>Version 0.1.0 (2020-07-27)
-- Initial release (beta)</p></li>
+<li><p><strong>AsyncCompatibleClient</strong>: Full async/await support with rate limiting and concurrency control</p></li>
+<li><p><strong>Parallel Processing</strong>: Collect data from multiple banks simultaneously</p></li>
+<li><p><strong>Direct Polars Conversion</strong>: XBRL → Polars pipeline preserves maximum numerical precision</p></li>
+<li><p><strong>Advanced Error Handling</strong>: Custom exception types with rich context</p></li>
+<li><p><strong>Memory Management</strong>: Proper cleanup, context managers, SOAP client caching</p></li>
+<li><p><strong>Thread Safety</strong>: Race condition resolution and concurrent access support</p></li>
+<li><p><strong>New Collection Methods</strong>:
+- <code class="docutils literal notranslate"><span class="pre">collect_filers_on_reporting_period()</span></code>
+- <code class="docutils literal notranslate"><span class="pre">collect_filers_since_date()</span></code>
+- <code class="docutils literal notranslate"><span class="pre">collect_filers_submission_date_time()</span></code></p></li>
 </ul>
+<p><strong>🔒 Security Improvements</strong></p>
+<ul class="simple">
+<li><p>Comprehensive input validation for all method parameters</p></li>
+<li><p>Credential security with password masking</p></li>
+<li><p>XXE prevention with XML parser hardening</p></li>
+<li><p>Immutable credentials after initialization</p></li>
+<li><p>Secure session management</p></li>
+</ul>
+<p><strong>🧠 Performance &amp; Reliability</strong></p>
+<ul class="simple">
+<li><p>Memory leak prevention with proper resource cleanup</p></li>
+<li><p>SOAP client caching to prevent expensive recreation</p></li>
+<li><p>Thread-safe operations throughout</p></li>
+<li><p>Up to 5x performance improvement with async operations</p></li>
+<li><p>Comprehensive test suite with 253 tests</p></li>
+</ul>
+<p><strong>📊 Data Processing Enhancements</strong></p>
+<ul class="simple">
+<li><p>Type-specific columns (int_data, float_data, bool_data, str_data)</p></li>
+<li><p>NumPy dtype consistency throughout data pipeline</p></li>
+<li><p>Support for list, pandas DataFrame, and Polars DataFrame outputs</p></li>
+<li><p>Maximum precision preservation in XBRL processing</p></li>
+</ul>
+<p><strong>📚 Documentation &amp; Developer Experience</strong></p>
+<ul class="simple">
+<li><p>Comprehensive Jupyter notebook demonstration</p></li>
+<li><p>Technical analysis documents for security, memory, and performance</p></li>
+<li><p>Complete API documentation with examples</p></li>
+<li><p>Migration guides and backward compatibility</p></li>
+</ul>
+<p><strong>🔧 Breaking Changes</strong></p>
+<p>While backward compatibility is maintained, some advanced usage patterns may need updates. See CHANGELOG.md for detailed migration guidance.</p>
+</section>
+<section id="version-0-3-0">
+<h2>Version 0.3.0<a class="headerlink" href="#version-0-3-0" title="Link to this heading"></a></h2>
+<p>Date: 2024-XX-XX</p>
+<p><strong>What’s new?</strong></p>
+<ul class="simple">
+<li><p>Direct XBRL to Polars conversion implementation</p></li>
+<li><p>NumPy dtype consistency improvements</p></li>
+<li><p>Enhanced notebook demonstrations</p></li>
+<li><p>Memory management improvements</p></li>
+<li><p>Thread safety enhancements</p></li>
+<li><p>Connection stability improvements</p></li>
+</ul>
+</section>
+<section id="version-0-2-0">
+<h2>Version 0.2.0<a class="headerlink" href="#version-0-2-0" title="Link to this heading"></a></h2>
+<p>Date: 2020-07-28</p>
+<p><strong>What’s new?</strong></p>
+<ul class="simple">
+<li><p>Fixed issues where credentials provided as environment variables were triggering an exception when used</p></li>
+<li><p>Improved error handling and validation</p></li>
+<li><p>Enhanced session management</p></li>
+</ul>
+</section>
+<section id="version-0-1-0">
+<h2>Version 0.1.0<a class="headerlink" href="#version-0-1-0" title="Link to this heading"></a></h2>
+<p>Date: 2020-07-27</p>
+<ul class="simple">
+<li><p>Initial release (beta)</p></li>
+<li><p>Basic FFIEC webservice integration</p></li>
+<li><p>Core data collection functionality</p></li>
+</ul>
+</section>
 </section>
 
 
@@ -89,7 +179,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Michael Handelman.</p>
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
