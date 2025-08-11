@@ -64,7 +64,7 @@ class SOAPClientConfig:
         """Generate cache key for this configuration."""
         # Use hash of all config values for cache key
         config_str = str(asdict(self))
-        return hashlib.md5(config_str.encode()).hexdigest()
+        return hashlib.md5(config_str.encode(), usedforsecurity=False).hexdigest()
 
 
 class SOAPClientCache:
