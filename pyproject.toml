@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "ffiec-data-connect"
 version = "1.0.0rc1"
 authors = [
-    {name = "Civic Forge Solutions LLC", email = "support@civicforge.com"},
+    {name = "Civic Forge Solutions LLC", email = "michael@civicforge.solutions"},
 ]
 description = "Secure, thread-safe Python wrapper for FFIEC webservice API with async support"
 readme = "README.md"
