@@ -31,7 +31,7 @@ class Config:
             import warnings
 
             warnings.warn(
-                "Legacy error mode is deprecated and will be disabled by default in version 1.0.0. "
+                "Legacy error mode is deprecated and will be disabled by default in version 2.0.0. "
                 "The new exception types provide better error context and debugging information. "
                 "To migrate: catch specific exceptions (CredentialError, ValidationError, etc.) instead of ValueError. "
                 "To disable this warning and opt into new behavior: set FFIEC_USE_LEGACY_ERRORS=false or call disable_legacy_mode().",
