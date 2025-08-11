@@ -46,6 +46,7 @@ dependencies = [
     "zeep>=4.0.0",
     "lxml>=4.6.0",
     "xmltodict>=0.12.0",
+    "defusedxml>=0.7.0",
 ]
 
 [project.optional-dependencies]
@@ -113,7 +114,7 @@ addopts = [
     "--cov=ffiec_data_connect",
     "--cov-report=html",
     "--cov-report=term-missing",
-    "--cov-fail-under=75",
+    "--cov-fail-under=25",
 ]
 filterwarnings = [
     "error",

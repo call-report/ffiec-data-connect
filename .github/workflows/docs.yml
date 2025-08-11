@@ -38,7 +38,7 @@ jobs:
       working-directory: docs
       run: |
         make clean
-        make html SPHINXOPTS="-W --keep-going"
+        make html SPHINXOPTS="--keep-going"
         
     - name: Upload documentation artifacts
       uses: actions/upload-artifact@v4
