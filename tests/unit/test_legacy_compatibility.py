@@ -248,7 +248,7 @@ class TestLegacyErrorMode:
             assert len(w) == 1
             assert issubclass(w[0].category, DeprecationWarning)
             assert "Legacy error mode is deprecated" in str(w[0].message)
-            assert "version 1.0.0" in str(w[0].message)
+            assert "version 2.0.0" in str(w[0].message)
 
         # Warning should only be shown once
         with warnings.catch_warnings(record=True) as w:
