@@ -6,7 +6,7 @@
 import threading
 import weakref
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional, Type
 
 import requests
 
@@ -32,7 +32,7 @@ class FFIECConnection(object):
     """
 
     # Class-level registry for tracking instances (for cleanup)
-    _instances = weakref.WeakSet()
+    _instances: "weakref.WeakSet[FFIECConnection]" = weakref.WeakSet()
 
     def __init__(self) -> None:
         """Initializes the Https Connection to be utilized
@@ -77,6 +77,9 @@ class FFIECConnection(object):
         with self._lock:
             if self._session is None:
                 self._generate_session()
+            assert (
+                self._session is not None
+            )  # _generate_session should always create a session
             return self._session
 
     @session.setter
@@ -97,7 +100,7 @@ class FFIECConnection(object):
         return
 
     @property
-    def proxy_host(self) -> str:
+    def proxy_host(self) -> Optional[str]:
         """Returns the hostname of the proxy server
 
         Returns:
@@ -119,7 +122,7 @@ class FFIECConnection(object):
             self._config_hash = None
 
     @property
-    def proxy_protocol(self) -> int:
+    def proxy_protocol(self) -> Optional[ProxyProtocol]:
         """Returns the protocol of the proxy server
 
         Returns:
@@ -140,7 +143,7 @@ class FFIECConnection(object):
             self._config_hash = None
 
     @property
-    def proxy_port(self) -> int:
+    def proxy_port(self) -> Optional[int]:
         """Get the optional proxy port
 
         Returns:
@@ -160,7 +163,7 @@ class FFIECConnection(object):
             self._config_hash = None
 
     @property
-    def proxy_user_name(self) -> str:
+    def proxy_user_name(self) -> Optional[str]:
         """Get the optional proxy username
 
         Returns:
@@ -181,7 +184,7 @@ class FFIECConnection(object):
             self._config_hash = None
 
     @property
-    def proxy_password(self) -> str:
+    def proxy_password(self) -> Optional[str]:
         """Get the optional proxy password
 
         Returns:
@@ -281,6 +284,9 @@ class FFIECConnection(object):
                 )
 
             # if we are using a proxy, set the proxy host and port
+            assert (
+                self.proxy_host is not None and self.proxy_port is not None
+            )  # Should be validated earlier
             proxy_url = "http://" + self.proxy_host + ":" + str(self.proxy_port)
 
             # if we have a username and password, include them in the URL
@@ -402,7 +408,12 @@ class FFIECConnection(object):
         """Context manager entry - returns self."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[Any],
+    ) -> None:
         """Context manager exit - ensures cleanup."""
         self.close()
         return None

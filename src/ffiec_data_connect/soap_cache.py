@@ -37,7 +37,7 @@ class SOAPClientConfig:
         cls,
         credentials: WebserviceCredentials,
         session: Union[FFIECConnection, Any],
-        wsdl_url: str = None,
+        wsdl_url: Optional[str] = None,
     ) -> "SOAPClientConfig":
         """Create config from credentials and session."""
         if wsdl_url is None:
@@ -79,7 +79,7 @@ class SOAPClientCache:
         self._lock = threading.RLock()
 
         # Track cache for cleanup
-        self._instances = weakref.WeakSet()
+        self._instances: weakref.WeakSet["SOAPClientCache"] = weakref.WeakSet()
         self._instances.add(self)
 
     def get_client(
@@ -115,6 +115,8 @@ class SOAPClientCache:
                     f"Failed to create SOAP client for {config.wsdl_url}: {str(e)}",
                     url=config.wsdl_url,
                 )
+                # This should never be reached due to raise_exception throwing an exception
+                raise  # Add explicit raise to satisfy type checker
 
     def _create_soap_client(
         self,
@@ -224,7 +226,7 @@ _global_soap_cache = SOAPClientCache(max_size=20)
 def get_soap_client(
     credentials: WebserviceCredentials,
     session: Union[FFIECConnection, Any],
-    wsdl_url: str = None,
+    wsdl_url: Optional[str] = None,
 ) -> Client:
     """Get cached SOAP client for the given configuration.
 

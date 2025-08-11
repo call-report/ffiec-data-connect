@@ -8,6 +8,7 @@ Credentials may be input via environment variables, or passing them as arguments
 
 import os
 from enum import Enum
+from typing import Optional
 
 import requests
 
@@ -43,9 +44,14 @@ class WebserviceCredentials(object):
 
     """
 
-    def __init__(self, username=None, password=None):
+    def __init__(
+        self, username: Optional[str] = None, password: Optional[str] = None
+    ) -> None:
         # Flag to track if credentials are initialized (for immutability)
         self._initialized = False
+
+        # Initialize credential_source
+        self.credential_source: CredentialType = CredentialType.NO_CREDENTIALS
 
         # collect the credentials from the environment variables
         # if the environment variables are not set, we will set the credentials from the arguments
@@ -56,7 +62,7 @@ class WebserviceCredentials(object):
         if password and username:
             self.username = username
             self.password = password
-            self.credential_source: CredentialType = CredentialType.SET_FROM_INIT
+            self.credential_source = CredentialType.SET_FROM_INIT
             self._initialized = True  # Mark as initialized
             return
 
@@ -66,7 +72,7 @@ class WebserviceCredentials(object):
         elif username_env and password_env:
             self.username = username_env
             self.password = password_env
-            self.credential_source: CredentialType = CredentialType.SET_FROM_ENV
+            self.credential_source = CredentialType.SET_FROM_ENV
             self._initialized = True  # Mark as initialized
 
         else:
@@ -175,13 +181,13 @@ class WebserviceCredentials(object):
 
             if has_access_response:
                 print("Your credentials are valid.")
-                return
+                return True
             else:
                 print(
                     "Your credentials are invalid. Please refer to the documentation for more information."
                 )
                 print(has_access_response)
-                return
+                return False
 
             print(has_access_response)
 
@@ -212,6 +218,9 @@ class WebserviceCredentials(object):
                     "Please refer to https://cdr.ffiec.gov/public/PWS/Home.aspx for account setup.",
                     credential_source=str(self.credential_source),
                 )
+
+        # This should never be reached due to exceptions above
+        return False
 
     @property
     def username(self) -> str:

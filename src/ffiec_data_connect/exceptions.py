@@ -4,7 +4,7 @@ This module provides custom exceptions with detailed error messages
 to improve debugging and user experience.
 """
 
-from typing import Any, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 
 def raise_exception(
@@ -34,7 +34,7 @@ def raise_exception(
 class FFIECError(Exception):
     """Base exception for all FFIEC Data Connect errors"""
 
-    def __init__(self, message: str, details: Optional[dict] = None):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
         self.message = message
         self.details = details or {}
         super().__init__(self.message)
@@ -85,7 +85,7 @@ class ConnectionError(FFIECError):
     def __init__(
         self, message: str, url: Optional[str] = None, status_code: Optional[int] = None
     ):
-        details = {}
+        details: Dict[str, Any] = {}
         if url:
             details["url"] = url
         if status_code:

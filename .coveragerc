@@ -106,8 +106,8 @@ skip_empty = True
 # Skip covered files in HTML report (focus on gaps)
 skip_covered = False
 
-# Extra CSS for better HTML report styling
-extra_css = coverage-custom.css
+# Extra CSS for better HTML report styling (disabled - file not found)
+# extra_css = coverage-custom.css
 
 [xml]
 # XML report output file (for CI/CD integration)

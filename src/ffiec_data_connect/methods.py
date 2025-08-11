@@ -5,7 +5,7 @@ The methods contained in this module are utilized to call and collect data from 
 """
 
 import re
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ try:
     POLARS_AVAILABLE = True
 except ImportError:
     POLARS_AVAILABLE = False
-    pl = None
+    pl = None  # type: ignore
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -63,7 +63,7 @@ def _create_ffiec_date_from_datetime(indate: datetime) -> str:
     return mmddyyyy
 
 
-def _convert_any_date_to_ffiec_format(indate: str or datetime) -> str:
+def _convert_any_date_to_ffiec_format(indate: Union[str, datetime]) -> Optional[str]:
     """Converts a string-based date or python datetime object to a FFIEC-formatted date
 
     Args:
@@ -87,16 +87,17 @@ def _convert_any_date_to_ffiec_format(indate: str or datetime) -> str:
             )
         elif len(indate) == 8:
             return _create_ffiec_date_from_datetime(datetime.strptime(indate, "%Y%m%d"))
+        else:
+            # String format not recognized - return None for backwards compatibility
+            return None
     else:
         # raise an error if we don't have a valid date
-        raise (
-            ValueError(
-                "Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"
-            )
+        raise ValueError(
+            "Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"
         )
 
 
-def _convert_quarter_to_date(reporting_period: str) -> datetime:
+def _convert_quarter_to_date(reporting_period: str) -> Optional[datetime]:
     """Converts date in the format of #QYYYY to a datetime object
 
     Returns:
@@ -121,13 +122,14 @@ def _convert_quarter_to_date(reporting_period: str) -> datetime:
         elif quarter_number == 4:
             return datetime(year, 12, 31)
         else:
-            raise (
-                ValueError("Invalid quarter number")
-            )  # raise an error if we don't have a valid quarter number
-    pass
+            return (
+                None  # Invalid quarter number - return None for backwards compatibility
+            )
+    else:
+        return None  # Invalid reporting period format - return None for backwards compatibility
 
 
-def _is_valid_date_or_quarter(reporting_period: str or datetime) -> bool:
+def _is_valid_date_or_quarter(reporting_period: Union[str, datetime]) -> bool:
     """Validates the reporting period input argument, which should indicate either the name of a calendar quarter, or a string that represents the last day of a quarter (e.g. "2019-03-31"), or a datetime object.
 
     If reporting period is a datetime, validate that the date is at quarter end.
@@ -157,6 +159,8 @@ def _is_valid_date_or_quarter(reporting_period: str or datetime) -> bool:
                 return True  # the quarter ends on the 30th in June, September
             else:
                 return False
+        else:
+            return False  # not a valid quarter end month
     elif isinstance(reporting_period, str):
         # does our date match any of the valid regexes?
         return any(re.search(regex, reporting_period) for regex in validRegexList)
@@ -166,14 +170,24 @@ def _is_valid_date_or_quarter(reporting_period: str or datetime) -> bool:
         )
 
 
-def _return_ffiec_reporting_date(indate: datetime or str) -> str:
+def _return_ffiec_reporting_date(indate: Union[datetime, str]) -> str:
     if isinstance(indate, datetime):
         return _create_ffiec_date_from_datetime(indate)
     elif isinstance(indate, str):
         if indate[1] == "Q":
-            return _create_ffiec_date_from_datetime(_convert_quarter_to_date(indate))
+            quarter_date = _convert_quarter_to_date(indate)
+            if quarter_date is None:
+                raise ValueError(
+                    "Invalid quarter format. Must be in the format #Qyyyy where # is 1-4"
+                )
+            return _create_ffiec_date_from_datetime(quarter_date)
         else:
             ffiec_date = _convert_any_date_to_ffiec_format(indate)
+            if ffiec_date is None:
+                raise ValueError(
+                    "Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"
+                )
+
             ffiec_date_month = ffiec_date.split("/")[0]
             ffiec_date_date = ffiec_date.split("/")[1]
 
@@ -192,10 +206,8 @@ def _return_ffiec_reporting_date(indate: datetime or str) -> str:
             elif ffiec_date_month == "12" and ffiec_date_date == "31":
                 return ffiec_date
             else:
-                raise (
-                    ValueError(
-                        "Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"
-                    )
+                raise ValueError(
+                    "Invalid date format. Must be a string in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', or a python datetime object"
                 )
 
 
@@ -270,7 +282,9 @@ def _credentials_validator(creds: credentials.WebserviceCredentials) -> bool:
     return True
 
 
-def _session_validator(session: requests.Session) -> bool:
+def _session_validator(
+    session: Union[ffiec_connection.FFIECConnection, requests.Session],
+) -> bool:
     """Internal function to validate the session
 
     Args:
@@ -364,7 +378,7 @@ def _return_client_session(
 
 
 def collect_reporting_periods(
-    session: requests.Session,
+    session: Union[ffiec_connection.FFIECConnection, requests.Session],
     creds: credentials.WebserviceCredentials,
     series="call",
     output_type="list",
@@ -416,6 +430,8 @@ def collect_reporting_periods(
             rssd_id=None,
         )
 
+    # At this point ret is guaranteed to be non-None and non-empty
+    assert ret is not None
     ret_date_formatted = ret
 
     if date_output_format == "string_yyyymmdd":
@@ -437,7 +453,10 @@ def collect_reporting_periods(
     pass
 
 
-def _client_factory(session, creds) -> Client:
+def _client_factory(
+    session: Union[ffiec_connection.FFIECConnection, requests.Session],
+    creds: credentials.WebserviceCredentials,
+) -> Client:
     """Creates a zeep client session
 
     Determines whether the session argument is an FFIECConnection instance or a requests.Session instance.
@@ -525,8 +544,39 @@ def collect_data(
             fiID=rssd_id_int,
             reportingPeriodEndDate=reporting_period_ffiec,
         )
+    else:
+        raise_exception(
+            ValidationError,
+            f"Invalid series: {series}",
+            field="series",
+            value=series,
+            expected="'call' or 'ubpr'",
+        )
 
-    processed_ret = xbrl_processor._process_xml(ret, date_output_format)
+    # Check if we received data from the webservice
+    if ret is None:
+        raise_exception(
+            NoDataError,
+            "No data returned from FFIEC webservice",
+            reporting_period=str(reporting_period),
+            rssd_id=rssd_id,
+        )
+
+    # Ensure ret is bytes for XML processing
+    if isinstance(ret, str):
+        ret_bytes = ret.encode("utf-8")
+    elif isinstance(ret, bytes):
+        ret_bytes = ret
+    else:
+        raise_exception(
+            ValidationError,
+            f"Invalid data type returned from webservice: {type(ret)}",
+            field="webservice_response",
+            value=str(type(ret)),
+            expected="bytes or str",
+        )
+
+    processed_ret = xbrl_processor._process_xml(ret_bytes, date_output_format)
 
     if output_type == "list":
         return processed_ret
@@ -675,10 +725,10 @@ def collect_filers_since_date(
 def collect_filers_submission_date_time(
     session: Union[ffiec_connection.FFIECConnection, requests.Session],
     creds: credentials.WebserviceCredentials,
-    since_date: str or datetime,
-    reporting_period: str or datetime,
-    output_type="list",
-    date_output_format="string_original",
+    since_date: Union[str, datetime],
+    reporting_period: Union[str, datetime],
+    output_type: str = "list",
+    date_output_format: str = "string_original",
 ) -> Union[list, pd.DataFrame]:
     """Retrieves the ID RSSDs and DateTime of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
 

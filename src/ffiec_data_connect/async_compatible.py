@@ -17,15 +17,15 @@ from ffiec_data_connect import credentials, ffiec_connection, methods
 class RateLimiter:
     """Thread-safe rate limiter for both sync and async use."""
 
-    def __init__(self, calls_per_second: float = 10):
+    def __init__(self, calls_per_second: float = 10) -> None:
         """Initialize rate limiter.
 
         Args:
             calls_per_second: Maximum number of calls per second allowed
         """
-        self.calls_per_second = calls_per_second
-        self.min_interval = 1.0 / calls_per_second
-        self.last_call = 0
+        self.calls_per_second: float = calls_per_second
+        self.min_interval: float = 1.0 / calls_per_second
+        self.last_call: float = 0.0
         self.lock = threading.Lock()
 
     def wait_if_needed(self) -> None:
@@ -63,7 +63,7 @@ class AsyncCompatibleClient:
         max_concurrent: int = 5,
         rate_limit: Optional[float] = 10,  # requests per second
         executor: Optional[ThreadPoolExecutor] = None,
-    ):
+    ) -> None:
         """Initialize the async-compatible client.
 
         Args:

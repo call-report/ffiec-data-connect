@@ -216,7 +216,7 @@ class TestCredentialValidation:
 
         # Should complete without raising exception
         result = creds.test_credentials(session)
-        assert result is None  # Method returns None on success
+        assert result is True  # Method returns True on success
 
         mock_get_client.assert_called_once_with(creds, session)
         mock_client.service.TestUserAccess.assert_called_once()

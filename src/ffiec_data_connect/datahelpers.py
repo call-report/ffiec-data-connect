@@ -1,9 +1,13 @@
 """Internal functions to assist with processing results from the Webservice"""
 
+from typing import Any, Dict, Optional, Union
+
 from zeep import helpers
 
 
-def _normalize_output_from_reporter_panel(row: dict) -> dict:
+def _normalize_output_from_reporter_panel(
+    row: Dict[str, Any],
+) -> Dict[str, Optional[Union[str, bool]]]:
     """Normalize the output from the reporter panel into a dict
     Converts integers to strings,
     for zipcode, convert to string and zfill for 5 digits
@@ -14,7 +18,7 @@ def _normalize_output_from_reporter_panel(row: dict) -> dict:
         _type_: _description_
     """
 
-    new_row = {}
+    new_row: Dict[str, Optional[Union[str, bool]]] = {}
     row_keys = list(helpers.serialize_object(row).keys())
 
     # process ID_RSSD
