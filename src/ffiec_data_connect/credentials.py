@@ -98,9 +98,9 @@ class WebserviceCredentials(object):
         ):
             return "WebserviceCredentials(status='not configured')"
 
-        # Show username plainly - usernames are not sensitive data
+        # Mask username for security
         username_display = (
-            self.username
+            self._mask_sensitive_string(self.username)
             if hasattr(self, "_username") and self._username
             else "not_set"
         )
