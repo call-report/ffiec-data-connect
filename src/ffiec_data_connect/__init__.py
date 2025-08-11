@@ -6,7 +6,7 @@ with support for both synchronous and asynchronous operations.
 """
 
 # Version
-__version__ = "2.0.0rc2"
+__version__ = "2.0.0rc3"
 
 # New async-compatible client
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
