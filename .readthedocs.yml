@@ -7,14 +7,17 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.11"
+    python: "3.12"
   jobs:
     post_checkout:
       - git fetch --unshallow || true  # For proper git history in PR builds
+    post_build:
+      - echo "Build completed for version $(python -c 'import ffiec_data_connect; print(ffiec_data_connect.__version__)')"
 
 # Python configuration
 python:
   install:
+    - requirements: docs/requirements.txt  # Install documentation dependencies
     - method: pip
       path: .
       extra_requirements:
@@ -25,13 +28,6 @@ sphinx:
   configuration: docs/source/conf.py
   builder: html
   fail_on_warning: false
-  builder_options:
-    html_context:
-      display_github: true
-      github_user: civic-forge
-      github_repo: ffiec-data-connect
-      github_version: main
-      conf_py_path: /docs/source/
 
 # Build formats
 formats:
