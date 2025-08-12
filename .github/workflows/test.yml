@@ -1,8 +1,4 @@
-name: Test
-
-concurrency:
-  group: test-${{ github.ref }}
-  cancel-in-progress: true
+name: Test & Quality Assurance
 
 on:
   push:
@@ -10,170 +6,356 @@ on:
   pull_request:
     branches: [ main, develop, release/* ]
 
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint:
-    name: Lint & Type Check (Python ${{ matrix.python-version }})
+  # Skip expensive tests for documentation-only changes
+  changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
-      fail-fast: false
+    outputs:
+      code-changed: ${{ steps.changes.outputs.code }}
+      docs-only: ${{ steps.changes.outputs.docs-only }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+      
+    - name: Check for code changes
+      id: changes
+      run: |
+        if git diff --name-only ${{ github.event.before }}..${{ github.sha }} | grep -E '\.(py|toml|yml|yaml|cfg|ini)$' > /dev/null; then
+          echo "code=true" >> $GITHUB_OUTPUT
+          echo "docs-only=false" >> $GITHUB_OUTPUT
+        elif git diff --name-only ${{ github.event.before }}..${{ github.sha }} | grep -E '\.(md|rst|txt)$' > /dev/null; then
+          echo "code=false" >> $GITHUB_OUTPUT
+          echo "docs-only=true" >> $GITHUB_OUTPUT
+        else
+          echo "code=true" >> $GITHUB_OUTPUT
+          echo "docs-only=false" >> $GITHUB_OUTPUT
+        fi
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-
-      - name: Install lint deps
-        env:
-          PIP_DISABLE_PIP_VERSION_CHECK: '1'
-        run: |
-          python -m pip install --upgrade pip
-          pip install black isort flake8 mypy types-requests
-          # Install package (non-editable) to allow mypy to resolve
-          pip install .
-
-      - name: Black (check)
-        run: black --check src/ tests/
-
-      - name: Isort (check)
-        run: isort --check-only src/ tests/
-
-      - name: Flake8
-        run: flake8 src/ tests/
-
-      - name: MyPy
-        run: mypy --package ffiec_data_connect
-
-  build:
-    name: Build & Validate (Python 3.11)
+  build-and-validate:
+    name: Build & Validate Package
     runs-on: ubuntu-latest
-    needs: lint
+    needs: changes
+    if: needs.changes.outputs.docs-only != 'true'
     timeout-minutes: 15
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install build deps
-        env:
-          PIP_DISABLE_PIP_VERSION_CHECK: '1'
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
-
-      - name: Build distributions
-        run: |
-          echo "📦 Building sdist and wheel artifacts..."
-          python -m build --sdist --wheel
-          ls -1 dist
-
-      - name: Validate dist artifact versions & metadata
-        run: |
-          set -euo pipefail
-          echo "🔍 Validating version consistency (build job)..."
-          EXPECTED_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
-          echo "Expected version: ${EXPECTED_VERSION}"
-          test -n "${EXPECTED_VERSION}" || { echo 'Failed to extract version'; exit 1; }
-          test -d dist || { echo 'dist/ missing'; exit 1; }
-          shopt -s nullglob
-          wheels=(dist/*.whl)
-          sdists=(dist/*.tar.gz)
-          if [ ${#wheels[@]} -eq 0 ] || [ ${#sdists[@]} -eq 0 ]; then
-            echo '❌ Expected both wheel and sdist'; exit 1; fi
-          for f in "${wheels[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}-"* ]] || { echo "Bad wheel name $f"; exit 1; }; done
-          for f in "${sdists[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}.tar.gz" ]] || { echo "Bad sdist name $f"; exit 1; }; done
-          echo "✅ Filenames contain expected version"
-          python -m pip install twine
-          python -m twine check dist/*
-          echo "✅ Metadata (twine check) passed"
-          if [ -f dev/scripts/validate_wheel_dependencies.py ]; then
-            echo "🔍 Validating wheel dependencies..."
-            python dev/scripts/validate_wheel_dependencies.py "${wheels[0]}"
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install build dependencies
+      run: |
+        echo "::group::Installing build tools"
+        python -m pip install --upgrade pip
+        pip install build twine bandit pip-audit
+        echo "::endgroup::"
+        
+    - name: Security scan with bandit
+      run: |
+        echo "::group::Running security scan"
+        bandit -r src/ffiec_data_connect/ -f json -o bandit-report.json -ll || echo "Bandit found issues, check report"
+        bandit -r src/ffiec_data_connect/ -ll --skip B101  # Skip assert_used_test
+        echo "::endgroup::"
+        
+    - name: Check dependencies for vulnerabilities
+      run: |
+        echo "::group::Checking for vulnerable dependencies"
+        pip-audit --desc --format=json --output=vulnerability-report.json . || echo "Vulnerabilities found, check report"
+        pip-audit --desc .
+        echo "::endgroup::"
+        
+    - name: Build package
+      run: |
+        echo "::group::Building distributions"
+        python -m build
+        echo "Built files:"
+        ls -la dist/
+        
+        # Monitor wheel size with trend analysis
+        if [ -f "dev/scripts/monitor_build_size.py" ]; then
+          for wheel in dist/*.whl; do
+            [ -f "$wheel" ] || continue
+            python dev/scripts/monitor_build_size.py "$wheel"
+            break
+          done
+        else
+          # Fallback size check
+          WHEEL_SIZE=$(du -m dist/*.whl | cut -f1)
+          echo "Wheel size: ${WHEEL_SIZE}MB"
+          if [ "$WHEEL_SIZE" -gt 5 ]; then
+            echo "⚠️ Warning: Wheel size is ${WHEEL_SIZE}MB (> 5MB threshold)"
           fi
-          echo "🎉 Build job validation complete"
+        fi
+        echo "::endgroup::"
+        
+    - name: Verify package metadata
+      run: |
+        echo "::group::Validating package metadata"
+        twine check dist/*
+        echo "::endgroup::"
+        
+    - name: Validate version consistency & dependencies
+      run: |
+        echo "::group::Version and dependency validation"
+        
+        # Extract version from pyproject.toml
+        EXPECTED_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "Expected version: $EXPECTED_VERSION"
+        
+        # Validate wheel filename matches version
+        for wheel in dist/*.whl; do
+          [ -f "$wheel" ] || continue
+          if [[ ! "$wheel" =~ -$EXPECTED_VERSION- ]]; then
+            echo "❌ Wheel file $wheel does not contain expected version $EXPECTED_VERSION"
+            exit 1
+          fi
+        done
+        
+        # Validate sdist filename matches version  
+        for sdist in dist/*.tar.gz; do
+          [ -f "$sdist" ] || continue
+          if [[ ! "$sdist" =~ -$EXPECTED_VERSION\.tar\.gz ]]; then
+            echo "❌ Source distribution $sdist does not contain expected version $EXPECTED_VERSION"
+            exit 1
+          fi
+        done
+        
+        # Validate wheel dependencies
+        if [ -f "dev/scripts/validate_wheel_dependencies.py" ]; then
+          for wheel in dist/*.whl; do
+            [ -f "$wheel" ] || continue
+            echo "🔍 Validating wheel dependencies..."
+            python dev/scripts/validate_wheel_dependencies.py "$wheel"
+            break
+          done
+        fi
+        
+        echo "✅ All validation checks passed!"
+        echo "::endgroup::"
+        
+    - name: Upload security reports
+      if: always()
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          vulnerability-report.json
+        retention-days: 7
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: dist-artifacts
+        path: dist/*
+        retention-days: 7
 
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-artifacts
-          path: dist/*
-          if-no-files-found: error
-
-  test:
-    name: Test Python ${{ matrix.python-version }}
+  test-core:
+    name: Test Core (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    needs: build
-    timeout-minutes: 30
+    needs: build-and-validate
+    timeout-minutes: 20
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
-      fail-fast: false
-    env:
-      PYTHONHASHSEED: '0'
-      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      fail-fast: true
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: dist-artifacts
+        path: dist
+        
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        
+    - name: Install from wheel with test dependencies
+      run: |
+        echo "::group::Installing package and dependencies"
+        python -m pip install --upgrade pip
+        
+        # Install the built wheel
+        pip install dist/*.whl
+        
+        # Install test dependencies
+        pip install pytest pytest-cov pytest-asyncio pytest-mock pytest-timeout pytest-xdist
+        pip install black isort flake8 mypy types-requests
+        
+        # Install optional dependencies for comprehensive testing
+        pip install polars pyarrow
+        echo "::endgroup::"
+        
+    - name: Smoke test - basic import and version check
+      run: |
+        echo "::group::Smoke test"
+        python -c "
+        import sys
+        import ffiec_data_connect as fdc
+        
+        print(f'Python version: {sys.version}')
+        print(f'Package version: {fdc.__version__}')
+        print('Available classes:', [name for name in dir(fdc) if not name.startswith('_')])
+        
+        # Test basic imports
+        from ffiec_data_connect import WebserviceCredentials, FFIECConnection
+        from ffiec_data_connect import AsyncCompatibleClient, RateLimiter
+        
+        print('✅ Smoke test passed - all core imports successful')
+        "
+        echo "::endgroup::"
+        
+    - name: Run quality checks
+      run: |
+        echo "::group::Code quality checks"
+        make check-all
+        echo "::endgroup::"
+        
+    - name: Run core tests with timing
+      run: |
+        echo "::group::Running test suite"
+        pytest -v -x --tb=short \
+          --cov=ffiec_data_connect \
+          --cov-report=term-missing \
+          --cov-report=xml \
+          --cov-report=html \
+          --durations=10 \
+          --timeout=300 \
+          -n auto \
+          tests/unit/
+        echo "::endgroup::"
+        
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          htmlcov/
+          coverage.xml
+          .coverage
+        retention-days: 7
+        
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v4.5.0
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: python-${{ matrix.python-version }}
+        fail_ci_if_error: false
 
-      - name: Download dist artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-artifacts
-          path: dist
+  test-extended:
+    name: Extended Tests (Python 3.11)
+    runs-on: ubuntu-latest
+    needs: [build-and-validate, test-core]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: dist-artifacts
+        path: dist
+        
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install with all dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install dist/*.whl
+        pip install pytest pytest-asyncio pytest-mock pytest-timeout
+        pip install psutil  # For memory testing
+        pip install polars pyarrow
+        
+    - name: Run memory leak tests
+      run: |
+        echo "::group::Memory leak detection"
+        pytest -v tests/unit/test_memory_leaks.py --tb=short --durations=10
+        echo "::endgroup::"
+        
+    - name: Run thread safety tests
+      run: |
+        echo "::group::Thread safety validation"
+        pytest -v tests/unit/test_thread_safety.py --tb=short --durations=10
+        echo "::endgroup::"
+        
+    - name: Run integration tests
+      run: |
+        echo "::group::Integration tests"
+        pytest -v tests/integration/ --tb=short --durations=10
+        echo "::endgroup::"
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-
-      - name: Install project wheel + test deps
-        run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip
-          echo "🔍 Listing dist/ contents:" && ls -1 dist || true
-          # Install package from local dist with extras (extras can't be appended to a wheel path directly)
-          # Use find-links so pip resolves the project name with extras from the local wheel
-          pip install --no-index --find-links dist 'ffiec-data-connect[polars]'
-          # Install test/dev tooling (without reinstalling project) from pinned list if available
-          if [ -f dev/requirements-test.txt ]; then
-            # Filter out black/isort/flake8/mypy if already installed to speed up (optional)
-            grep -v -E '^(black|isort|flake8|mypy)(==|>=)?' dev/requirements-test.txt > /tmp/test-reqs.txt || true
-            pip install -r /tmp/test-reqs.txt
-          else
-            pip install pytest pytest-cov
-          fi
-          python -c "import ffiec_data_connect, sys; import importlib; v=getattr(ffiec_data_connect,'__version__','?'); print('Imported ffiec_data_connect version', v); sys.exit(0 if v else 1)"
-
-      - name: Lightweight dist version re-validation
-        run: |
-          set -euo pipefail
-          EXPECTED_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
-          echo "Expected version: ${EXPECTED_VERSION} (Python ${{ matrix.python-version }})"
-          shopt -s nullglob
-          wheels=(dist/*.whl); sdists=(dist/*.tar.gz)
-          if [ ${#wheels[@]} -eq 0 ] || [ ${#sdists[@]} -eq 0 ]; then echo '❌ Missing wheel or sdist'; exit 1; fi
-          for f in "${wheels[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}-"* ]] || { echo "Bad wheel $f"; exit 1; }; done
-          for f in "${sdists[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}.tar.gz" ]] || { echo "Bad sdist $f"; exit 1; }; done
-          echo '✅ Artifact filenames match expected version'
-
-      - name: Run tests
-        run: |
-          pytest -v --cov=ffiec_data_connect --cov-report=term-missing --cov-report=xml
-
-      - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.11'
-        uses: codecov/codecov-action@v4
-        with:
-          fail_ci_if_error: false
+  # Summary job to check overall status
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [changes, build-and-validate, test-core, test-extended]
+    if: always()
+    
+    steps:
+    - name: Check test results
+      run: |
+        echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.changes.result }}" == "success" && "${{ needs.changes.outputs.docs-only }}" == "true" ]]; then
+          echo "📚 **Documentation-only changes detected** - skipped code tests" >> $GITHUB_STEP_SUMMARY
+          exit 0
+        fi
+        
+        echo "### Build & Validation" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.build-and-validate.result }}" == "success" ]]; then
+          echo "✅ **Build & Validation**: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Build & Validation**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "### Core Tests" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.test-core.result }}" == "success" ]]; then
+          echo "✅ **Core Tests**: PASSED (Python 3.10-3.13)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Core Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "### Extended Tests" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.test-extended.result }}" == "success" ]]; then
+          echo "✅ **Extended Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+        elif [[ "${{ needs.test-extended.result }}" == "skipped" ]]; then
+          echo "⏭️ **Extended Tests**: SKIPPED (not main branch)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Extended Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Fail if any required job failed
+        if [[ "${{ needs.build-and-validate.result }}" != "success" || "${{ needs.test-core.result }}" != "success" ]]; then
+          echo "❌ **Overall Status**: FAILED" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        else
+          echo "✅ **Overall Status**: PASSED" >> $GITHUB_STEP_SUMMARY
+        fi
