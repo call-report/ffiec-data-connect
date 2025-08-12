@@ -65,6 +65,7 @@ jobs:
           done
           
           # Validate sdist filename matches version  
+          shopt -s nullglob
           for sdist in dist/*.tar.gz; do
             [ -f "$sdist" ] || continue
             if [[ ! "$sdist" =~ -$EXPECTED_VERSION\.tar\.gz ]]; then
