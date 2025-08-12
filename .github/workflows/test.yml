@@ -71,7 +71,30 @@ jobs:
               echo "❌ Source distribution $sdist does not contain expected version $EXPECTED_VERSION"
               exit 1
             fi
-          done
+          if ls dist/*.whl 1> /dev/null 2>&1; then
+            for wheel in dist/*.whl; do
+              [ -f "$wheel" ] || continue
+              if [[ ! "$wheel" =~ -$EXPECTED_VERSION- ]]; then
+                echo "❌ Wheel file $wheel does not contain expected version $EXPECTED_VERSION"
+                exit 1
+              fi
+            done
+          else
+            echo "ℹ️  No wheel files found in dist/, skipping wheel version validation"
+          fi
+          
+          # Validate sdist filename matches version  
+          if ls dist/*.tar.gz 1> /dev/null 2>&1; then
+            for sdist in dist/*.tar.gz; do
+              [ -f "$sdist" ] || continue
+              if [[ ! "$sdist" =~ -$EXPECTED_VERSION\.tar\.gz ]]; then
+                echo "❌ Source distribution $sdist does not contain expected version $EXPECTED_VERSION"
+                exit 1
+              fi
+            done
+          else
+            echo "ℹ️  No source distribution files found in dist/, skipping sdist version validation"
+          fi
           
           # Validate wheel dependencies if validation script exists
           if [ -f "dev/scripts/validate_wheel_dependencies.py" ]; then
