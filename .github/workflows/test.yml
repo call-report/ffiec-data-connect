@@ -42,6 +42,52 @@ jobs:
       run: |
         make check-all
         
+    - name: Validate version consistency (Python 3.11 only)
+      if: matrix.python-version == '3.11'
+      run: |
+        echo "🔍 Validating version consistency between pyproject.toml and dist/ artifacts..."
+        
+        # Extract version from pyproject.toml
+        EXPECTED_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "Expected version: $EXPECTED_VERSION"
+        
+        # Check if dist/ folder has correct artifacts (if it exists)
+        if [ -d "dist" ] && [ "$(ls -A dist/ 2>/dev/null)" ]; then
+          echo "Found dist/ artifacts, validating versions..."
+          
+          # Validate wheel filename matches version
+          for wheel in dist/*.whl; do
+            [ -f "$wheel" ] || continue
+            if [[ ! "$wheel" =~ -$EXPECTED_VERSION- ]]; then
+              echo "❌ Wheel file $wheel does not contain expected version $EXPECTED_VERSION"
+              exit 1
+            fi
+          done
+          
+          # Validate sdist filename matches version  
+          for sdist in dist/*.tar.gz; do
+            [ -f "$sdist" ] || continue
+            if [[ ! "$sdist" =~ -$EXPECTED_VERSION\.tar\.gz ]]; then
+              echo "❌ Source distribution $sdist does not contain expected version $EXPECTED_VERSION"
+              exit 1
+            fi
+          done
+          
+          # Validate wheel dependencies if validation script exists
+          if [ -f "dev/scripts/validate_wheel_dependencies.py" ]; then
+            for wheel in dist/*.whl; do
+              [ -f "$wheel" ] || continue
+              echo "🔍 Validating wheel dependencies..."
+              python dev/scripts/validate_wheel_dependencies.py "$wheel"
+              break  # Only need to check one wheel
+            done
+          fi
+          
+          echo "✅ All version checks passed!"
+        else
+          echo "ℹ️  No dist/ artifacts found, skipping version validation"
+        fi
+        
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.11'
       uses: codecov/codecov-action@v4
