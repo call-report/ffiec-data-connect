@@ -12,49 +12,48 @@ on:
 
 jobs:
   lint:
-    name: Lint & Type Check (Python 3.11)
+    name: Lint & Type Check (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install lint deps (dev extras only)
+      - name: Install lint deps
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: '1'
         run: |
           python -m pip install --upgrade pip
-          # Install only required tooling packages explicitly for speed
           pip install black isort flake8 mypy types-requests
-          pip install -e .
+          # Install package (non-editable) to allow mypy to resolve
+          pip install .
 
-      - name: Run black (check)
-        run: |
-          black --version
-          black --check src/ tests/
+      - name: Black (check)
+        run: black --check src/ tests/
 
-      - name: Run isort (check)
-        run: |
-          isort --version-number
-          isort --check-only src/ tests/
+      - name: Isort (check)
+        run: isort --check-only src/ tests/
 
-      - name: Run flake8
-        run: |
-          flake8 src/ tests/
+      - name: Flake8
+        run: flake8 src/ tests/
 
-      - name: Run mypy
-        run: |
-          mypy --package ffiec_data_connect
+      - name: MyPy
+        run: mypy --package ffiec_data_connect
 
   build:
     name: Build & Validate (Python 3.11)
     runs-on: ubuntu-latest
+    needs: lint
     timeout-minutes: 15
     steps:
       - name: Checkout code
@@ -139,10 +138,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install project (editable) + extras
+      - name: Install project wheel + test deps
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
-          pip install -e '.[dev,polars]'
+          # Install built wheel with extras
+          pip install dist/*.whl[polars]
+          # Install test/dev tooling (without reinstalling project) from pinned list if available
+          if [ -f dev/requirements-test.txt ]; then
+            # Filter out black/isort/flake8/mypy if already installed to speed up (optional)
+            grep -v -E '^(black|isort|flake8|mypy)(==|>=)?' dev/requirements-test.txt > /tmp/test-reqs.txt || true
+            pip install -r /tmp/test-reqs.txt
+          else
+            pip install pytest pytest-cov
+          fi
+          python -c "import ffiec_data_connect, sys; import importlib; v=getattr(ffiec_data_connect,'__version__','?'); print('Imported ffiec_data_connect version', v); sys.exit(0 if v else 1)"
 
       - name: Lightweight dist version re-validation
         run: |
@@ -156,9 +166,9 @@ jobs:
           for f in "${sdists[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}.tar.gz" ]] || { echo "Bad sdist $f"; exit 1; }; done
           echo '✅ Artifact filenames match expected version'
 
-      - name: Run quality checks & tests
+      - name: Run tests
         run: |
-          make check-all
+          pytest -v --cov=ffiec_data_connect --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.11'
