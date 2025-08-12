@@ -1,5 +1,9 @@
 name: Test
 
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ main, develop, feature/*, release/* ]
@@ -7,116 +11,116 @@ on:
     branches: [ main, develop, release/* ]
 
 jobs:
+  build:
+    name: Build & Validate (Python 3.11)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install build deps
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build distributions
+        run: |
+          echo "📦 Building sdist and wheel artifacts..."
+          python -m build --sdist --wheel
+          ls -1 dist
+
+      - name: Validate dist artifact versions & metadata
+        run: |
+          set -euo pipefail
+          echo "🔍 Validating version consistency (build job)..."
+          EXPECTED_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
+          echo "Expected version: ${EXPECTED_VERSION}"
+          test -n "${EXPECTED_VERSION}" || { echo 'Failed to extract version'; exit 1; }
+          test -d dist || { echo 'dist/ missing'; exit 1; }
+          shopt -s nullglob
+          wheels=(dist/*.whl)
+          sdists=(dist/*.tar.gz)
+          if [ ${#wheels[@]} -eq 0 ] || [ ${#sdists[@]} -eq 0 ]; then
+            echo '❌ Expected both wheel and sdist'; exit 1; fi
+          for f in "${wheels[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}-"* ]] || { echo "Bad wheel name $f"; exit 1; }; done
+          for f in "${sdists[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}.tar.gz" ]] || { echo "Bad sdist name $f"; exit 1; }; done
+          echo "✅ Filenames contain expected version"
+          python -m pip install twine
+          python -m twine check dist/*
+          echo "✅ Metadata (twine check) passed"
+          if [ -f dev/scripts/validate_wheel_dependencies.py ]; then
+            echo "🔍 Validating wheel dependencies..."
+            python dev/scripts/validate_wheel_dependencies.py "${wheels[0]}"
+          fi
+          echo "🎉 Build job validation complete"
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist/*
+          if-no-files-found: error
+
   test:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    needs: build
     timeout-minutes: 30
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
       fail-fast: false
-    
+    env:
+      PYTHONHASHSEED: '0'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
-          
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev,polars]"
-        
-    - name: Run quality checks
-      run: |
-        make check-all
-        
-    - name: Validate version consistency (Python 3.11 only)
-      if: matrix.python-version == '3.11'
-      run: |
-        echo "🔍 Validating version consistency between pyproject.toml and dist/ artifacts..."
-        
-        # Extract version from pyproject.toml
-        EXPECTED_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
-        echo "Expected version: $EXPECTED_VERSION"
-        
-        # Check if dist/ folder has correct artifacts (if it exists)
-        if [ -d "dist" ] && [ "$(ls -A dist/ 2>/dev/null)" ]; then
-          echo "Found dist/ artifacts, validating versions..."
-          
-          # Validate wheel filename matches version
-          for wheel in dist/*.whl; do
-            [ -f "$wheel" ] || continue
-            if [[ ! "$wheel" =~ -$EXPECTED_VERSION- ]]; then
-              echo "❌ Wheel file $wheel does not contain expected version $EXPECTED_VERSION"
-              exit 1
-            fi
-          done
-          
-          # Validate sdist filename matches version  
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install project (editable) + extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev,polars]'
+
+      - name: Lightweight dist version re-validation
+        run: |
+          set -euo pipefail
+          EXPECTED_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
+          echo "Expected version: ${EXPECTED_VERSION} (Python ${{ matrix.python-version }})"
           shopt -s nullglob
-          for sdist in dist/*.tar.gz; do
-            [ -f "$sdist" ] || continue
-            if [[ ! "$sdist" =~ -$EXPECTED_VERSION\.tar\.gz ]]; then
-              echo "❌ Source distribution $sdist does not contain expected version $EXPECTED_VERSION"
-              exit 1
-            fi
-          if ls dist/*.whl 1> /dev/null 2>&1; then
-            for wheel in dist/*.whl; do
-              [ -f "$wheel" ] || continue
-              if [[ ! "$wheel" =~ -$EXPECTED_VERSION- ]]; then
-                echo "❌ Wheel file $wheel does not contain expected version $EXPECTED_VERSION"
-                exit 1
-              fi
-            done
-          else
-            echo "ℹ️  No wheel files found in dist/, skipping wheel version validation"
-          fi
-          
-          # Validate sdist filename matches version  
-          if ls dist/*.tar.gz 1> /dev/null 2>&1; then
-            for sdist in dist/*.tar.gz; do
-              [ -f "$sdist" ] || continue
-              if [[ ! "$sdist" =~ -$EXPECTED_VERSION\.tar\.gz ]]; then
-                echo "❌ Source distribution $sdist does not contain expected version $EXPECTED_VERSION"
-                exit 1
-              fi
-            done
-          else
-            echo "ℹ️  No source distribution files found in dist/, skipping sdist version validation"
-          fi
-          
-          # Validate wheel dependencies if validation script exists
-          if [ -f "dev/scripts/validate_wheel_dependencies.py" ]; then
-            for wheel in dist/*.whl; do
-              [ -f "$wheel" ] || continue
-              echo "🔍 Validating wheel dependencies..."
-              python dev/scripts/validate_wheel_dependencies.py "$wheel"
-              break  # Only need to check one wheel
-          # Validate wheel dependencies if validation script exists and at least one wheel exists
-          if [ -f "dev/scripts/validate_wheel_dependencies.py" ] && [ -f "${wheel_files[0]}" ]; then
-            echo "🔍 Validating wheel dependencies..."
-            python dev/scripts/validate_wheel_dependencies.py "${wheel_files[0]}"
-          fi
-          
-          echo "✅ All version checks passed!"
-        else
-          echo "ℹ️  No dist/ artifacts found, skipping version validation"
-        fi
-        
-    - name: Upload coverage to Codecov
-      if: matrix.python-version == '3.11'
-      uses: codecov/codecov-action@v4
-      with:
-        fail_ci_if_error: false
+          wheels=(dist/*.whl); sdists=(dist/*.tar.gz)
+          if [ ${#wheels[@]} -eq 0 ] || [ ${#sdists[@]} -eq 0 ]; then echo '❌ Missing wheel or sdist'; exit 1; fi
+          for f in "${wheels[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}-"* ]] || { echo "Bad wheel $f"; exit 1; }; done
+          for f in "${sdists[@]}"; do [[ "$f" == *"-${EXPECTED_VERSION}.tar.gz" ]] || { echo "Bad sdist $f"; exit 1; }; done
+          echo '✅ Artifact filenames match expected version'
+
+      - name: Run quality checks & tests
+        run: |
+          make check-all
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: false
