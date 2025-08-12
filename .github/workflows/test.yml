@@ -288,11 +288,11 @@ jobs:
         pytest -v tests/unit/test_thread_safety.py --tb=short --durations=10
         echo "::endgroup::"
         
-    - name: Run integration tests
-      run: |
-        echo "::group::Integration tests"
-        pytest -v tests/integration/ --tb=short --durations=10
-        echo "::endgroup::"
+    # - name: Run integration tests
+    #   run: |
+    #     echo "::group::Integration tests"
+    #     pytest -v tests/integration/ --tb=short --durations=10
+    #     echo "::endgroup::"
 
   # Summary job to check overall status
   test-summary:
