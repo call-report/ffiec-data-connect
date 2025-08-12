@@ -37,6 +37,10 @@ jobs:
       run: |
         python -m twine check dist/*
         
+    - name: Validate wheel dependencies
+      run: |
+        python dev/scripts/validate_wheel_dependencies.py dist/*.whl
+        
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       
@@ -50,23 +54,39 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13']
     
     steps:
+    - name: Checkout code (for version extraction)
+      uses: actions/checkout@v4
+      
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    
+    - name: Extract version from pyproject.toml
+      id: get_version
+      run: |
+        # Extract version using grep and sed (no external dependencies)
+        VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Installing version: $VERSION"
         
-    - name: Install from PyPI
+    - name: Install specific version from PyPI
       run: |
         python -m pip install --upgrade pip
         # Wait a few minutes for package to be available
         sleep 180
-        pip install ffiec-data-connect
+        # Install the specific version we just published, including pre-releases
+        pip install --pre ffiec-data-connect==${{ steps.get_version.outputs.version }}
         
-    - name: Test basic import
+    - name: Test basic import and verify version
       run: |
         python -c "
         import ffiec_data_connect
-        print(f'Successfully installed ffiec-data-connect v{ffiec_data_connect.__version__}')
+        expected_version = '${{ steps.get_version.outputs.version }}'
+        actual_version = ffiec_data_connect.__version__
+        print(f'Expected: {expected_version}')
+        print(f'Installed: {actual_version}')
+        assert actual_version == expected_version, f'Version mismatch! Expected {expected_version}, got {actual_version}'
         from ffiec_data_connect import WebserviceCredentials
-        print('✅ Basic import test passed')
+        print('✅ Version verification and basic import test passed')
         "
