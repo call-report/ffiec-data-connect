@@ -199,6 +199,9 @@ jobs:
         pip install pytest pytest-cov pytest-asyncio pytest-mock pytest-timeout pytest-xdist
         pip install black isort flake8 mypy types-requests
         
+        # Install dependencies needed by test suite
+        pip install psutil  # Required by memory leak tests
+        
         # Install optional dependencies for comprehensive testing
         pip install polars pyarrow
         echo "::endgroup::"
