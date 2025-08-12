@@ -54,8 +54,8 @@ jobs:
     - name: Run security audit
       run: |
         echo "::group::Security audit of dependencies"
-        pip-audit --desc --format=json --output=security-audit.json . || echo "Vulnerabilities found"
-        pip-audit --desc .
+        pip-audit --format=json --output=security-audit.json . || echo "Vulnerabilities found"
+        pip-audit .
         echo "::endgroup::"
         
     - name: Upload security audit results

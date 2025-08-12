@@ -71,8 +71,8 @@ jobs:
     - name: Check dependencies for vulnerabilities
       run: |
         echo "::group::Checking for vulnerable dependencies"
-        pip-audit --desc --format=json --output=vulnerability-report.json . || echo "Vulnerabilities found, check report"
-        pip-audit --desc .
+        pip-audit --format=json --output=vulnerability-report.json . || echo "Vulnerabilities found, check report"
+        pip-audit .
         echo "::endgroup::"
         
     - name: Build package
