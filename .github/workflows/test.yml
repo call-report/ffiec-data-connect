@@ -234,36 +234,16 @@ jobs:
     - name: Run core tests with timing
       run: |
         echo "::group::Running test suite"
+        # Run tests without coverage for wheel-based installation
+        # Coverage is difficult with installed packages vs source
         pytest -v -x --tb=short \
-          --cov=ffiec_data_connect \
-          --cov-report=term-missing \
-          --cov-report=xml \
-          --cov-report=html \
           --durations=10 \
           --timeout=300 \
           -n auto \
           tests/unit/
         echo "::endgroup::"
         
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4.3.3
-      with:
-        name: test-results-${{ matrix.python-version }}
-        path: |
-          htmlcov/
-          coverage.xml
-          .coverage
-        retention-days: 7
-        
-    - name: Upload coverage to Codecov
-      if: matrix.python-version == '3.11'
-      uses: codecov/codecov-action@v4.5.0
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: python-${{ matrix.python-version }}
-        fail_ci_if_error: false
+    # Note: Coverage is handled in extended tests with source installation
 
   test-extended:
     name: Extended Tests (Python 3.11)
