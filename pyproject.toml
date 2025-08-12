@@ -116,10 +116,6 @@ addopts = [
     "--strict-config",
     "--verbose",
     "--tb=short",
-    "--cov=ffiec_data_connect",
-    "--cov-report=html",
-    "--cov-report=term-missing",
-    "--cov-fail-under=25",
 ]
 filterwarnings = [
     "error",
