@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: ffiec-data-connect
-Version: 2.0.0rc3
+Version: 2.0.0rc4
 Summary: Secure, thread-safe Python wrapper for FFIEC webservice API with async support
 Author-email: Civic Forge Solutions LLC <michael@civicforge.solutions>
 License-Expression: MPL-2.0
