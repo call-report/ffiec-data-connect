@@ -104,7 +104,10 @@ jobs:
               echo "🔍 Validating wheel dependencies..."
               python dev/scripts/validate_wheel_dependencies.py "$wheel"
               break  # Only need to check one wheel
-            done
+          # Validate wheel dependencies if validation script exists and at least one wheel exists
+          if [ -f "dev/scripts/validate_wheel_dependencies.py" ] && [ -f "${wheel_files[0]}" ]; then
+            echo "🔍 Validating wheel dependencies..."
+            python dev/scripts/validate_wheel_dependencies.py "${wheel_files[0]}"
           fi
           
           echo "✅ All version checks passed!"
