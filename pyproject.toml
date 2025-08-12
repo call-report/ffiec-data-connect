@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ffiec-data-connect"
-version = "2.0.0rc2"
+version = "2.0.0rc3"
 authors = [
     {name = "Civic Forge Solutions LLC", email = "michael@civicforge.solutions"},
 ]

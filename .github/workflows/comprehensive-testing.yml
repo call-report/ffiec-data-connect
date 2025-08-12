@@ -2,9 +2,9 @@ name: Comprehensive Testing & Quality Assurance
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop, feature/*, release/* ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, release/* ]
   schedule:
     # Run nightly at 2 AM UTC to catch any regressions
     - cron: '0 2 * * *'
