@@ -142,8 +142,10 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          # Install built wheel with extras
-          pip install dist/*.whl[polars]
+          echo "🔍 Listing dist/ contents:" && ls -1 dist || true
+          # Install package from local dist with extras (extras can't be appended to a wheel path directly)
+          # Use find-links so pip resolves the project name with extras from the local wheel
+          pip install --no-index --find-links dist 'ffiec-data-connect[polars]'
           # Install test/dev tooling (without reinstalling project) from pinned list if available
           if [ -f dev/requirements-test.txt ]; then
             # Filter out black/isort/flake8/mypy if already installed to speed up (optional)
