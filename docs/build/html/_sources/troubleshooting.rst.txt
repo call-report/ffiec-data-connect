@@ -385,22 +385,55 @@ Legacy Token Expiration
 Getting Help
 ============
 
-When to Contact Support
------------------------
+Support Channels
+-----------------
 
-Contact the FFIEC Help Desk (cdr.help@cdr.ffiec.gov) for:
+.. important::
+   **The FFIEC does NOT provide technical support for this library.** FFIEC support is only available for matters relating to your CDR account.
 
-- Account setup and migration issues
-- PWS portal access problems
-- Token generation problems
-- Questions about data availability
+**FFIEC Support (Account Issues Only)**
 
-**Before contacting support**:
+Contact the FFIEC Help Desk (cdr.help@cdr.ffiec.gov) **ONLY** for:
 
-1. Check this troubleshooting guide
-2. Verify your token is valid and not expired
-3. Try with a different RSSD ID or reporting period
-4. Check the library's GitHub issues: https://github.com/call-report/ffiec-data-connect/issues
+- CDR account setup and migration issues
+- PWS portal access problems  
+- JWT token generation problems
+- Questions about official data availability and reporting schedules
+- Microsoft Entra ID authentication issues
+
+**Library Support (Technical Issues)**
+
+For technical support with the ffiec-data-connect library:
+
+1. **GitHub Issues** (Recommended): https://github.com/call-report/ffiec-data-connect/issues
+   
+   - Search existing issues before creating a new one
+   - Include complete error messages and code examples
+   - Best for bugs, feature requests, and general questions
+   
+2. **Direct Email**: michael@civicforge.solutions
+   
+   - For urgent issues or private inquiries
+   - Basic support provided free for all users
+
+**Commercial Support**
+
+For commercial entities requiring:
+
+- **Priority technical support** with guaranteed response times
+- **Custom code modifications** and feature development  
+- **Integration consulting** and architectural guidance
+- **Training and onboarding** for development teams
+- **Private deployment** and customization services
+
+Enhanced commercial support is available upon request. Contact michael@civicforge.solutions to discuss your specific requirements and support packages.
+
+**Before contacting any support**:
+
+1. Check this troubleshooting guide thoroughly
+2. Verify your credentials are valid and not expired
+3. Test with different RSSD IDs or reporting periods
+4. Review existing GitHub issues for similar problems
 
 Debug Information to Provide
 -----------------------------
