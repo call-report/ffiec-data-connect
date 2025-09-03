@@ -33,15 +33,8 @@ from ffiec_data_connect.methods import (
     _output_type_validator,
     _date_format_validator
 )
-from ffiec_data_connect.models import (
-    ReportingPeriodsResponse,
-    UBPRReportingPeriodsResponse,
-    InstitutionsResponse,
-    RSSDIDsResponse,
-    SubmissionsResponse,
-    Institution,
-    SubmissionInfo
-)
+# Pydantic models are handled at the protocol adapter level
+# No direct model imports needed in enhanced methods
 from ffiec_data_connect.data_normalizer import DataNormalizer
 
 logger = logging.getLogger(__name__)
