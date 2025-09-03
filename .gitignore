@@ -1,15 +1,53 @@
-.vscode
+# IDE and editor settings
+.vscode/
+.idea/
+
+# Python bytecode and cache
 *.pyc
 *__pycache__*
+.mypy_cache/
+.ruff_cache/
+
+# OS files
 .DS_Store
-.pytest_cache
+
+# Testing and coverage
+.pytest_cache/
 .pytest_cache.coverage
 htmlcov/
 coverage.xml
 coverage.json
 *.coverage
-*.csv
-*.xlsx
-*.parquet
-*.json
-*.png
+
+# Build artifacts and documentation
+docs/build/
+build/
+dist/
+*.egg-info/
+
+# Test output files - prevent accidental commit of sensitive data
+ffiec_data_*.csv
+ffiec_data_*.xlsx
+ffiec_data_*.parquet
+ffiec_data_*.json
+ffiec_data_*.png
+rest_api_response_data.json
+
+# Debug and test scripts with potential credentials
+test_*.py
+collect_*.py
+*_debug.py
+*_test.py
+
+# Internal documentation - prevent accidental commit
+*_IMPLEMENTATION_*.md
+*_GUIDE_*.md
+*_RELEASE_*.md
+*_MAPPING.md
+*_FIXES.md
+
+# Temporary files
+*.tmp
+*.temp
+.env
+.env.local
