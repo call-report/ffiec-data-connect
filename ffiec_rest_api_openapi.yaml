@@ -1,0 +1,391 @@
+openapi: 3.0.0
+info:
+  title: FFIEC CDR Public Web Service REST API
+  description: |
+    REST API for accessing FFIEC Call Report and UBPR data.
+    This API requires OAuth2 Bearer token authentication with tokens valid for 90 days.
+    
+    Base URL: https://ffieccdr.azure-api.us/public
+    
+    Authentication Headers Required:
+    - UserId: Your FFIEC PWS username
+    - Authentication: Bearer {token}
+    - dataSeries: The data series (call or ubpr)
+  version: 1.0.0
+  contact:
+    name: FFIEC CDR Support
+    url: https://cdr.ffiec.gov/public/PWS/Home.aspx
+
+servers:
+  - url: https://ffieccdr.azure-api.us/public
+    description: Production REST API server
+
+security:
+  - bearerAuth: []
+  - apiHeaders: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: OAuth2 Bearer token (90-day lifecycle)
+    
+    apiHeaders:
+      type: apiKey
+      in: header
+      name: UserId
+      description: FFIEC PWS username
+  
+  parameters:
+    UserId:
+      name: UserId
+      in: header
+      required: true
+      schema:
+        type: string
+      description: FFIEC PWS username (note lowercase 'd' in UserId)
+    
+    Authentication:
+      name: Authentication
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: ^Bearer .+
+      description: Bearer token with "Bearer " prefix
+    
+    dataSeries:
+      name: dataSeries
+      in: header
+      required: true
+      schema:
+        type: string
+        enum: [call, ubpr]
+      description: Data series (lowercase)
+  
+  schemas:
+    ReportingPeriod:
+      type: string
+      pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+      example: "12/31/2023"
+      description: Reporting period in MM/DD/YYYY format
+    
+    RssdId:
+      type: string
+      pattern: ^\d+$
+      example: "480228"
+      description: RSSD ID as string
+    
+    FilerInfo:
+      type: object
+      properties:
+        rssd:
+          type: string
+          description: RSSD ID
+        name:
+          type: string
+          description: Institution name
+        city:
+          type: string
+        state:
+          type: string
+        filingDate:
+          type: string
+          format: date-time
+    
+    Error:
+      type: object
+      properties:
+        Message:
+          type: string
+        Code:
+          type: integer
+
+paths:
+  /RetrieveReportingPeriods:
+    get:
+      summary: Get available reporting periods
+      description: Returns list of available reporting periods for the specified data series
+      operationId: retrieveReportingPeriods
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Authentication'
+        - $ref: '#/components/parameters/dataSeries'
+      responses:
+        '200':
+          description: List of reporting periods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportingPeriod'
+              example:
+                - "6/30/2025"
+                - "3/31/2025"
+                - "12/31/2024"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - invalid token or headers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded (2500 requests/hour)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds to wait before retry
+  
+  /RetrievePanelOfReporters:
+    get:
+      summary: Get list of institutions that filed for a period
+      description: Returns list of institutions that filed reports for the specified reporting period
+      operationId: retrievePanelOfReporters
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Authentication'
+        - $ref: '#/components/parameters/dataSeries'
+        - name: reportingPeriodEndDate
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ReportingPeriod'
+          description: Reporting period end date
+      responses:
+        '200':
+          description: List of filers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FilerInfo'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /RetrieveFilersSinceDate:
+    get:
+      summary: Get filers since a specific date
+      description: Returns institutions that filed after the specified date for a reporting period
+      operationId: retrieveFilersSinceDate
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Authentication'
+        - $ref: '#/components/parameters/dataSeries'
+        - name: reportingPeriodEndDate
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ReportingPeriod'
+        - name: lastUpdateDateTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Get filers since this date/time
+      responses:
+        '200':
+          description: List of filers since date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: RSSD ID
+        '403':
+          description: Forbidden
+  
+  /RetrieveFilersSubmissionDateTime:
+    get:
+      summary: Get filers with submission timestamps
+      description: Returns institutions with their submission date/time for a reporting period
+      operationId: retrieveFilersSubmissionDateTime
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Authentication'
+        - $ref: '#/components/parameters/dataSeries'
+        - name: reportingPeriodEndDate
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ReportingPeriod'
+      responses:
+        '200':
+          description: List of filers with submission times
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    rssd:
+                      type: string
+                    submissionDateTime:
+                      type: string
+                      format: date-time
+        '403':
+          description: Forbidden
+  
+  /RetrieveFacsimile:
+    get:
+      summary: Retrieve individual bank data (XBRL)
+      description: |
+        Retrieves XBRL facsimile data for a specific institution and reporting period.
+        Note: This endpoint may not be available in the REST API yet.
+      operationId: retrieveFacsimile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Authentication'
+        - $ref: '#/components/parameters/dataSeries'
+        - name: fiIDType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ID_RSSD]
+          description: ID type (always ID_RSSD)
+        - name: fiID
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/RssdId'
+          description: RSSD ID of the institution
+        - name: reportingPeriodEndDate
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ReportingPeriod'
+        - name: facsimileFormat
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [XBRL, PDF]
+            default: XBRL
+          description: Format of the facsimile
+      responses:
+        '200':
+          description: XBRL or PDF data
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Forbidden
+        '404':
+          description: No data found for specified parameters
+        '500':
+          description: Server error (endpoint may not be implemented)
+  
+  /RetrieveFacsimileExt:
+    post:
+      summary: Retrieve individual bank data (Extended)
+      description: |
+        Extended version of RetrieveFacsimile that may accept POST with JSON body.
+        Note: Exact implementation status unknown.
+      operationId: retrieveFacsimileExt
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Authentication'
+        - $ref: '#/components/parameters/dataSeries'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fiIDType
+                - fiID
+                - reportingPeriodEndDate
+              properties:
+                fiIDType:
+                  type: string
+                  enum: [ID_RSSD]
+                fiID:
+                  $ref: '#/components/schemas/RssdId'
+                reportingPeriodEndDate:
+                  $ref: '#/components/schemas/ReportingPeriod'
+                facsimileFormat:
+                  type: string
+                  enum: [XBRL, PDF]
+                  default: XBRL
+      responses:
+        '200':
+          description: XBRL or PDF data
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Forbidden
+        '500':
+          description: Server error
+  
+  /RetrieveUBPRXBRLFacsimile:
+    get:
+      summary: Retrieve UBPR data
+      description: Retrieves UBPR XBRL facsimile data for a specific institution
+      operationId: retrieveUBPRXBRLFacsimile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/Authentication'
+        - name: dataSeries
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: [ubpr]
+          description: Must be 'ubpr' for this endpoint
+        - name: fiIDType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ID_RSSD]
+        - name: fiID
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/RssdId'
+        - name: reportingPeriodEndDate
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ReportingPeriod'
+      responses:
+        '200':
+          description: UBPR XBRL data
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Forbidden
+        '404':
+          description: No data found
+        '500':
+          description: Server error

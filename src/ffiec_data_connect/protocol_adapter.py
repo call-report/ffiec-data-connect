@@ -384,7 +384,6 @@ class RESTAdapter(ProtocolAdapter):
         }
         
         try:
-            # The REST API might use POST with JSON payload instead of GET with params
             headers = self.credentials.get_auth_headers()
             # Add dataSeries as header (required for REST API)
             headers["dataSeries"] = series.lower()
@@ -392,64 +391,39 @@ class RESTAdapter(ProtocolAdapter):
             if self.rate_limiter:
                 self.rate_limiter.wait_if_needed()
             
-            # Try POST with JSON payload first
-            request_data = {
-                "rssdId": str(rssd_id),
-                "reportingPeriod": reporting_period,
-                "series": series.lower()
+            # Use correct REST API parameters based on OpenAPI spec
+            # GET request with query parameters
+            url = f"{self.BASE_URL}/RetrieveFacsimile"
+            params = {
+                "fiIDType": "ID_RSSD",
+                "fiID": str(rssd_id),
+                "reportingPeriodEndDate": reporting_period,
+                "facsimileFormat": "XBRL"
             }
             
-            endpoints_to_try = [
-                ("RetrieveFacsimileExt", "POST"),
-                ("RetrieveData", "POST"), 
-                ("RetrieveFacsimile", "POST"),
-                ("RetrieveFacsimileExt", "GET"),
-                ("RetrieveData", "GET"),
-                ("RetrieveFacsimile", "GET")
-            ]
+            logger.debug(f"Calling RetrieveFacsimile with params: {params}")
             
-            last_error = None
-            for endpoint_name, method in endpoints_to_try:
-                try:
-                    url = f"{self.BASE_URL}/{endpoint_name}"
-                    logger.debug(f"Trying REST endpoint: {endpoint_name} with {method}")
-                    
-                    if method == "POST":
-                        response = self.client.post(
-                            url,
-                            headers=headers,
-                            json=request_data
-                        )
-                    else:
-                        response = self.client.get(
-                            url,
-                            headers=headers,
-                            params=params
-                        )
-                    
-                    if response.status_code == 200:
-                        logger.info(f"Successfully used endpoint: {endpoint_name} with {method}")
-                        return response.content
-                    elif response.status_code == 404:
-                        # This endpoint doesn't exist, try next
-                        continue
-                    elif response.status_code == 405:
-                        # Method not allowed, try next
-                        continue
-                    else:
-                        # Other error - handle it
-                        self._handle_response(response, endpoint_name)
-                        
-                except Exception as e:
-                    last_error = e
-                    logger.debug(f"Endpoint {endpoint_name} with {method} failed: {e}")
-                    continue
+            response = self.client.get(
+                url,
+                headers=headers,
+                params=params
+            )
             
-            # If we get here, all endpoints failed
-            if last_error:
-                raise last_error
+            if response.status_code == 200:
+                logger.info(f"Successfully retrieved facsimile for RSSD {rssd_id}")
+                return response.content
+            elif response.status_code == 404:
+                raise NoDataError(f"No data found for RSSD {rssd_id} for period {reporting_period}")
+            elif response.status_code == 500:
+                # Server error - this endpoint may not be implemented yet
+                logger.error(f"Server error retrieving facsimile - endpoint may not be implemented")
+                raise ConnectionError(
+                    f"RetrieveFacsimile endpoint returned server error. "
+                    f"This REST endpoint may not be implemented yet. "
+                    f"Consider using SOAP API for individual bank data retrieval."
+                )
             else:
-                raise ConnectionError(f"No working REST endpoint found for facsimile data")
+                self._handle_response(response, "RetrieveFacsimile")
                 
         except Exception as e:
             logger.error(f"Failed to retrieve facsimile for RSSD {rssd_id}: {e}")
@@ -465,7 +439,8 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             List of institution dictionaries (normalized to SOAP format)
         """
-        params = {"reportingPeriod": reporting_period}
+        # REST API uses reportingPeriodEndDate parameter
+        params = {"reportingPeriodEndDate": reporting_period}
         
         try:
             raw_response = self._make_request("RetrievePanelOfReporters", params)
@@ -494,9 +469,10 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             List of RSSD IDs as strings (normalized to SOAP format)
         """
+        # REST API uses reportingPeriodEndDate and lastUpdateDateTime parameters
         params = {
-            "reportingPeriod": reporting_period,
-            "sinceDate": since_date
+            "reportingPeriodEndDate": reporting_period,
+            "lastUpdateDateTime": since_date
         }
         
         try:
@@ -524,7 +500,8 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             List of submission info dictionaries (normalized to SOAP format)
         """
-        params = {"reportingPeriod": reporting_period}
+        # REST API uses reportingPeriodEndDate parameter
+        params = {"reportingPeriodEndDate": reporting_period}
         
         try:
             raw_response = self._make_request("RetrieveFilersSubmissionDateTime", params)
