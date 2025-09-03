@@ -35,6 +35,7 @@ Data returned from the APIs may be returned as:
    account_setup
    development_setup
    modules
+   rest_api_reference
    data_type_handling
    examples
    versionhistory

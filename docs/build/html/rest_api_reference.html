@@ -1,0 +1,481 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REST API Reference &mdash; FFIEC Data Connect 2.0.0rc4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=aa9da443"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Type Handling" href="data_type_handling.html" />
+    <link rel="prev" title="ffiec_data_connect package" href="ffiec_data_connect.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">REST API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#base-url">Base URL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rate-limiting">Rate Limiting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api-specification">API Specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-response-codes">Common Response Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#date-formats">Date Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-usage-with-python">Example Usage with Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#direct-api-usage-with-curl">Direct API Usage with curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#migration-from-soap-to-rest">Migration from SOAP to REST</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#additional-resources">Additional Resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FFIEC Data Connect</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">REST API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/rest_api_reference.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="rest-api-reference">
+<h1>REST API Reference<a class="headerlink" href="#rest-api-reference" title="Link to this heading"></a></h1>
+<p>This section provides a complete reference for the FFIEC CDR REST API endpoints. The API uses OAuth2 Bearer token authentication with JWT tokens that are valid for 90 days.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Authentication Requirements</strong></p>
+<ul class="simple">
+<li><p>All parameters are passed as <strong>HTTP headers</strong>, not query parameters</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">UserID</span></code>: Your FFIEC PWS username (note capital ‘ID’)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Authentication</span></code>: Bearer {token} (NOT Authorization header)</p></li>
+<li><p>JWT tokens begin with <code class="docutils literal notranslate"><span class="pre">ey</span></code> and end with <code class="docutils literal notranslate"><span class="pre">.</span></code></p></li>
+</ul>
+</div>
+<section id="base-url">
+<h2>Base URL<a class="headerlink" href="#base-url" title="Link to this heading"></a></h2>
+<p>Production: <code class="docutils literal notranslate"><span class="pre">https://ffieccdr.azure-api.us/public</span></code></p>
+</section>
+<section id="rate-limiting">
+<h2>Rate Limiting<a class="headerlink" href="#rate-limiting" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Maximum 2,500 requests per hour per user</p></li>
+<li><p>Rate limit resets on a rolling basis</p></li>
+</ul>
+</section>
+<section id="api-specification">
+<h2>API Specification<a class="headerlink" href="#api-specification" title="Link to this heading"></a></h2>
+<p>The following OpenAPI specification documents all available REST API endpoints, request parameters, and response schemas:</p>
+<dl class="http get">
+<dt class="sig sig-object http" id="get--RetrieveReportingPeriods">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/RetrieveReportingPeriods</span></span><a class="headerlink" href="#get--RetrieveReportingPeriods" title="Link to this definition"></a></dt>
+<dd><p><strong>Retrieve available reporting periods for Call data series</strong></p>
+<p>This method retrieves a list of all reporting period end dates available for the Call data series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – List of reporting periods in chronological order (newest first)</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.2">401 Unauthorized</a></span> – Authentication failed</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – Forbidden - invalid token or headers</p></li>
+<li><p><span><a class="reference external" href="https://www.rfc-editor.org/rfc/rfc6585#section-4">429 Too Many Requests</a></span> – Rate limit exceeded (2500 requests/hour)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>UserID</strong> – FFIEC PWS username
+(Required)</p></li>
+<li><p><strong>Authentication</strong> – User’s security token with “Bearer “ preceding it
+(Required)</p></li>
+<li><p><strong>dataSeries</strong> – Data series name (must be “Call”)
+(Required)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--RetrievePanelOfReporters">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/RetrievePanelOfReporters</span></span><a class="headerlink" href="#get--RetrievePanelOfReporters" title="Link to this definition"></a></dt>
+<dd><p><strong>Retrieve Panel of Reporters for a reporting period</strong></p>
+<p>This method retrieves information for the financial institutions in the Panel of Reporters (POR) expected to file for a given Call reporting period.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – List of filers</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – Forbidden</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1">500 Internal Server Error</a></span> – Server error</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>UserID</strong> – FFIEC PWS username
+(Required)</p></li>
+<li><p><strong>Authentication</strong> – Bearer token with “Bearer “ prefix
+(Required)</p></li>
+<li><p><strong>dataSeries</strong> – Data series name (must be “Call”)
+(Required)</p></li>
+<li><p><strong>reportingPeriodEndDate</strong> – Date string of the reporting period end date (MM/DD/YYYY)
+(Required)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--RetrieveFilersSinceDate">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/RetrieveFilersSinceDate</span></span><a class="headerlink" href="#get--RetrieveFilersSinceDate" title="Link to this definition"></a></dt>
+<dd><p><strong>Retrieve filers since a specific date</strong></p>
+<p>This method retrieves a list of ID RSSDs for financial institutions that have filed for the given reporting period after the provided lastUpdateDateTime and whose new filings are available for public distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – List of filers since date</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – Forbidden</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1">500 Internal Server Error</a></span> – Server error</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>UserID</strong> – FFIEC PWS username
+(Required)</p></li>
+<li><p><strong>Authentication</strong> – Bearer token with “Bearer “ prefix
+(Required)</p></li>
+<li><p><strong>dataSeries</strong> – Data series name (must be “Call”)
+(Required)</p></li>
+<li><p><strong>reportingPeriodEndDate</strong> – Date string of the reporting period end date (MM/DD/YYYY)
+(Required)</p></li>
+<li><p><strong>lastUpdateDateTime</strong> – Date (and optional time) string for when the reports were last filed
+(Required)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--RetrieveFilersSubmissionDateTime">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/RetrieveFilersSubmissionDateTime</span></span><a class="headerlink" href="#get--RetrieveFilersSubmissionDateTime" title="Link to this definition"></a></dt>
+<dd><p><strong>Retrieve filers with submission timestamps</strong></p>
+<p>This method retrieves the ID RSSDs and submission date and time of the reporters who have filed after the provided lastUpdateDateTime and whose new filings are available for public distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – List of filers with submission times</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – Forbidden</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1">500 Internal Server Error</a></span> – Server error</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>UserID</strong> – FFIEC PWS username
+(Required)</p></li>
+<li><p><strong>Authentication</strong> – Bearer token with “Bearer “ prefix
+(Required)</p></li>
+<li><p><strong>dataSeries</strong> – Data series name (must be “Call”)
+(Required)</p></li>
+<li><p><strong>reportingPeriodEndDate</strong> – Date string of the reporting period end date (MM/DD/YYY)
+(Required)</p></li>
+<li><p><strong>lastUpdateDateTime</strong> – Date (and optional time) string for when the reports were last filed. (MM/DD/YYYY)
+(Required)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--RetrieveFacsimile">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/RetrieveFacsimile</span></span><a class="headerlink" href="#get--RetrieveFacsimile" title="Link to this definition"></a></dt>
+<dd><p><strong>Retrieve individual bank facsimile data</strong></p>
+<p>This method retrieves a byte array stream of the requested facsimile file. 
+The client must de-serialize the stream into a file in its local file system. 
+SDF text files can be viewed and modified using spreadsheet or database software 
+(e.g., Excel, Access) or with a text editor (e.g., NotePad). 
+XBRL files require an XBRL editor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – Facsimile file data</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – Forbidden</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – No data found for specified parameters</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1">500 Internal Server Error</a></span> – Server error</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>UserID</strong> – FFIEC PWS username
+(Required)</p></li>
+<li><p><strong>Authentication</strong> – Bearer token with “Bearer “ prefix
+(Required)</p></li>
+<li><p><strong>dataSeries</strong> – Data series name (must be “Call”)
+(Required)</p></li>
+<li><p><strong>reportingPeriodEndDate</strong> – Date string of the reporting period end date (MM/DD/YYYY)
+(Required)</p></li>
+<li><p><strong>fiIdType</strong> – The type of identifier being provided
+(Required)</p></li>
+<li><p><strong>fiId</strong> – The financial institution’s identifier
+(Required)</p></li>
+<li><p><strong>facsimileFormat</strong> – The report format to retrieve
+(Required)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--RetrieveUBPRReportingPeriods">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/RetrieveUBPRReportingPeriods</span></span><a class="headerlink" href="#get--RetrieveUBPRReportingPeriods" title="Link to this definition"></a></dt>
+<dd><p><strong>Retrieve UBPR reporting periods</strong></p>
+<p>This method retrieves a list of all reporting period end dates available for the UBPR data series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – List of UBPR reporting periods</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – Forbidden</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1">500 Internal Server Error</a></span> – Server error</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>UserID</strong> – FFIEC PWS username
+(Required)</p></li>
+<li><p><strong>Authentication</strong> – Bearer token with “Bearer “ prefix
+(Required)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--RetrieveUBPRXBRLFacsimile">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/RetrieveUBPRXBRLFacsimile</span></span><a class="headerlink" href="#get--RetrieveUBPRXBRLFacsimile" title="Link to this definition"></a></dt>
+<dd><p><strong>Retrieve UBPR XBRL facsimile</strong></p>
+<p>Call to retrieve a byte array stream of the requested XBRL instance document. 
+The client must de-serialize the stream into a file in its local file system. 
+XBRL files require an XBRL editor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1">200 OK</a></span> – UBPR XBRL data</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.4">403 Forbidden</a></span> – Forbidden</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">404 Not Found</a></span> – No data found</p></li>
+<li><p><span><a class="reference external" href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.5.1">500 Internal Server Error</a></span> – Server error</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request Headers<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>UserID</strong> – FFIEC PWS username
+(Required)</p></li>
+<li><p><strong>Authentication</strong> – Bearer token with “Bearer “ prefix
+(Required)</p></li>
+<li><p><strong>reportingPeriodEndDate</strong> – Date string of the reporting period end date (MM/DD/YYYY)
+(Required)</p></li>
+<li><p><strong>fiIdType</strong> – The type of identifier being provided
+(Required)</p></li>
+<li><p><strong>fiId</strong> – The financial institution’s identifier
+(Required)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="common-response-codes">
+<h2>Common Response Codes<a class="headerlink" href="#common-response-codes" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 10.0%" />
+<col style="width: 90.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Code</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>200</p></td>
+<td><p>Success - Request processed successfully</p></td>
+</tr>
+<tr class="row-odd"><td><p>401</p></td>
+<td><p>Unauthorized - Authentication failed or token expired</p></td>
+</tr>
+<tr class="row-even"><td><p>403</p></td>
+<td><p>Forbidden - Invalid token or missing required headers</p></td>
+</tr>
+<tr class="row-odd"><td><p>404</p></td>
+<td><p>Not Found - Endpoint or resource not available</p></td>
+</tr>
+<tr class="row-even"><td><p>429</p></td>
+<td><p>Too Many Requests - Rate limit exceeded (2500 requests/hour)</p></td>
+</tr>
+<tr class="row-odd"><td><p>500</p></td>
+<td><p>Internal Server Error - Server-side issue</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="date-formats">
+<h2>Date Formats<a class="headerlink" href="#date-formats" title="Link to this heading"></a></h2>
+<p>The REST API uses consistent date formatting:</p>
+<ul class="simple">
+<li><p><strong>Reporting periods</strong>: <code class="docutils literal notranslate"><span class="pre">MM/DD/YYYY</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">12/31/2024</span></code>)</p></li>
+<li><p><strong>DateTime values</strong>: <code class="docutils literal notranslate"><span class="pre">M/D/YYYY</span> <span class="pre">H:MM:SS</span> <span class="pre">AM/PM</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">2/20/2024</span> <span class="pre">3:23:30</span> <span class="pre">PM</span></code>)</p></li>
+</ul>
+</section>
+<section id="example-usage-with-python">
+<h2>Example Usage with Python<a class="headerlink" href="#example-usage-with-python" title="Link to this heading"></a></h2>
+<p>Using the <code class="docutils literal notranslate"><span class="pre">ffiec_data_connect</span></code> package:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fdc</span>
+
+<span class="c1"># Setup credentials</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;eyJhbGci...&quot;</span><span class="p">,</span>  <span class="c1"># Your JWT token</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Collect reporting periods</span>
+<span class="n">periods</span> <span class="o">=</span> <span class="n">fdc</span><span class="o">.</span><span class="n">collect_reporting_periods</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># None for REST API</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;list&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Collect data for a specific bank</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">fdc</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;12/31/2024&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="direct-api-usage-with-curl">
+<h2>Direct API Usage with curl<a class="headerlink" href="#direct-api-usage-with-curl" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get reporting periods</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;https://ffieccdr.azure-api.us/public/RetrieveReportingPeriods&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;UserID: your_username&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Authentication: Bearer eyJhbGci...&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;dataSeries: Call&quot;</span>
+
+<span class="c1"># Get panel of reporters</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;https://ffieccdr.azure-api.us/public/RetrievePanelOfReporters&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;UserID: your_username&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Authentication: Bearer eyJhbGci...&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;dataSeries: Call&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;reportingPeriodEndDate: 12/31/2024&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="migration-from-soap-to-rest">
+<h2>Migration from SOAP to REST<a class="headerlink" href="#migration-from-soap-to-rest" title="Link to this heading"></a></h2>
+<p>Key differences when migrating from SOAP:</p>
+<ol class="arabic simple">
+<li><p><strong>Authentication</strong>: Use JWT tokens instead of username/password</p></li>
+<li><p><strong>Headers</strong>: All parameters in headers, not SOAP envelope</p></li>
+<li><p><strong>Date Format</strong>: Still uses <code class="docutils literal notranslate"><span class="pre">MM/DD/YYYY</span></code> format like SOAP</p></li>
+<li><p><strong>Response Format</strong>: JSON instead of XML/XBRL</p></li>
+<li><p><strong>Performance</strong>: Significantly faster response times</p></li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The legacy SOAP API will be discontinued on <strong>February 28, 2026</strong>.
+All integrations must migrate to REST before this date.</p>
+</div>
+</section>
+<section id="additional-resources">
+<h2>Additional Resources<a class="headerlink" href="#additional-resources" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf">REST API Specifications (PDF)</a></p></li>
+<li><p><a class="reference external" href="mailto:cdr&#46;help&#37;&#52;&#48;cdr&#46;ffiec&#46;gov">CDR Help Desk</a></p></li>
+<li><p><a class="reference internal" href="account_setup.html"><span class="doc">FFIEC Account Setup Instructions</span></a> - Instructions for obtaining JWT tokens</p></li>
+<li><p><a class="reference internal" href="examples.html"><span class="doc">Example Code</span></a> - Code examples using the REST API</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ffiec_data_connect.html" class="btn btn-neutral float-left" title="ffiec_data_connect package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="data_type_handling.html" class="btn btn-neutral float-right" title="Data Type Handling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

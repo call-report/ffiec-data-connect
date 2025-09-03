@@ -23,7 +23,7 @@ Starting August 25, 2025, the FFIEC uses JSON Web Tokens (JWT) for authenticatio
 * JWT tokens begin with ``ey`` and end with ``.``
 * Tokens expire every 90 days and must be regenerated
 * The token is NOT your account password - it must be generated separately
-* REST API specifications available at: https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf
+* REST API specifications available at: ``https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf``
 
 **2. SOAP API (Legacy - Deprecated February 28, 2026)**
 
@@ -170,7 +170,7 @@ Important Notes
 - What's New: https://cdr.ffiec.gov/public/HelpFileContainers/WhatsNew.aspx
 - FAQs: https://cdr.ffiec.gov/public/HelpFileContainers/FAQ.aspx
 - Help Desk: cdr.help@cdr.ffiec.gov
-- REST API Specifications: https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf
+- REST API Specifications: ``https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf``
 - Migration Instructions: https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF
 
 
