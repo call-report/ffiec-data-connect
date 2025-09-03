@@ -156,7 +156,7 @@ SOAP vs REST Confusion
      - ``None`` (no session needed)
    * - **Date Format**
      - ``MM/DD/YYYY`` (e.g., "12/31/2023")
-     - ``YYYY-MM-DD`` (e.g., "2023-12-31")
+     - ``MM/DD/YYYY`` (e.g., "12/31/2023")
    * - **Rate Limit**
      - 1,000 requests/hour
      - 2,500 requests/hour
@@ -219,7 +219,7 @@ Empty Datasets
    1. **Wrong reporting period**: Institution didn't file for that period
    2. **Wrong RSSD ID**: Institution ID doesn't exist or is inactive
    3. **Wrong series**: Requesting "ubpr" for institution that doesn't have UBPR data
-   4. **Date format mismatch**: Using SOAP format with REST API or vice versa
+   4. **Invalid date format**: Both APIs use MM/DD/YYYY format
 
 **Debugging Steps**:
 
@@ -353,7 +353,7 @@ SOAP to REST Migration
    * - ``FFIECConnection()`` session
      - ``session=None``
    * - Date: ``"12/31/2023"``
-     - Date: ``"2023-12-31"``
+     - Date: ``"12/31/2023"``
    * - Rate limit: 1,000/hour
      - Rate limit: 2,500/hour
 
@@ -372,7 +372,7 @@ SOAP to REST Migration
    from ffiec_data_connect import OAuth2Credentials
    
    rest_creds = OAuth2Credentials("user", "jwt_token", expires_date)
-   data = collect_data(None, rest_creds, reporting_period="2023-12-31", ...)
+   data = collect_data(None, rest_creds, reporting_period="12/31/2023", ...)
 
 Legacy Token Expiration
 ------------------------

@@ -287,7 +287,7 @@
 </tr>
 <tr class="row-even"><td><p><strong>Date Format</strong></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">MM/DD/YYYY</span></code> (e.g., “12/31/2023”)</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code> (e.g., “2023-12-31”)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MM/DD/YYYY</span></code> (e.g., “12/31/2023”)</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Rate Limit</strong></p></td>
 <td><p>1,000 requests/hour</p></td>
@@ -349,7 +349,7 @@
 <li><p><strong>Wrong reporting period</strong>: Institution didn’t file for that period</p></li>
 <li><p><strong>Wrong RSSD ID</strong>: Institution ID doesn’t exist or is inactive</p></li>
 <li><p><strong>Wrong series</strong>: Requesting “ubpr” for institution that doesn’t have UBPR data</p></li>
-<li><p><strong>Date format mismatch</strong>: Using SOAP format with REST API or vice versa</p></li>
+<li><p><strong>Invalid date format</strong>: Both APIs use MM/DD/YYYY format</p></li>
 </ol>
 </div>
 <p><strong>Debugging Steps</strong>:</p>
@@ -501,7 +501,7 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">session=None</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Date: <code class="docutils literal notranslate"><span class="pre">&quot;12/31/2023&quot;</span></code></p></td>
-<td><p>Date: <code class="docutils literal notranslate"><span class="pre">&quot;2023-12-31&quot;</span></code></p></td>
+<td><p>Date: <code class="docutils literal notranslate"><span class="pre">&quot;12/31/2023&quot;</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>Rate limit: 1,000/hour</p></td>
 <td><p>Rate limit: 2,500/hour</p></td>
@@ -520,7 +520,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
 
 <span class="n">rest_creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;jwt_token&quot;</span><span class="p">,</span> <span class="n">expires_date</span><span class="p">)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">rest_creds</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">rest_creds</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;12/31/2023&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
