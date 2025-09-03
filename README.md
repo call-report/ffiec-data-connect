@@ -1,114 +1,202 @@
 # FFIEC Data Connector
 
-- The FFIEC Webservice Python Connector library (`ffiec_data_connect`) downloads data from the FFIEC (Federal Financial Institution Examination Council) via the FFIEC's "webservice" interface. 
+The FFIEC Data Connect Python library (`ffiec_data_connect`) downloads data from the FFIEC (Federal Financial Institution Examination Council) via both SOAP and REST APIs.
 
-- The library interfaces with the SOAP-based API published by FFIEC, normalizing dates and data, conducting transformations to permit immediate analysis of acquired data within a Python data science or scripted environment. (Software will update to new REST API in 4Q 2025)
+## Key Features
 
-- This library is provided for public use, subject to the terms of the Mozilla Public License 2.0, by Civic Forge Solutions LLC
+- **Dual Protocol Support**: Supports both SOAP (legacy) and REST (new) APIs
+- **Automatic Protocol Selection**: Automatically selects the appropriate protocol based on credential type
+- **OAuth2 Authentication**: REST API support with 90-day bearer tokens
+- **Higher Rate Limits**: REST API allows 2500 requests/hour vs 1000 for SOAP
+- **Data Normalization**: Ensures consistency between SOAP and REST responses
+- **Multiple Output Formats**: Returns data as Python lists, Pandas DataFrames, or Polars DataFrames
 
 ### Disclaimer
 
--  __This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.__
--  __Please review the license and disclaimer before using this package.__
+- __This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.__
+- __Please review the license and disclaimer before using this package.__
 
-### Overview
+## Overview
 
-The FFIEC Webservice Python Connector (`ffiec_data_connect`) was created to facilitate the use of the SOAP-based FFIEC Webservice.
+The FFIEC Data Connect library provides a Python interface to both the SOAP-based and REST-based FFIEC APIs. As of version 2.0, the library supports:
 
-Although limited documentation is provided for the Webservice by the FFIEC, practical use of the Webservice via Python requires a considerable amount of boilerplate code - and knowledge of esoteric terms and concepts inherent to bank regulatory data.
+- **SOAP API**: Traditional webservice interface (uses `WebserviceCredentials`)
+- **REST API**: Modern RESTful interface with OAuth2 (uses `OAuth2Credentials`)
 
-With these challenges in mind, this package provides a Python wrapper for the FFIEC Webservice, simplifying the process of interacting with the Webservice, and allow the rapid development of Python applications that require use of the data hosted on the Webservice.
-
-Data returned from the Webservice may be returned as a native Python data structure (`list`) or Pandas DataFrames or Series.
+The library automatically selects the appropriate protocol based on the credentials you provide.
 
 ## Installation
 
-``pip install ffiec-data-connect``
+```bash
+pip install ffiec-data-connect
+```
 
 ## Quickstart
 
-1. To run this Quick Start, you must have an account on the FFIEC Webservice at https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true
-2. After you create an account, verify your password, and complete the sign-in process, log into the public web interface here: https://cdr.ffiec.gov/Public/PWS/Login.aspx
-3. When you login, go to the "Account Details" tab. On this screen, look for the _Security Token_. This token is the password that you will use for the login credentials for ffiec-data-connect, __not the password__.
+### Setting up Credentials
 
-## Backward Compatibility and Error Handling
+1. Create an account at https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx
+2. Login at https://cdr.ffiec.gov/Public/PWS/Login.aspx
+3. For **SOAP API**: Use your username and Security Token from the Account Details tab
+4. For **REST API**: Generate a 90-day bearer token from the Account Details tab
 
-Starting with version 0.3.0, `ffiec-data-connect` includes enhanced error handling with specific exception types for better debugging and error context. **By default, legacy mode is enabled** to maintain backward compatibility with existing code that expects `ValueError` exceptions.
+### Using the REST API (Recommended)
 
-### ⚠️ Deprecation Notice
-
-Legacy error mode is **enabled by default** but is deprecated and will be disabled in version 1.0.0. We recommend migrating to the new specific exception types for better error handling.
-
-### Migrating to New Error Handling (Recommended)
-
-To use the new, more descriptive exception types:
-
-1. **Environment Variable**:
-   ```bash
-   export FFIEC_USE_LEGACY_ERRORS=false
-   python your_script.py
-   ```
-
-2. **Programmatically in your code**:
-   ```python
-   import ffiec_data_connect
-   
-   # Disable legacy mode to use new exception types
-   ffiec_data_connect.disable_legacy_mode()
-   
-   # Now catch specific exceptions:
-   from ffiec_data_connect import CredentialError, ValidationError
-   
-   try:
-       # Your code here
-   except CredentialError as e:
-       print(f"Credential issue: {e}")
-   except ValidationError as e:
-       print(f"Validation issue: {e}")
-   ```
-
-### Maintaining Legacy Behavior
-
-If you need to maintain the current behavior (which is default), you don't need to change anything. The library will continue to raise `ValueError` exceptions for all errors, with a deprecation warning shown once per session.
-
-To suppress the deprecation warning while keeping legacy behavior:
 ```python
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="ffiec_data_connect")
+from ffiec_data_connect import OAuth2Credentials, collect_data, collect_reporting_periods
+
+# Setup REST API credentials
+creds = OAuth2Credentials(
+    username="your_username",
+    bearer_token="your_90_day_token"
+)
+
+# Get reporting periods
+periods = collect_reporting_periods(
+    session=None,  # REST doesn't need session
+    creds=creds,
+    series="call",
+    output_type="list"
+)
+
+# Get individual bank data
+data = collect_data(
+    session=None,
+    creds=creds,
+    reporting_period="2023-12-31",
+    rssd_id="480228",  # JPMorgan Chase
+    series="call",
+    output_type="pandas"  # Returns DataFrame
+)
 ```
 
-## Troubleshooting and Helpful Info
+### Using the SOAP API (Legacy)
 
-- General issues with certificates and authentication: Multiple users have reported issues running the library on Windows-based python installations. The issues arise from libraries that have dependencies on Windows platform-specific SSL authentication libraries. Unfortunately, there are no universal fixes to these issues, as each Windows-based installation can be unique. If you are unable to operate the library in Windows, I advise utilizing a service such as Google Colab or finding a Linux-based or Mac-based machine instead.
+```python
+from ffiec_data_connect import WebserviceCredentials, FFIECConnection, collect_data
 
-- Seeing the `ValueError: Invalid Format String` error? Make sure you are running version >= 0.2.7. If running earlier versions in Windows, an incompatibility with the `strptime` library prevents parsing of valid date strings. A workaround is present in more recent versions of the library. To install the latest version, you may type `pip install ffiec-data-connect==0.2.7` at the commend line.
+# Setup SOAP API credentials
+creds = WebserviceCredentials(
+    username="your_username",
+    password="your_security_token"  # Note: This is the Security Token, not your password
+)
 
-- The FFIEC Webservice throttles requests. As per the Webservice:
+# Create connection
+conn = FFIECConnection()
 
+# Get data
+data = collect_data(
+    session=conn,
+    creds=creds,
+    reporting_period="2023-12-31",
+    rssd_id="480228",
+    series="call",
+    output_type="pandas"
+)
 ```
-Currently, the PWS will allow a limited number of downloads (approximately 2500 per hour). 
 
-If the download limit has been reached within one hour, the user will have to wait until the next hour to continue with the next download.
+## REST API Endpoints
+
+The library supports all 7 FFIEC REST API endpoints (per CDR-PDD-SIS-611 v1.10):
+
+1. **RetrieveReportingPeriods** - Get available reporting periods
+2. **RetrievePanelOfReporters** - Get institutions that filed
+3. **RetrieveFilersSinceDate** - Get filers since specific date
+4. **RetrieveFilersSubmissionDateTime** - Get submission timestamps
+5. **RetrieveFacsimile** - Get individual bank data (XBRL/PDF/SDF)
+6. **RetrieveUBPRReportingPeriods** - Get UBPR reporting periods
+7. **RetrieveUBPRXBRLFacsimile** - Get UBPR XBRL data
+
+## Key Differences Between SOAP and REST
+
+| Feature | SOAP API | REST API |
+|---------|----------|----------|
+| Authentication | Username + Security Token | OAuth2 Bearer Token |
+| Token Lifecycle | No expiration | 90 days |
+| Rate Limit | 1000 requests/hour | 2500 requests/hour |
+| Protocol | SOAP/XML | REST/JSON |
+| Library Used | zeep + requests | httpx |
+| All Endpoints Available | Yes | Yes (as of v2.0) |
+
+## Error Handling
+
+The library provides specific exception types for better debugging:
+
+```python
+from ffiec_data_connect import (
+    CredentialError,    # Authentication issues
+    ValidationError,    # Invalid parameters
+    RateLimitError,     # Rate limit exceeded
+    NoDataError,        # No data found
+    ConnectionError,    # Network issues
+    FFIECError         # General FFIEC errors
+)
+
+try:
+    data = collect_data(...)
+except CredentialError as e:
+    print(f"Authentication failed: {e}")
+except RateLimitError as e:
+    print(f"Rate limited. Retry after: {e.retry_after} seconds")
+except NoDataError as e:
+    print(f"No data available: {e}")
 ```
 
-A back-off function is recommended if your anticipated downloads would be greater than this limit.
+### Legacy Error Mode
 
+For backward compatibility, legacy error mode (raising `ValueError` for all errors) is enabled by default but deprecated. To use new exception types:
 
-## Sample Code
+```python
+import ffiec_data_connect
 
-Sample code to login and collect reporting periods:
-
+# Disable legacy mode for better error handling
+ffiec_data_connect.disable_legacy_mode()
 ```
-        from ffiec_data_connect import methods, credentials, ffiec_connection
-        
-        creds = credentials.WebserviceCredentials(username="USER_NAME_GOES_HERE", password="SECURITY_TOKEN_GOES_HERE")
 
-        conn = ffiec_connection.FFIECConnection()
+## Data Formats
 
-        reporting_periods = methods.collect_reporting_periods(
-            session=conn,
-            creds=creds,
-            output_type="list",
-            date_output_format="string_original"
-        )
-```
+The library preserves data integrity:
+- **ZIP codes**: Preserved as strings with leading zeros
+- **RSSD IDs**: Normalized as strings across both APIs
+- **Dates**: Consistent datetime format
+
+## Rate Limiting
+
+Both APIs have rate limits:
+- **SOAP**: ~1000 requests/hour
+- **REST**: ~2500 requests/hour
+
+The library includes automatic rate limiting to help stay within these limits.
+
+## Examples
+
+See the included Jupyter notebooks for comprehensive examples:
+- `ffiec_data_connect_REST_demo.ipynb` - REST API examples
+- `ffiec_data_connect_demo.ipynb` - SOAP API examples
+
+## Troubleshooting
+
+### Windows SSL Issues
+Some Windows installations may have SSL certificate issues. Consider using:
+- Google Colab
+- Linux/Mac environment
+- WSL (Windows Subsystem for Linux)
+
+### Invalid Format String Error
+Ensure you're using version >= 0.2.7 which includes Windows compatibility fixes.
+
+### REST API Header Requirements
+The REST API has specific header requirements:
+- `UserID` (not `UserId`) 
+- `Authentication` (not `Authorization`)
+- All parameters passed as headers, not query parameters
+
+## Support
+
+This library is provided by Civic Forge Solutions LLC under the Mozilla Public License 2.0.
+
+For issues, please visit: https://github.com/call-report/ffiec-data-connect
+
+## Changelog
+
+See CHANGELOG.md for version history and updates.
