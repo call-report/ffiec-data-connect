@@ -46,7 +46,13 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">FFIEC Account Setup Instructions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites-for-ffiec-data-connect-package">Prerequisites for ffiec_data_connect package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#how-to-create-an-account">How to create an account</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#account-creation-and-setup">Account Creation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#new-users">New Users</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#existing-users-migration-process">Existing Users - Migration Process</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-credentials-in-code">Using Credentials in Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#important-notes">Important Notes</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
@@ -83,42 +89,182 @@
              
   <section id="ffiec-account-setup-instructions">
 <h1>FFIEC Account Setup Instructions<a class="headerlink" href="#ffiec-account-setup-instructions" title="Link to this heading"></a></h1>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Authentication Migration Notice (Effective August 25, 2025)</strong></p>
+<p>The FFIEC CDR is transitioning to Microsoft Entra ID authentication with optional multifactor authentication (MFA).
+All users must complete a registration process to migrate their accounts to the new authentication protocol.</p>
+<ul class="simple">
+<li><p>Legacy SOAP API will remain available until <strong>February 28, 2026</strong></p></li>
+<li><p>All legacy security tokens will expire on <strong>February 28, 2026</strong></p></li>
+<li><p>Users must transition to the REST API before this date</p></li>
+</ul>
+</div>
 <section id="prerequisites-for-ffiec-data-connect-package">
 <h2>Prerequisites for ffiec_data_connect package<a class="headerlink" href="#prerequisites-for-ffiec-data-connect-package" title="Link to this heading"></a></h2>
 <p>The <cite>ffiec_data_connect</cite> package supports two authentication methods:</p>
-<p><strong>1. SOAP API (Legacy)</strong>
-To utilize the SOAP API, you must create an account with the Federal Financial Institution Examination Council (FFIEC)’s Webservice portal.</p>
-<p>There is no cost for the account, nor are there any apparent maximum limits for the total amount of data downloaded. Users are advised to read the terms of service and privacy policy before applying for a user name and utilizing the service.</p>
-<p>However, there are unpublished rate limits. When utilizing the package, it is recommended to utilize retry logic, in the event
-that the rate limit is exceeded.</p>
-<p>Please note that support for use of the FFIEC accounts is provided by the FFIEC, and is not provided by the <cite>ffiec_data_connect</cite> package repository.</p>
+<p><strong>1. REST API (Recommended - Modern OAuth2/JWT)</strong></p>
+<p>Starting August 25, 2025, the FFIEC uses JSON Web Tokens (JWT) for authentication:</p>
+<ul class="simple">
+<li><p>JWT tokens begin with <code class="docutils literal notranslate"><span class="pre">ey</span></code> and end with <code class="docutils literal notranslate"><span class="pre">.</span></code></p></li>
+<li><p>Tokens expire every 90 days and must be regenerated</p></li>
+<li><p>The token is NOT your account password - it must be generated separately</p></li>
+<li><p>REST API specifications available at: <a class="reference external" href="https://cdr.ffiec.gov/public/Files/">https://cdr.ffiec.gov/public/Files/</a><a href="#id1"><span class="problematic" id="id2">SIS611_</span></a>-_Retrieve_Public_Data_via_Web_Service.pdf</p></li>
+</ul>
+<p><strong>2. SOAP API (Legacy - Deprecated February 28, 2026)</strong></p>
+<p>The legacy SOAP API remains available for backward compatibility but will be discontinued.</p>
 </section>
-<section id="how-to-create-an-account">
-<h2>How to create an account<a class="headerlink" href="#how-to-create-an-account" title="Link to this heading"></a></h2>
-<ol class="arabic simple">
-<li><p>Visit the website at <a class="reference external" href="https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true">https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true</a></p></li>
-<li><p>Complete the fields requested</p></li>
-<li><p>Receive an email with a link to activate your account</p></li>
-<li><p>Start using the <cite>ffiec_data_connect</cite> package with WebserviceCredentials!</p></li>
+<section id="account-creation-and-setup">
+<h2>Account Creation and Setup<a class="headerlink" href="#account-creation-and-setup" title="Link to this heading"></a></h2>
+<section id="new-users">
+<h3>New Users<a class="headerlink" href="#new-users" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Prepare Microsoft Identity</strong></p>
+<p>Organizations need a Microsoft identity provider. Choose one:</p>
+<ul class="simple">
+<li><p><strong>Microsoft 365 for Business</strong> (Recommended): <a class="reference external" href="https://www.microsoft.com/en-us/microsoft-365/microsoft-365-business">https://www.microsoft.com/en-us/microsoft-365/microsoft-365-business</a></p></li>
+<li><p><strong>Microsoft Account</strong> (Free): <a class="reference external" href="https://support.microsoft.com/en-us/account-billing/how-to-create-a-new-microsoft-account-a84675c3-3e9e-17cf-2911-3d56b15c0aaf">https://support.microsoft.com/en-us/account-billing/how-to-create-a-new-microsoft-account-a84675c3-3e9e-17cf-2911-3d56b15c0aaf</a></p></li>
+</ul>
+</li>
+<li><p><strong>Create FFIEC Account</strong></p>
+<ul class="simple">
+<li><p>Visit: <a class="reference external" href="https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true">https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true</a></p></li>
+<li><p>Complete the registration fields</p></li>
+<li><p>Accept the invitation email from <code class="docutils literal notranslate"><span class="pre">invites&#64;microsoft.com</span></code></p></li>
+<li><p>Complete the Microsoft Entra ID registration process</p></li>
+</ul>
+</li>
+<li><p><strong>Generate JWT Token</strong></p>
+<ul class="simple">
+<li><p>Log into your CDR PWS account</p></li>
+<li><p>Navigate to token generation section</p></li>
+<li><p>Generate a new JWT token (valid for 90 days)</p></li>
+<li><p><strong>Important</strong>: The JWT token is what you use in the API, NOT your login password</p></li>
+</ul>
+</li>
 </ol>
-<p><strong>2. REST API (Modern)</strong></p>
-<p>For the REST API, you’ll need OAuth2 credentials:</p>
-<ol class="arabic simple">
-<li><p>Obtain a bearer token from the FFIEC REST API authentication endpoint</p></li>
-<li><p>Use OAuth2Credentials with your username and bearer token</p></li>
-<li><p>The REST API offers improved performance and reliability over SOAP</p></li>
+</section>
+<section id="existing-users-migration-process">
+<h3>Existing Users - Migration Process<a class="headerlink" href="#existing-users-migration-process" title="Link to this heading"></a></h3>
+<p>Starting <strong>August 25, 2025</strong>, existing users must migrate:</p>
+<ol class="arabic">
+<li><p><strong>Receive Migration Email</strong></p>
+<ul class="simple">
+<li><p>You’ll receive an invitation from <code class="docutils literal notranslate"><span class="pre">invites&#64;microsoft.com</span></code></p></li>
+<li><p>This email contains a link to accept the migration</p></li>
+</ul>
+</li>
+<li><p><strong>Complete Migration</strong></p>
+<ul class="simple">
+<li><p>Click the link in the invitation email</p></li>
+<li><p>Follow instructions at: <a class="reference external" href="https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF">https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF</a></p></li>
+<li><p>Complete the Microsoft Entra ID registration</p></li>
+</ul>
+</li>
+<li><p><strong>Generate New Token</strong></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>After migration, you MUST generate a new JWT token. The new tokens are longer than previous tokens.</p>
+</div>
+<ul class="simple">
+<li><p>Log into your migrated account</p></li>
+<li><p>Generate a new JWT token</p></li>
+<li><p>Update your code with the new token</p></li>
+</ul>
+</li>
+<li><p><strong>Migration Issues</strong></p>
+<p>If migration fails:</p>
+<ul class="simple">
+<li><p>Try the migration process again</p></li>
+<li><p>If it continues to fail, create a new account following the “New Users” process</p></li>
+<li><p>Contact CDR Help Desk: <a class="reference external" href="mailto:cdr&#46;help&#37;&#52;&#48;cdr&#46;ffiec&#46;gov">cdr<span>&#46;</span>help<span>&#64;</span>cdr<span>&#46;</span>ffiec<span>&#46;</span>gov</a></p></li>
+</ul>
+</li>
 </ol>
-<p>Example REST credential setup:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
+</section>
+</section>
+<section id="using-credentials-in-code">
+<h2>Using Credentials in Code<a class="headerlink" href="#using-credentials-in-code" title="Link to this heading"></a></h2>
+<p><strong>REST API (JWT Token) - Recommended</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 
+<span class="c1"># JWT tokens start with &#39;ey&#39; and end with &#39;.&#39;</span>
+<span class="c1"># Example: eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0...YXVkIjoiUFdTIFVzZXIifQ.</span>
+
 <span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
-    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>
-    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;your_bearer_token&quot;</span><span class="p">,</span>
-    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>  <span class="c1"># Your CDR account username</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;eyJhbGci...&quot;</span><span class="p">,</span>  <span class="c1"># JWT token from CDR PWS portal (NOT your password!)</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>  <span class="c1"># Tokens expire after 90 days</span>
+<span class="p">)</span>
+
+<span class="c1"># Use with REST API (no session needed)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fdc</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">fdc</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># None for REST</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2024-09-30&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span>
 <span class="p">)</span>
 </pre></div>
 </div>
+<p><strong>SOAP API (Legacy - Deprecated)</strong></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>SOAP API will be discontinued on February 28, 2026. Please migrate to REST API.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">WebserviceCredentials</span><span class="p">,</span> <span class="n">FFIECConnection</span>
+
+<span class="c1"># Legacy SOAP credentials</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">WebserviceCredentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>
+    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;your_password&quot;</span>  <span class="c1"># Account password (not JWT token)</span>
+<span class="p">)</span>
+
+<span class="n">conn</span> <span class="o">=</span> <span class="n">FFIECConnection</span><span class="p">()</span>
+
+<span class="c1"># Use with SOAP API</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fdc</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">fdc</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span>  <span class="c1"># Connection object for SOAP</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;6/30/2024&quot;</span><span class="p">,</span>  <span class="c1"># SOAP uses MM/DD/YYYY format</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="important-notes">
+<h2>Important Notes<a class="headerlink" href="#important-notes" title="Link to this heading"></a></h2>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p><strong>Common Authentication Mistakes</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Using password instead of JWT token</strong>: The REST API requires the JWT token generated from the portal, NOT your account password</p></li>
+<li><p><strong>Token expiration</strong>: JWT tokens expire after 90 days - set up reminders to regenerate</p></li>
+<li><p><strong>Token format</strong>: Valid JWT tokens always start with <code class="docutils literal notranslate"><span class="pre">ey</span></code> and end with <code class="docutils literal notranslate"><span class="pre">.</span></code></p></li>
+<li><p><strong>Migration required</strong>: After account migration, old tokens become invalid - generate new ones immediately</p></li>
+</ol>
+</div>
+<p><strong>Token Management Best Practices</strong></p>
+<ul class="simple">
+<li><p>Store tokens securely (use environment variables or secret management systems)</p></li>
+<li><p>Never commit tokens to version control</p></li>
+<li><p>Implement token refresh logic before expiration</p></li>
+<li><p>Monitor token expiration dates in production systems</p></li>
+</ul>
+<p><strong>Additional Resources</strong></p>
+<ul class="simple">
+<li><p>What’s New: <a class="reference external" href="https://cdr.ffiec.gov/public/HelpFileContainers/WhatsNew.aspx">https://cdr.ffiec.gov/public/HelpFileContainers/WhatsNew.aspx</a></p></li>
+<li><p>FAQs: <a class="reference external" href="https://cdr.ffiec.gov/public/HelpFileContainers/FAQ.aspx">https://cdr.ffiec.gov/public/HelpFileContainers/FAQ.aspx</a></p></li>
+<li><p>Help Desk: <a class="reference external" href="mailto:cdr&#46;help&#37;&#52;&#48;cdr&#46;ffiec&#46;gov">cdr<span>&#46;</span>help<span>&#64;</span>cdr<span>&#46;</span>ffiec<span>&#46;</span>gov</a></p></li>
+<li><p>REST API Specifications: <a class="reference external" href="https://cdr.ffiec.gov/public/Files/">https://cdr.ffiec.gov/public/Files/</a><a href="#id3"><span class="problematic" id="id4">SIS611_</span></a>-_Retrieve_Public_Data_via_Web_Service.pdf</p></li>
+<li><p>Migration Instructions: <a class="reference external" href="https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF">https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF</a></p></li>
+</ul>
 <a class="reference internal image-reference" href="_images/create_account.png"><img alt="Screen shot of FFIEC account creation page" src="_images/create_account.png" style="width: 400px;" />
 </a>
 </section>
