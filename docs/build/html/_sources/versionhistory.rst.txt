@@ -11,12 +11,14 @@ This is a transformative release that elevates FFIEC Data Connect to enterprise-
 
 **🚀 New Features**
 
+* **REST API Support**: Full support for modern OAuth2-based REST API alongside legacy SOAP
 * **AsyncCompatibleClient**: Full async/await support with rate limiting and concurrency control
 * **Parallel Processing**: Collect data from multiple banks simultaneously
 * **Direct Polars Conversion**: XBRL → Polars pipeline preserves maximum numerical precision
 * **Advanced Error Handling**: Custom exception types with rich context
 * **Memory Management**: Proper cleanup, context managers, SOAP client caching
 * **Thread Safety**: Race condition resolution and concurrent access support
+* **Null Type Control**: New ``force_null_types`` parameter for pandas/numpy null handling
 * **New Collection Methods**: 
   - ``collect_filers_on_reporting_period()``
   - ``collect_filers_since_date()``

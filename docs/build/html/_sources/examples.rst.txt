@@ -191,6 +191,69 @@ Collect the list of rssd(s) that have filed in a reporting period since a partic
         >> [688556, 175458, 92144, 750444, 715630]
 
 
+REST API Examples
+----------------
+
+The package also supports the modern REST API using OAuth2 credentials. Here are examples using the REST API:
+
+**Loading OAuth2 credentials and connecting**::
+
+    from ffiec_data_connect import OAuth2Credentials
+    from datetime import datetime, timedelta
+    
+    # Create OAuth2 credentials for REST API
+    rest_creds = OAuth2Credentials(
+        username="your_username",
+        bearer_token="your_bearer_token",
+        token_expires=datetime.now() + timedelta(days=90)
+    )
+    
+    # No connection object needed for REST - pass None as session
+    
+**Collecting reporting periods via REST**::
+
+    from ffiec_data_connect import methods
+    
+    reporting_periods = methods.collect_reporting_periods(
+        session=None,  # None for REST API
+        creds=rest_creds,
+        output_type="list",
+        date_output_format="string_original"
+    )
+    
+    print(reporting_periods[0:5])
+    >> ['2024-09-30', '2024-06-30', '2024-03-31', '2023-12-31', '2023-09-30']
+
+**Collecting data via REST with force_null_types**::
+
+    # Collect data with pandas null handling (better for integer display)
+    time_series = methods.collect_data(
+        session=None,
+        creds=rest_creds,
+        rssd_id="37",
+        reporting_period="2024-06-30",
+        series="call",
+        force_null_types="pandas"  # Use pd.NA for nulls
+    )
+    
+    # Or force numpy nulls for compatibility
+    time_series_compat = methods.collect_data(
+        session=None,
+        creds=rest_creds,
+        rssd_id="37",
+        reporting_period="2024-06-30",
+        series="call",
+        force_null_types="numpy"  # Use np.nan for nulls
+    )
+
+**REST API Advantages**:
+
+* Better performance and reliability
+* Modern authentication with OAuth2
+* Automatic retry logic built-in
+* No session management required
+
+
 Collect the time series data associated with a particular rssd and reporting period.
 ------------------------------------------------------------------------------------
 

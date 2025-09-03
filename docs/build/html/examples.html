@@ -54,6 +54,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rest-api-examples">REST API Examples</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
 </ul>
 </li>
@@ -280,6 +281,67 @@
 </pre></div>
 </div>
 </div></blockquote>
+</section>
+<section id="rest-api-examples">
+<h2>REST API Examples<a class="headerlink" href="#rest-api-examples" title="Link to this heading"></a></h2>
+<p>The package also supports the modern REST API using OAuth2 credentials. Here are examples using the REST API:</p>
+<p><strong>Loading OAuth2 credentials and connecting</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="c1"># Create OAuth2 credentials for REST API</span>
+<span class="n">rest_creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;your_bearer_token&quot;</span><span class="p">,</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># No connection object needed for REST - pass None as session</span>
+</pre></div>
+</div>
+<p><strong>Collecting reporting periods via REST</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span>
+
+<span class="n">reporting_periods</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_reporting_periods</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># None for REST API</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">,</span>
+    <span class="n">date_output_format</span><span class="o">=</span><span class="s2">&quot;string_original&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">reporting_periods</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
+<span class="o">&gt;&gt;</span> <span class="p">[</span><span class="s1">&#39;2024-09-30&#39;</span><span class="p">,</span> <span class="s1">&#39;2024-06-30&#39;</span><span class="p">,</span> <span class="s1">&#39;2024-03-31&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-12-31&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-09-30&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Collecting data via REST with force_null_types</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Collect data with pandas null handling (better for integer display)</span>
+<span class="n">time_series</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2024-06-30&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">,</span>
+    <span class="n">force_null_types</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span>  <span class="c1"># Use pd.NA for nulls</span>
+<span class="p">)</span>
+
+<span class="c1"># Or force numpy nulls for compatibility</span>
+<span class="n">time_series_compat</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2024-06-30&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">,</span>
+    <span class="n">force_null_types</span><span class="o">=</span><span class="s2">&quot;numpy&quot;</span>  <span class="c1"># Use np.nan for nulls</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>REST API Advantages</strong>:</p>
+<ul class="simple">
+<li><p>Better performance and reliability</p></li>
+<li><p>Modern authentication with OAuth2</p></li>
+<li><p>Automatic retry logic built-in</p></li>
+<li><p>No session management required</p></li>
+</ul>
 </section>
 <section id="collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">
 <h2>Collect the time series data associated with a particular rssd and reporting period.<a class="headerlink" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period" title="Link to this heading"></a></h2>

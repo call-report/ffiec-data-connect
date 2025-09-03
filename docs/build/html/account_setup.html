@@ -85,7 +85,9 @@
 <h1>FFIEC Account Setup Instructions<a class="headerlink" href="#ffiec-account-setup-instructions" title="Link to this heading"></a></h1>
 <section id="prerequisites-for-ffiec-data-connect-package">
 <h2>Prerequisites for ffiec_data_connect package<a class="headerlink" href="#prerequisites-for-ffiec-data-connect-package" title="Link to this heading"></a></h2>
-<p>To utilize the <cite>ffiec_data_connect</cite> package, you must create an account with the Federal Financial Institution Examination Council (FFIEC)’s Webservice portal.</p>
+<p>The <cite>ffiec_data_connect</cite> package supports two authentication methods:</p>
+<p><strong>1. SOAP API (Legacy)</strong>
+To utilize the SOAP API, you must create an account with the Federal Financial Institution Examination Council (FFIEC)’s Webservice portal.</p>
 <p>There is no cost for the account, nor are there any apparent maximum limits for the total amount of data downloaded. Users are advised to read the terms of service and privacy policy before applying for a user name and utilizing the service.</p>
 <p>However, there are unpublished rate limits. When utilizing the package, it is recommended to utilize retry logic, in the event
 that the rate limit is exceeded.</p>
@@ -97,8 +99,26 @@ that the rate limit is exceeded.</p>
 <li><p>Visit the website at <a class="reference external" href="https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true">https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true</a></p></li>
 <li><p>Complete the fields requested</p></li>
 <li><p>Receive an email with a link to activate your account</p></li>
-<li><p>Start using the <cite>ffiec_data_connect</cite> package!</p></li>
+<li><p>Start using the <cite>ffiec_data_connect</cite> package with WebserviceCredentials!</p></li>
 </ol>
+<p><strong>2. REST API (Modern)</strong></p>
+<p>For the REST API, you’ll need OAuth2 credentials:</p>
+<ol class="arabic simple">
+<li><p>Obtain a bearer token from the FFIEC REST API authentication endpoint</p></li>
+<li><p>Use OAuth2Credentials with your username and bearer token</p></li>
+<li><p>The REST API offers improved performance and reliability over SOAP</p></li>
+</ol>
+<p>Example REST credential setup:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;your_bearer_token&quot;</span><span class="p">,</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 <a class="reference internal image-reference" href="_images/create_account.png"><img alt="Screen shot of FFIEC account creation page" src="_images/create_account.png" style="width: 400px;" />
 </a>
 </section>
