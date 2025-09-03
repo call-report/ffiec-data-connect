@@ -186,9 +186,11 @@ class RESTAdapter(ProtocolAdapter):
         """
         Make authenticated REST request with rate limiting and error handling.
         
+        CRITICAL: FFIEC REST API passes ALL parameters as headers, not query params!
+        
         Args:
             endpoint: API endpoint (e.g., "RetrieveReportingPeriods")
-            params: Query parameters
+            params: Parameters to pass as HEADERS (not query params)
             additional_headers: Additional headers to include in request
             
         Returns:
@@ -211,23 +213,26 @@ class RESTAdapter(ProtocolAdapter):
         url = f"{self.BASE_URL}/{endpoint}"
         headers = self.credentials.get_auth_headers()
         
+        # CRITICAL: For FFIEC REST API, ALL parameters are passed as headers!
+        if params:
+            headers.update(params)
+        
         # Add any additional headers
         if additional_headers:
             headers.update(additional_headers)
         
         logger.debug(f"Making REST request to {endpoint}")
         logger.debug(f"URL: {url}")
-        if params:
-            logger.debug(f"Parameters: {params}")
+        logger.debug(f"Headers (excluding auth): {[k for k in headers.keys() if k != 'Authentication']}")
         # Log token info safely
         token_preview = self.credentials.bearer_token[:10] if len(self.credentials.bearer_token) > 10 else "SHORT"
         logger.debug(f"Auth: Bearer token (first 10 chars): {token_preview}...")
         
         try:
+            # No query params - everything is in headers!
             response = self.client.get(
                 url,
-                headers=headers,
-                params=params or {}
+                headers=headers
             )
             
             logger.debug(f"Response Status: {response.status_code}")
@@ -338,12 +343,12 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             List of reporting period strings (normalized to SOAP format)
         """
-        # REST API expects "dataSeries" as a HEADER (not query param)
-        # Keep series lowercase as per working curl example
-        series_lower = series.lower()
+        # REST API expects "dataSeries" as a HEADER
+        # Use "Call" or "UBPR" (capitalized) per PDF documentation
+        series_mapped = "Call" if series.lower() == "call" else "UBPR"
         
         # Add dataSeries as an additional header
-        additional_headers = {"dataSeries": series_lower}
+        additional_headers = {"dataSeries": series_mapped}
         
         try:
             raw_response = self._make_request(
@@ -384,29 +389,29 @@ class RESTAdapter(ProtocolAdapter):
         }
         
         try:
+            # Map series to correct format
+            series_mapped = "Call" if series.lower() == "call" else "UBPR"
+            
+            # ALL parameters are passed as headers per PDF!
             headers = self.credentials.get_auth_headers()
-            # Add dataSeries as header (required for REST API)
-            headers["dataSeries"] = series.lower()
+            headers.update({
+                "dataSeries": series_mapped,
+                "fiIdType": "ID_RSSD",  # Note: lowercase 'd' in fiId per PDF
+                "fiId": str(rssd_id),
+                "reportingPeriodEndDate": reporting_period,
+                "facsimileFormat": "XBRL"
+            })
             
             if self.rate_limiter:
                 self.rate_limiter.wait_if_needed()
             
-            # Use correct REST API parameters based on OpenAPI spec
-            # GET request with query parameters
             url = f"{self.BASE_URL}/RetrieveFacsimile"
-            params = {
-                "fiIDType": "ID_RSSD",
-                "fiID": str(rssd_id),
-                "reportingPeriodEndDate": reporting_period,
-                "facsimileFormat": "XBRL"
-            }
             
-            logger.debug(f"Calling RetrieveFacsimile with params: {params}")
+            logger.debug(f"Calling RetrieveFacsimile with headers: {[k for k in headers.keys() if k != 'Authentication']}")
             
             response = self.client.get(
                 url,
-                headers=headers,
-                params=params
+                headers=headers
             )
             
             if response.status_code == 200:
@@ -439,8 +444,12 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             List of institution dictionaries (normalized to SOAP format)
         """
-        # REST API uses reportingPeriodEndDate parameter
-        params = {"reportingPeriodEndDate": reporting_period}
+        # REST API uses reportingPeriodEndDate as a HEADER
+        # Also need dataSeries header
+        params = {
+            "reportingPeriodEndDate": reporting_period,
+            "dataSeries": "Call"  # Default to Call series
+        }
         
         try:
             raw_response = self._make_request("RetrievePanelOfReporters", params)
@@ -469,10 +478,11 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             List of RSSD IDs as strings (normalized to SOAP format)
         """
-        # REST API uses reportingPeriodEndDate and lastUpdateDateTime parameters
+        # REST API uses reportingPeriodEndDate and lastUpdateDateTime as HEADERS
         params = {
             "reportingPeriodEndDate": reporting_period,
-            "lastUpdateDateTime": since_date
+            "lastUpdateDateTime": since_date,
+            "dataSeries": "Call"  # Default to Call series
         }
         
         try:
@@ -500,8 +510,12 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             List of submission info dictionaries (normalized to SOAP format)
         """
-        # REST API uses reportingPeriodEndDate parameter
-        params = {"reportingPeriodEndDate": reporting_period}
+        # REST API uses reportingPeriodEndDate as a HEADER
+        # Also need dataSeries header
+        params = {
+            "reportingPeriodEndDate": reporting_period,
+            "dataSeries": "Call"  # Default to Call series
+        }
         
         try:
             raw_response = self._make_request("RetrieveFilersSubmissionDateTime", params)

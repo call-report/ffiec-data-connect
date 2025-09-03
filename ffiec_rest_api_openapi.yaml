@@ -61,8 +61,8 @@ components:
       required: true
       schema:
         type: string
-        enum: [call, ubpr]
-      description: Data series (lowercase)
+        enum: [Call, UBPR]
+      description: Data series name ("Call" or "UBPR")
   
   schemas:
     ReportingPeriod:
@@ -155,7 +155,7 @@ paths:
         - $ref: '#/components/parameters/Authentication'
         - $ref: '#/components/parameters/dataSeries'
         - name: reportingPeriodEndDate
-          in: query
+          in: header
           required: true
           schema:
             $ref: '#/components/schemas/ReportingPeriod'
@@ -186,17 +186,16 @@ paths:
         - $ref: '#/components/parameters/Authentication'
         - $ref: '#/components/parameters/dataSeries'
         - name: reportingPeriodEndDate
-          in: query
+          in: header
           required: true
           schema:
             $ref: '#/components/schemas/ReportingPeriod'
         - name: lastUpdateDateTime
-          in: query
+          in: header
           required: true
           schema:
             type: string
-            format: date-time
-          description: Get filers since this date/time
+          description: Get filers since this date/time (e.g., "04/15/2025" or "04/15/2025 9:00 PM")
       responses:
         '200':
           description: List of filers since date
@@ -220,10 +219,16 @@ paths:
         - $ref: '#/components/parameters/Authentication'
         - $ref: '#/components/parameters/dataSeries'
         - name: reportingPeriodEndDate
-          in: query
+          in: header
           required: true
           schema:
             $ref: '#/components/schemas/ReportingPeriod'
+        - name: lastUpdateDateTime
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional: Get filers since this date/time
       responses:
         '200':
           description: List of filers with submission times
@@ -244,41 +249,40 @@ paths:
   
   /RetrieveFacsimile:
     get:
-      summary: Retrieve individual bank data (XBRL)
+      summary: Retrieve individual bank data
       description: |
-        Retrieves XBRL facsimile data for a specific institution and reporting period.
-        Note: This endpoint may not be available in the REST API yet.
+        Retrieves facsimile data for a specific institution and reporting period.
+        Returns a byte stream of the requested file format.
       operationId: retrieveFacsimile
       parameters:
         - $ref: '#/components/parameters/UserId'
         - $ref: '#/components/parameters/Authentication'
         - $ref: '#/components/parameters/dataSeries'
-        - name: fiIDType
-          in: query
+        - name: fiIdType
+          in: header
           required: true
           schema:
             type: string
-            enum: [ID_RSSD]
-          description: ID type (always ID_RSSD)
-        - name: fiID
-          in: query
+            enum: [ID_RSSD, FDICCertNumber, OCCChartNumber, OTSDockNumber]
+          description: The type of identifier being provided
+        - name: fiId
+          in: header
           required: true
           schema:
-            $ref: '#/components/schemas/RssdId'
-          description: RSSD ID of the institution
+            type: string
+          description: The financial institution's identifier
         - name: reportingPeriodEndDate
-          in: query
+          in: header
           required: true
           schema:
             $ref: '#/components/schemas/ReportingPeriod'
         - name: facsimileFormat
-          in: query
-          required: false
+          in: header
+          required: true
           schema:
             type: string
-            enum: [XBRL, PDF]
-            default: XBRL
-          description: Format of the facsimile
+            enum: [PDF, XBRL, SDF]
+          description: The report format to retrieve
       responses:
         '200':
           description: XBRL or PDF data
