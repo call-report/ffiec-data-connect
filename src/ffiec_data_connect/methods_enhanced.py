@@ -64,7 +64,7 @@ def collect_reporting_periods_enhanced(
     creds: "OAuth2Credentials",  # Forward reference to avoid circular imports
     series: str = "call",
     output_type: str = "list",
-    date_output_format: str = "mm/dd/yyyy"
+    date_output_format: str = "string_original"
 ) -> Union[List[str], pd.DataFrame, "pl.DataFrame"]:
     """Enhanced REST implementation for collect_reporting_periods
     
@@ -297,7 +297,7 @@ def collect_filers_submission_date_time_enhanced(
     since_date: Union[str, datetime],
     reporting_period: Union[str, datetime],
     output_type: str = "list",
-    date_output_format: str = "mm/dd/yyyy"
+    date_output_format: str = "string_original"
 ) -> Union[List[Dict], pd.DataFrame, "pl.DataFrame"]:
     """Enhanced REST implementation for collect_filers_submission_date_time
     
