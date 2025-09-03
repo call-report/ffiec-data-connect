@@ -138,7 +138,7 @@ def collect_reporting_periods_enhanced(
 
 def collect_filers_on_reporting_period_enhanced(
     session: Union[object, None],
-    creds: object,  # OAuth2Credentials
+    creds: "OAuth2Credentials",  # Forward reference to avoid circular imports
     reporting_period: Union[str, datetime],
     output_type: str = "list"
 ) -> Union[List[Dict], pd.DataFrame]:
@@ -206,7 +206,7 @@ def collect_filers_on_reporting_period_enhanced(
 
 def collect_filers_since_date_enhanced(
     session: Union[object, None],
-    creds: object,  # OAuth2Credentials
+    creds: "OAuth2Credentials",  # Forward reference to avoid circular imports
     reporting_period: Union[str, datetime],
     since_date: Union[str, datetime],
     output_type: str = "list"
