@@ -29,6 +29,13 @@ The library automatically selects the appropriate protocol based on the credenti
 
 ## Installation
 
+### Requirements
+
+- Python 3.10 or higher
+- pip package manager
+
+### Install from PyPI
+
 ```bash
 pip install ffiec-data-connect
 ```

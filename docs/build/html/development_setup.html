@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Development Setup &mdash; FFIEC Data Connect 2.0.0rc4 documentation</title>
+  <title>Development Setup &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=aa9da443"></script>
+      <script src="_static/documentation_options.js?v=0ee5205a"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -142,7 +142,7 @@
 <section id="system-requirements">
 <h3>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p>Python 3.8 or higher</p></li>
+<li><p>Python 3.10 or higher (required for modern type hints and zoneinfo support)</p></li>
 <li><p>Git for version control</p></li>
 <li><p>Virtual environment tool (venv, virtualenv, or conda)</p></li>
 </ul>
@@ -181,7 +181,7 @@ venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
 <section id="using-conda">
 <h3>Using conda<a class="headerlink" href="#using-conda" title="Link to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create conda environment</span>
-conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>ffiec-dev<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>ffiec-dev<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
 
 <span class="c1"># Activate it</span>
 conda<span class="w"> </span>activate<span class="w"> </span>ffiec-dev

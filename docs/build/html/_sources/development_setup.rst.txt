@@ -10,7 +10,7 @@ Prerequisites
 System Requirements
 -------------------
 
-- Python 3.8 or higher
+- Python 3.10 or higher (required for modern type hints and zoneinfo support)
 - Git for version control
 - Virtual environment tool (venv, virtualenv, or conda)
 
@@ -55,7 +55,7 @@ Using conda
 .. code-block:: bash
 
    # Create conda environment
-   conda create -n ffiec-dev python=3.9
+   conda create -n ffiec-dev python=3.10
    
    # Activate it
    conda activate ffiec-dev
