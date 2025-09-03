@@ -384,23 +384,72 @@ class RESTAdapter(ProtocolAdapter):
         }
         
         try:
-            # For facsimile, we expect binary data, not JSON
-            url = f"{self.BASE_URL}/RetrieveFacsimile"
+            # The REST API might use POST with JSON payload instead of GET with params
             headers = self.credentials.get_auth_headers()
+            # Add dataSeries as header (required for REST API)
+            headers["dataSeries"] = series.lower()
             
             if self.rate_limiter:
                 self.rate_limiter.wait_if_needed()
             
-            response = self.client.get(
-                url,
-                headers=headers,
-                params=params
-            )
+            # Try POST with JSON payload first
+            request_data = {
+                "rssdId": str(rssd_id),
+                "reportingPeriod": reporting_period,
+                "series": series.lower()
+            }
             
-            if response.status_code == 200:
-                return response.content
+            endpoints_to_try = [
+                ("RetrieveFacsimileExt", "POST"),
+                ("RetrieveData", "POST"), 
+                ("RetrieveFacsimile", "POST"),
+                ("RetrieveFacsimileExt", "GET"),
+                ("RetrieveData", "GET"),
+                ("RetrieveFacsimile", "GET")
+            ]
+            
+            last_error = None
+            for endpoint_name, method in endpoints_to_try:
+                try:
+                    url = f"{self.BASE_URL}/{endpoint_name}"
+                    logger.debug(f"Trying REST endpoint: {endpoint_name} with {method}")
+                    
+                    if method == "POST":
+                        response = self.client.post(
+                            url,
+                            headers=headers,
+                            json=request_data
+                        )
+                    else:
+                        response = self.client.get(
+                            url,
+                            headers=headers,
+                            params=params
+                        )
+                    
+                    if response.status_code == 200:
+                        logger.info(f"Successfully used endpoint: {endpoint_name} with {method}")
+                        return response.content
+                    elif response.status_code == 404:
+                        # This endpoint doesn't exist, try next
+                        continue
+                    elif response.status_code == 405:
+                        # Method not allowed, try next
+                        continue
+                    else:
+                        # Other error - handle it
+                        self._handle_response(response, endpoint_name)
+                        
+                except Exception as e:
+                    last_error = e
+                    logger.debug(f"Endpoint {endpoint_name} with {method} failed: {e}")
+                    continue
+            
+            # If we get here, all endpoints failed
+            if last_error:
+                raise last_error
             else:
-                self._handle_response(response, "RetrieveFacsimile")
+                raise ConnectionError(f"No working REST endpoint found for facsimile data")
                 
         except Exception as e:
             logger.error(f"Failed to retrieve facsimile for RSSD {rssd_id}: {e}")

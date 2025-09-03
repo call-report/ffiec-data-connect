@@ -538,11 +538,54 @@ def collect_data(
     _ = _date_format_validator(date_output_format)
     _ = _credentials_validator(creds)
     
-    # Check if we have OAuth2 credentials - use enhanced method
+    # Check if we have OAuth2 credentials - use REST API via protocol adapter
     from .credentials import OAuth2Credentials
     if isinstance(creds, OAuth2Credentials):
-        from .methods_enhanced import collect_data_enhanced
-        return collect_data_enhanced(session, creds, reporting_period, rssd_id, series, output_type, date_output_format)
+        from .protocol_adapter import create_protocol_adapter
+        adapter = create_protocol_adapter(creds, session)
+        
+        # Use protocol adapter to retrieve data
+        raw_data = adapter.retrieve_facsimile(rssd_id, reporting_period, series)
+        
+        # Process the raw data (assuming it's XBRL format)
+        if isinstance(raw_data, bytes):
+            ret_bytes = raw_data
+        elif isinstance(raw_data, str):
+            ret_bytes = raw_data.encode('utf-8')
+        else:
+            raise_exception(
+                ValidationError,
+                f"Invalid data type returned from REST API: {type(raw_data)}",
+                field="rest_response",
+                value=str(type(raw_data)),
+                expected="bytes or str",
+            )
+        
+        # Process the XBRL data
+        processed_ret = xbrl_processor._process_xml(ret_bytes, date_output_format)
+        
+        # Apply data normalization for consistency
+        from .data_normalizer import DataNormalizer
+        normalized_data = DataNormalizer.normalize_response(processed_ret, "RetrieveFacsimile", "REST")
+        
+        # Return in requested format
+        if output_type == "list":
+            return normalized_data
+        elif output_type == "pandas":
+            df = pd.DataFrame(normalized_data)
+            return df
+        elif output_type == "polars":
+            if not POLARS_AVAILABLE:
+                raise_exception(
+                    ValidationError,
+                    "Polars not available",
+                    field="output_type", 
+                    value="polars",
+                    expected="polars package must be installed: pip install polars",
+                )
+            return pl.DataFrame(normalized_data)
+        
+        return normalized_data
     
     # Original SOAP implementation for WebserviceCredentials
     _ = _session_validator(session)
