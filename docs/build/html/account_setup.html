@@ -120,24 +120,29 @@ All users must complete a registration process to migrate their accounts to the 
 <section id="new-users">
 <h3>New Users<a class="headerlink" href="#new-users" title="Link to this heading"></a></h3>
 <ol class="arabic">
-<li><p><strong>Prepare Microsoft Identity</strong></p>
-<p>Organizations need a Microsoft identity provider. Choose one:</p>
-<ul class="simple">
-<li><p><strong>Microsoft 365 for Business</strong> (Recommended): <a class="reference external" href="https://www.microsoft.com/en-us/microsoft-365/microsoft-365-business">https://www.microsoft.com/en-us/microsoft-365/microsoft-365-business</a></p></li>
-<li><p><strong>Microsoft Account</strong> (Free): <a class="reference external" href="https://support.microsoft.com/en-us/account-billing/how-to-create-a-new-microsoft-account-a84675c3-3e9e-17cf-2911-3d56b15c0aaf">https://support.microsoft.com/en-us/account-billing/how-to-create-a-new-microsoft-account-a84675c3-3e9e-17cf-2911-3d56b15c0aaf</a></p></li>
-</ul>
-</li>
 <li><p><strong>Create FFIEC Account</strong></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>No separate Microsoft account required!</strong> The FFIEC registration process will create the
+necessary Microsoft Entra ID authentication for you.</p>
+</div>
 <ul class="simple">
 <li><p>Visit: <a class="reference external" href="https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true">https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true</a></p></li>
 <li><p>Complete the registration fields</p></li>
-<li><p>Accept the invitation email from <code class="docutils literal notranslate"><span class="pre">invites&#64;microsoft.com</span></code></p></li>
-<li><p>Complete the Microsoft Entra ID registration process</p></li>
+<li><p>You’ll receive an invitation email from <code class="docutils literal notranslate"><span class="pre">invites&#64;microsoft.com</span></code></p></li>
+<li><p>Accept the invitation and complete the Microsoft Entra ID registration process</p></li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Callback Link Issues</strong></p>
+<p>After completing Microsoft verification, the callback link may not work properly.
+If you encounter an error or blank page, manually navigate to:
+<a class="reference external" href="https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx">https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx</a></p>
+</div>
 </li>
 <li><p><strong>Generate JWT Token</strong></p>
 <ul class="simple">
-<li><p>Log into your CDR PWS account</p></li>
+<li><p>Log into your CDR PWS account at <a class="reference external" href="https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx">https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx</a></p></li>
 <li><p>Navigate to token generation section</p></li>
 <li><p>Generate a new JWT token (valid for 90 days)</p></li>
 <li><p><strong>Important</strong>: The JWT token is what you use in the API, NOT your login password</p></li>
@@ -161,6 +166,13 @@ All users must complete a registration process to migrate their accounts to the 
 <li><p>Follow instructions at: <a class="reference external" href="https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF">https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF</a></p></li>
 <li><p>Complete the Microsoft Entra ID registration</p></li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Callback Link Issues</strong></p>
+<p>After completing Microsoft verification, the callback link may not work properly.
+If you encounter an error or blank page, manually navigate to:
+<a class="reference external" href="https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx">https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx</a></p>
+</div>
 </li>
 <li><p><strong>Generate New Token</strong></p>
 <div class="admonition warning">
@@ -263,9 +275,22 @@ All users must complete a registration process to migrate their accounts to the 
 <li><p>What’s New: <a class="reference external" href="https://cdr.ffiec.gov/public/HelpFileContainers/WhatsNew.aspx">https://cdr.ffiec.gov/public/HelpFileContainers/WhatsNew.aspx</a></p></li>
 <li><p>FAQs: <a class="reference external" href="https://cdr.ffiec.gov/public/HelpFileContainers/FAQ.aspx">https://cdr.ffiec.gov/public/HelpFileContainers/FAQ.aspx</a></p></li>
 <li><p>Help Desk: <a class="reference external" href="mailto:cdr&#46;help&#37;&#52;&#48;cdr&#46;ffiec&#46;gov">cdr<span>&#46;</span>help<span>&#64;</span>cdr<span>&#46;</span>ffiec<span>&#46;</span>gov</a></p></li>
-<li><p>REST API Specifications: <code class="docutils literal notranslate"><span class="pre">https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf</span></code></p></li>
+<li><p>Official REST API Specifications (PDF): <code class="docutils literal notranslate"><span class="pre">https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf</span></code></p></li>
 <li><p>Migration Instructions: <a class="reference external" href="https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF">https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF</a></p></li>
+<li><p><strong>Reverse-Engineered OpenAPI Schema</strong>: <a class="reference internal" href="rest_api_reference.html"><span class="doc">REST API Reference</span></a> (see our unofficial but validated OpenAPI specification)</p></li>
 </ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><strong>REST API Documentation</strong></p>
+<p>While the official FFIEC documentation provides the authoritative reference, we’ve created a
+reverse-engineered OpenAPI specification based on extensive testing. This specification:</p>
+<ul class="simple">
+<li><p>Documents actual API behavior including quirks and non-standard patterns</p></li>
+<li><p>Provides complete request/response schemas</p></li>
+<li><p>Available at: <a class="reference internal" href="rest_api_reference.html"><span class="doc">REST API Reference</span></a></p></li>
+<li><p>Raw YAML file: <code class="docutils literal notranslate"><span class="pre">docs/ffiec_rest_api_openapi.yaml</span></code> in the repository</p></li>
+</ul>
+</div>
 <a class="reference internal image-reference" href="_images/create_account.png"><img alt="Screen shot of FFIEC account creation page" src="_images/create_account.png" style="width: 400px;" />
 </a>
 </section>

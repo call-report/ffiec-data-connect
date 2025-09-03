@@ -35,23 +35,27 @@ Account Creation and Setup
 New Users
 ~~~~~~~~~
 
-1. **Prepare Microsoft Identity**
-   
-   Organizations need a Microsoft identity provider. Choose one:
-   
-   - **Microsoft 365 for Business** (Recommended): https://www.microsoft.com/en-us/microsoft-365/microsoft-365-business
-   - **Microsoft Account** (Free): https://support.microsoft.com/en-us/account-billing/how-to-create-a-new-microsoft-account-a84675c3-3e9e-17cf-2911-3d56b15c0aaf
+1. **Create FFIEC Account**
 
-2. **Create FFIEC Account**
+   .. note::
+      **No separate Microsoft account required!** The FFIEC registration process will create the 
+      necessary Microsoft Entra ID authentication for you.
 
    - Visit: https://cdr.ffiec.gov/public/PWS/CreateAccount.aspx?PWS=true
    - Complete the registration fields
-   - Accept the invitation email from ``invites@microsoft.com``
-   - Complete the Microsoft Entra ID registration process
+   - You'll receive an invitation email from ``invites@microsoft.com``
+   - Accept the invitation and complete the Microsoft Entra ID registration process
+   
+   .. warning::
+      **Callback Link Issues**
+      
+      After completing Microsoft verification, the callback link may not work properly. 
+      If you encounter an error or blank page, manually navigate to:
+      https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx
 
-3. **Generate JWT Token**
+2. **Generate JWT Token**
 
-   - Log into your CDR PWS account
+   - Log into your CDR PWS account at https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx
    - Navigate to token generation section
    - Generate a new JWT token (valid for 90 days)
    - **Important**: The JWT token is what you use in the API, NOT your login password
@@ -71,6 +75,13 @@ Starting **August 25, 2025**, existing users must migrate:
    - Click the link in the invitation email
    - Follow instructions at: https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF
    - Complete the Microsoft Entra ID registration
+   
+   .. warning::
+      **Callback Link Issues**
+      
+      After completing Microsoft verification, the callback link may not work properly. 
+      If you encounter an error or blank page, manually navigate to:
+      https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx
 
 3. **Generate New Token**
    
@@ -170,8 +181,20 @@ Important Notes
 - What's New: https://cdr.ffiec.gov/public/HelpFileContainers/WhatsNew.aspx
 - FAQs: https://cdr.ffiec.gov/public/HelpFileContainers/FAQ.aspx
 - Help Desk: cdr.help@cdr.ffiec.gov
-- REST API Specifications: ``https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf``
+- Official REST API Specifications (PDF): ``https://cdr.ffiec.gov/public/Files/SIS611_-_Retrieve_Public_Data_via_Web_Service.pdf``
 - Migration Instructions: https://cdr.ffiec.gov/public/Files/CDR_Public_User_Migration_Instructions.PDF
+- **Reverse-Engineered OpenAPI Schema**: :doc:`rest_api_reference` (see our unofficial but validated OpenAPI specification)
+
+.. tip::
+   **REST API Documentation**
+   
+   While the official FFIEC documentation provides the authoritative reference, we've created a 
+   reverse-engineered OpenAPI specification based on extensive testing. This specification:
+   
+   - Documents actual API behavior including quirks and non-standard patterns
+   - Provides complete request/response schemas
+   - Available at: :doc:`rest_api_reference`
+   - Raw YAML file: ``docs/ffiec_rest_api_openapi.yaml`` in the repository
 
 
 .. image:: images/create_account.png
