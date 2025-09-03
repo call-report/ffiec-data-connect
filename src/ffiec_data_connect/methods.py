@@ -4,6 +4,7 @@ The methods contained in this module are utilized to call and collect data from 
 
 """
 
+import logging
 import re
 from typing import Optional, Union
 
@@ -35,6 +36,9 @@ from ffiec_data_connect.exceptions import (
     ValidationError,
     raise_exception,
 )
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # global date regex
 quarterStringRegex = r"^[1-4](q|Q)([0-9]{4})$"
@@ -223,7 +227,7 @@ def _output_type_validator(output_type: str) -> bool:
     Raises:
         ValidationError: If output_type is invalid
     """
-    valid_types = ["list", "pandas", "polars"]
+    valid_types = ["list", "pandas", "polars", "bytes"]
     if output_type not in valid_types:
         raise_exception(
             ValidationError,
@@ -871,7 +875,7 @@ Retrieves the ID RSSDs and DateTime of the reporters who have filed after a give
     from .credentials import OAuth2Credentials
     if isinstance(creds, OAuth2Credentials):
         from .methods_enhanced import collect_filers_submission_date_time_enhanced
-        return collect_filers_submission_date_time_enhanced(session, creds, since_date, reporting_period, date_output_format, output_type)
+        return collect_filers_submission_date_time_enhanced(session, creds, since_date, reporting_period, output_type, date_output_format)
     
     # Original SOAP implementation for WebserviceCredentials  
     _ = _session_validator(session)
@@ -1000,3 +1004,163 @@ def collect_filers_on_reporting_period(
     else:
         # for now, default is to return a list
         return ret
+
+
+def collect_ubpr_reporting_periods(
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    output_type="list",
+    date_output_format="string_original"
+) -> Union[list, pd.DataFrame]:
+    """Retrieves UBPR reporting periods from FFIEC API.
+    
+    **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+    For better performance, use OAuth2Credentials for REST API access.
+    
+    Args:
+        session: The session object (can be None for REST API)
+        creds: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
+        output_type: Output format ("list", "pandas", or "polars")
+        date_output_format: Date format for output
+        
+    Returns:
+        list or pd.DataFrame: List of UBPR reporting periods
+    """
+    
+    # Validate inputs
+    _ = _output_type_validator(output_type)
+    _ = _date_format_validator(date_output_format)
+    _ = _credentials_validator(creds)
+    
+    # Check if we have OAuth2 credentials - use REST API
+    from .credentials import OAuth2Credentials
+    if isinstance(creds, OAuth2Credentials):
+        try:
+            from .protocol_adapter import create_protocol_adapter
+            
+            adapter = create_protocol_adapter(creds, session)
+            raw_periods = adapter.retrieve_ubpr_reporting_periods()
+            
+            # Handle output type conversion
+            if output_type == "pandas":
+                return pd.DataFrame({"reporting_period": raw_periods})
+            else:
+                return raw_periods
+                
+        except Exception as e:
+            logger.error(f"REST API call failed for UBPR reporting periods: {e}")
+            raise_exception(
+                ConnectionError,
+                f"Failed to retrieve UBPR reporting periods via REST API: {e}"
+            )
+    
+    # SOAP implementation for WebserviceCredentials
+    _ = _session_validator(session)
+    
+    # For SOAP API, UBPR periods would need to be implemented
+    # Currently not available in SOAP API per the documentation
+    raise_exception(
+        ValidationError,
+        "UBPR reporting periods are only available via REST API. Please use OAuth2Credentials.",
+        field="credentials",
+        value="WebserviceCredentials",
+        expected="OAuth2Credentials for UBPR access"
+    )
+
+
+def collect_ubpr_facsimile_data(
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    reporting_period: Union[str, datetime],
+    rssd_id: str,
+    output_type="list"
+) -> Union[bytes, list, pd.DataFrame]:
+    """Retrieves UBPR XBRL facsimile data for a specific institution.
+    
+    **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+    For better performance, use OAuth2Credentials for REST API access.
+    
+    Args:
+        session: The session object (can be None for REST API)
+        creds: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
+        reporting_period: Reporting period date
+        rssd_id: Institution RSSD ID
+        output_type: Output format ("list", "pandas", "polars", or "bytes")
+        
+    Returns:
+        bytes, list, or pd.DataFrame: UBPR XBRL data
+    """
+    
+    # Validate inputs
+    _ = _output_type_validator(output_type)
+    _ = _credentials_validator(creds)
+    
+    # Validate reporting period
+    if not _is_valid_date_or_quarter(reporting_period):
+        raise_exception(
+            ValidationError,
+            "Invalid reporting period format",
+            field="reporting_period",
+            value=str(reporting_period),
+            expected="MM/DD/YYYY, YYYY-MM-DD, YYYYMMDD, #QYYYY or datetime object"
+        )
+    
+    # Check if we have OAuth2 credentials - use REST API
+    from .credentials import OAuth2Credentials
+    if isinstance(creds, OAuth2Credentials):
+        try:
+            from .protocol_adapter import create_protocol_adapter
+            
+            # Convert reporting period to FFIEC format
+            if isinstance(reporting_period, datetime):
+                ffiec_date = _create_ffiec_date_from_datetime(reporting_period)
+            else:
+                ffiec_date = _convert_any_date_to_ffiec_format(reporting_period)
+                if ffiec_date is None:
+                    raise_exception(
+                        ValidationError,
+                        "Could not convert reporting period to FFIEC format",
+                        field="reporting_period",
+                        value=str(reporting_period)
+                    )
+            
+            adapter = create_protocol_adapter(creds, session)
+            raw_data = adapter.retrieve_ubpr_xbrl_facsimile(rssd_id, ffiec_date)
+            
+            # Handle output type
+            if output_type == "bytes":
+                return raw_data
+            
+            # Process XBRL data if needed
+            if isinstance(raw_data, bytes):
+                if output_type == "list":
+                    # Parse XBRL and return as list
+                    processed_data = xbrl_processor._process_xml(raw_data)
+                    return processed_data
+                elif output_type == "pandas":
+                    processed_data = xbrl_processor._process_xml(raw_data)
+                    return pd.DataFrame(processed_data)
+                else:
+                    return raw_data
+            else:
+                return raw_data
+                
+        except Exception as e:
+            logger.error(f"REST API call failed for UBPR facsimile data: {e}")
+            raise_exception(
+                ConnectionError,
+                f"Failed to retrieve UBPR facsimile data via REST API: {e}"
+            )
+    
+    # SOAP implementation for WebserviceCredentials
+    _ = _session_validator(session)
+    
+    # For SOAP API, UBPR facsimile would need to be implemented
+    # Currently not available in SOAP API per the documentation
+    raise_exception(
+        ValidationError,
+        "UBPR facsimile data is only available via REST API. Please use OAuth2Credentials.",
+        field="credentials",
+        value="WebserviceCredentials",
+        expected="OAuth2Credentials for UBPR access"
+    )

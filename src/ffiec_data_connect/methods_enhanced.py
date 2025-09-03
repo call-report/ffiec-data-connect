@@ -293,12 +293,12 @@ def collect_filers_since_date_enhanced(
 
 def collect_filers_submission_date_time_enhanced(
     session: Union[object, None],
-    creds: object,  # OAuth2Credentials
+    creds: "OAuth2Credentials",  # Forward reference to avoid circular imports
     since_date: Union[str, datetime],
     reporting_period: Union[str, datetime],
-    date_output_format: str = "mm/dd/yyyy",
-    output_type: str = "list"
-) -> Union[List[Dict], pd.DataFrame]:
+    output_type: str = "list",
+    date_output_format: str = "mm/dd/yyyy"
+) -> Union[List[Dict], pd.DataFrame, "pl.DataFrame"]:
     """Enhanced REST implementation for collect_filers_submission_date_time
     
     Args:
