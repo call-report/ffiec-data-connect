@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """
 Test script to verify which FFIEC REST API endpoints are actually working.
+Based on official FFIEC document CDR-PDD-SIS-611 v1.10
+
+There are exactly 7 REST endpoints:
+1. RetrieveReportingPeriods
+2. RetrievePanelOfReporters
+3. RetrieveFilersSinceDate
+4. RetrieveFilersSubmissionDateTime
+5. RetrieveFacsimile
+6. RetrieveUBPRReportingPeriods
+7. RetrieveUBPRXBRLFacsimile
 """
 
 import httpx
@@ -13,36 +23,31 @@ TOKEN = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJBY2Nlc3MgVG9rZW4iLCJqdGk
 
 BASE_URL = "https://ffieccdr.azure-api.us/public"
 
-def get_headers(series="Call", **extra_headers):
+def get_headers(**extra_headers):
     """Get standard headers for REST API requests."""
     headers = {
-        "UserId": USERNAME,
-        "Authentication": f"Bearer {TOKEN}",
-        "dataSeries": series
+        "UserID": USERNAME,  # Note capital 'ID' not 'Id'
+        "Authentication": f"Bearer {TOKEN}",  # Note: NOT "Authorization"
     }
     # Add any extra headers passed in
     headers.update(extra_headers)
     return headers
 
-def test_endpoint(name, path, headers_params=None, method="GET", series="Call"):
+def test_endpoint(name, path, headers_params=None, method="GET"):
     """Test a single endpoint."""
     print(f"\nTesting: {name}")
     print(f"  Endpoint: {method} {path}")
     
     # Get headers with any additional parameters
-    headers = get_headers(series, **(headers_params or {}))
+    headers = get_headers(**(headers_params or {}))
     
     url = f"{BASE_URL}/{path}"
-    print(f"  Headers: {headers}")
+    print(f"  Headers: {[k for k in headers.keys()]}")
     print(f"  Full URL: {url}")
     
     try:
         with httpx.Client() as client:
-            if method == "GET":
-                response = client.get(url, headers=headers, timeout=30)
-            else:
-                # For POST, send params as JSON body if needed
-                response = client.post(url, headers=headers, json=headers_params, timeout=30)
+            response = client.get(url, headers=headers, timeout=30)
             
             print(f"  Status: {response.status_code}")
             
@@ -68,73 +73,80 @@ def test_endpoint(name, path, headers_params=None, method="GET", series="Call"):
 def main():
     print("=" * 60)
     print("FFIEC REST API Endpoint Testing")
+    print("Based on CDR-PDD-SIS-611 v1.10")
     print("=" * 60)
     
-    # Test 1: RetrieveReportingPeriods (KNOWN WORKING)
+    # Test 1: RetrieveReportingPeriods (Call series)
     test_endpoint(
+        "1. RetrieveReportingPeriods (Call)",
         "RetrieveReportingPeriods",
-        "RetrieveReportingPeriods"
+        headers_params={"dataSeries": "Call"}  # Required header
     )
     
     # Test 2: RetrievePanelOfReporters
     test_endpoint(
+        "2. RetrievePanelOfReporters",
         "RetrievePanelOfReporters",
-        "RetrievePanelOfReporters",
-        headers_params={"reportingPeriodEndDate": "12/31/2023"}
+        headers_params={
+            "dataSeries": "Call",
+            "reportingPeriodEndDate": "12/31/2023"
+        }
     )
     
     # Test 3: RetrieveFilersSinceDate
     test_endpoint(
-        "RetrieveFilersSinceDate",
+        "3. RetrieveFilersSinceDate",
         "RetrieveFilersSinceDate",
         headers_params={
+            "dataSeries": "Call",
             "reportingPeriodEndDate": "12/31/2023",
-            "lastUpdateDateTime": "01/01/2023"  # Use simple date format per PDF
+            "lastUpdateDateTime": "01/01/2023"  # Simple date format
         }
     )
     
     # Test 4: RetrieveFilersSubmissionDateTime
     test_endpoint(
+        "4. RetrieveFilersSubmissionDateTime",
         "RetrieveFilersSubmissionDateTime",
-        "RetrieveFilersSubmissionDateTime",
-        headers_params={"reportingPeriodEndDate": "12/31/2023"}
+        headers_params={
+            "dataSeries": "Call",
+            "reportingPeriodEndDate": "12/31/2023",
+            "lastUpdateDateTime": "01/01/2023"  # Required per PDF
+        }
     )
     
     # Test 5: RetrieveFacsimile (Individual bank data)
     test_endpoint(
-        "RetrieveFacsimile",
+        "5. RetrieveFacsimile",
         "RetrieveFacsimile",
         headers_params={
-            "fiIdType": "ID_RSSD",  # Note: lowercase 'd' in fiId per PDF
-            "fiId": "480228",  # JPMorgan Chase
+            "dataSeries": "Call",
             "reportingPeriodEndDate": "12/31/2023",
+            "fiIdType": "ID_RSSD",
+            "fiId": "480228",  # JPMorgan Chase
             "facsimileFormat": "XBRL"
         }
     )
     
-    # Test 6: Try POST version of RetrieveFacsimile (may not exist)
+    # Test 6: RetrieveUBPRReportingPeriods
+    # NOTE: This endpoint does NOT require dataSeries header!
     test_endpoint(
-        "RetrieveFacsimileExt (POST)",
-        "RetrieveFacsimileExt",
-        headers_params={
-            "fiIdType": "ID_RSSD",
-            "fiId": "480228",
-            "reportingPeriodEndDate": "12/31/2023",
-            "facsimileFormat": "XBRL"
-        },
-        method="POST"
+        "6. RetrieveUBPRReportingPeriods",
+        "RetrieveUBPRReportingPeriods"
+        # No dataSeries header needed for UBPR reporting periods
     )
     
     # Test 7: RetrieveUBPRXBRLFacsimile
+    # NOTE: This endpoint does NOT require dataSeries header!
     test_endpoint(
-        "RetrieveUBPRXBRLFacsimile",
+        "7. RetrieveUBPRXBRLFacsimile",
         "RetrieveUBPRXBRLFacsimile",
         headers_params={
+            # No dataSeries header for UBPR endpoints
+            "reportingPeriodEndDate": "12/31/2023",
             "fiIdType": "ID_RSSD",
-            "fiId": "480228",
-            "reportingPeriodEndDate": "12/31/2023"
-        },
-        series="UBPR"  # Uppercase per PDF
+            "fiId": "480228"
+        }
     )
     
     print("\n" + "=" * 60)

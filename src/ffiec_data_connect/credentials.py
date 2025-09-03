@@ -170,7 +170,7 @@ class OAuth2Credentials:
             Dictionary containing required authentication headers
         """
         return {
-            "UserId": self._username,  # Note: lowercase 'd' in UserId
+            "UserID": self._username,  # Note: capital 'ID' per PDF specification
             "Authentication": f"Bearer {self._bearer_token}",
             "Content-Type": "application/json",
             "Accept": "application/json"
