@@ -2,7 +2,7 @@
 FFIEC Data Connect - Python wrapper for FFIEC webservice API.
 
 This package provides secure, thread-safe access to FFIEC financial data
-with support for both synchronous and asynchronous operations.
+with support for both REST and SOAP APIs.
 """
 
 # Version
@@ -43,51 +43,22 @@ from ffiec_data_connect.methods import (
 # SOAP client caching utilities
 from ffiec_data_connect.soap_cache import clear_soap_cache, get_cache_stats
 
-# Phase 0 - Data format analysis and normalization (REST API support)
+# REST API support - Data normalization for backward compatibility
 from ffiec_data_connect.data_normalizer import DataNormalizer
-from ffiec_data_connect.format_analyzer import APIFormatAnalyzer
-from ffiec_data_connect.financial_analyzer import FinancialDataAnalyzer
 
-# Phase 1 - Protocol adapters and enhanced methods
+# REST API support - Protocol adapters for automatic SOAP/REST selection
 from ffiec_data_connect.protocol_adapter import (
     ProtocolAdapter,
     RESTAdapter,
     SOAPAdapter,
-    RateLimiter,
     create_protocol_adapter
-)
-from ffiec_data_connect.methods_enhanced import EnhancedMethodsHelper
-
-# Phase 2 - Performance benchmarking tools
-from ffiec_data_connect.performance_benchmark import (
-    PerformanceBenchmark,
-    BenchmarkResult,
-    ComparisonReport,
-    quick_benchmark,
-    benchmark_async_client,
-    print_performance_report
-)
-
-# Phase 2 - Production monitoring and observability
-from ffiec_data_connect.monitoring import (
-    MetricsCollector,
-    PerformanceMonitor,
-    MigrationTracker,
-    APICallRecord,
-    MetricData,
-    get_metrics_collector,
-    get_performance_monitor,
-    get_migration_tracker,
-    monitor_api_call,
-    record_protocol_usage,
-    get_monitoring_summary
 )
 
 # Expose main classes for easier import
 __all__ = [
     # Core classes
     "WebserviceCredentials",
-    "OAuth2Credentials",  # Phase 0 - REST API support
+    "OAuth2Credentials",  # REST API support
     "FFIECConnection",
     "AsyncCompatibleClient",
     # Methods (backward compatible)
@@ -118,17 +89,12 @@ __all__ = [
     # SOAP Caching
     "clear_soap_cache",
     "get_cache_stats",
-    # Phase 0 - Data format analysis and normalization
+    # REST API support
     "DataNormalizer",
-    "APIFormatAnalyzer", 
-    "FinancialDataAnalyzer",
-    # Phase 1 - Protocol adapters and enhanced methods
     "ProtocolAdapter",
     "RESTAdapter", 
     "SOAPAdapter",
-    "RateLimiter",
     "create_protocol_adapter",
-    "EnhancedMethodsHelper",
     # Version
     "__version__",
 ]
