@@ -382,12 +382,6 @@ class RESTAdapter(ProtocolAdapter):
         Returns:
             Raw XBRL data bytes
         """
-        params = {
-            "rssdId": str(rssd_id),
-            "reportingPeriod": reporting_period,
-            "series": series
-        }
-        
         try:
             # Map series to correct format
             series_mapped = "Call" if series.lower() == "call" else "UBPR"
@@ -500,22 +494,46 @@ class RESTAdapter(ProtocolAdapter):
             logger.error(f"Failed to retrieve filers since {since_date}: {e}")
             raise
     
-    def retrieve_filers_submission_datetime(self, reporting_period: str) -> List[Dict]:
+    def retrieve_filers_submission_datetime(self, reporting_period: str, 
+                                           last_update: Optional[str] = None) -> List[Dict]:
         """
         Retrieve filer submission date/time info via REST API.
         
         Args:
             reporting_period: Reporting period (MM/dd/yyyy)
+            last_update: Optional last update date/time filter
             
         Returns:
             List of submission info dictionaries (normalized to SOAP format)
         """
-        # REST API uses reportingPeriodEndDate as a HEADER
-        # Also need dataSeries header
+        # REST API uses reportingPeriodEndDate and lastUpdateDateTime as HEADERS
         params = {
             "reportingPeriodEndDate": reporting_period,
             "dataSeries": "Call"  # Default to Call series
         }
+        
+        # Per PDF, lastUpdateDateTime is required for this endpoint
+        if last_update:
+            params["lastUpdateDateTime"] = last_update
+        else:
+            # Default to beginning of reporting period if not specified
+            # Extract month/day/year from reporting period
+            parts = reporting_period.split('/')
+            if len(parts) == 3:
+                # Set to first day of the quarter
+                month = int(parts[0])
+                year = int(parts[2])
+                if month == 3:
+                    params["lastUpdateDateTime"] = f"01/01/{year}"
+                elif month == 6:
+                    params["lastUpdateDateTime"] = f"04/01/{year}"
+                elif month == 9:
+                    params["lastUpdateDateTime"] = f"07/01/{year}"
+                else:  # month == 12
+                    params["lastUpdateDateTime"] = f"10/01/{year}"
+            else:
+                # Fallback to a year ago
+                params["lastUpdateDateTime"] = "01/01/2023"
         
         try:
             raw_response = self._make_request("RetrieveFilersSubmissionDateTime", params)
@@ -530,6 +548,78 @@ class RESTAdapter(ProtocolAdapter):
             
         except Exception as e:
             logger.error(f"Failed to retrieve filer submission info: {e}")
+            raise
+    
+    def retrieve_ubpr_reporting_periods(self) -> List[str]:
+        """
+        Retrieve available UBPR reporting periods via REST API.
+        
+        Returns:
+            List of reporting period strings
+        """
+        # NOTE: UBPR endpoints do NOT require dataSeries header per PDF
+        try:
+            raw_response = self._make_request(
+                "RetrieveUBPRReportingPeriods",
+                params=None  # No additional headers needed
+            )
+            
+            # Apply data normalization if needed
+            normalized = DataNormalizer.normalize_response(
+                raw_response, "RetrieveUBPRReportingPeriods", "REST"
+            )
+            
+            logger.info(f"Retrieved {len(normalized)} UBPR reporting periods")
+            return normalized
+            
+        except Exception as e:
+            logger.error(f"Failed to retrieve UBPR reporting periods: {e}")
+            raise
+    
+    def retrieve_ubpr_xbrl_facsimile(self, rssd_id: Union[str, int], 
+                                     reporting_period: str) -> bytes:
+        """
+        Retrieve UBPR XBRL facsimile data via REST API.
+        
+        Args:
+            rssd_id: Institution RSSD ID
+            reporting_period: Reporting period (MM/dd/yyyy)
+            
+        Returns:
+            Raw XBRL data bytes
+        """
+        try:
+            # UBPR endpoints do NOT require dataSeries header per PDF
+            headers = self.credentials.get_auth_headers()
+            headers.update({
+                "reportingPeriodEndDate": reporting_period,
+                "fiIdType": "ID_RSSD",
+                "fiId": str(rssd_id)
+                # NO facsimileFormat header for UBPR (always XBRL)
+            })
+            
+            if self.rate_limiter:
+                self.rate_limiter.wait_if_needed()
+            
+            url = f"{self.BASE_URL}/RetrieveUBPRXBRLFacsimile"
+            
+            logger.debug(f"Calling RetrieveUBPRXBRLFacsimile with headers: {[k for k in headers.keys() if k != 'Authentication']}")
+            
+            response = self.client.get(
+                url,
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                logger.info(f"Successfully retrieved UBPR facsimile for RSSD {rssd_id}")
+                return response.content
+            elif response.status_code == 404:
+                raise NoDataError(f"No UBPR data found for RSSD {rssd_id} for period {reporting_period}")
+            else:
+                self._handle_response(response, "RetrieveUBPRXBRLFacsimile")
+                
+        except Exception as e:
+            logger.error(f"Failed to retrieve UBPR facsimile for RSSD {rssd_id}: {e}")
             raise
     
     @property
