@@ -6,8 +6,8 @@ full backward compatibility with the original SOAP implementations.
 """
 
 import logging
-from typing import Union, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 
@@ -20,24 +20,24 @@ except ImportError:
     POLARS_AVAILABLE = False
     pl = None
 
-from ffiec_data_connect.protocol_adapter import create_protocol_adapter
 from ffiec_data_connect.credentials import OAuth2Credentials
-from ffiec_data_connect.exceptions import (
-    ValidationError,
-    ConnectionError,
-    raise_exception,
-)
-from ffiec_data_connect.methods import (
-    _is_valid_date_or_quarter,
-    _create_ffiec_date_from_datetime,
-    _convert_any_date_to_ffiec_format,
-    _output_type_validator,
-    _date_format_validator,
-)
 
 # Pydantic models are handled at the protocol adapter level
 # No direct model imports needed in enhanced methods
 from ffiec_data_connect.data_normalizer import DataNormalizer
+from ffiec_data_connect.exceptions import (
+    ConnectionError,
+    ValidationError,
+    raise_exception,
+)
+from ffiec_data_connect.methods import (
+    _convert_any_date_to_ffiec_format,
+    _create_ffiec_date_from_datetime,
+    _date_format_validator,
+    _is_valid_date_or_quarter,
+    _output_type_validator,
+)
+from ffiec_data_connect.protocol_adapter import create_protocol_adapter
 
 logger = logging.getLogger(__name__)
 
@@ -136,9 +136,11 @@ def collect_reporting_periods_enhanced(
         # Validate that we received properly formatted data
         validation_report = DataNormalizer.validate_pydantic_compatibility(
             raw_periods,
-            "RetrieveUBPRReportingPeriods"
-            if series.lower() == "ubpr"
-            else "RetrieveReportingPeriods",
+            (
+                "RetrieveUBPRReportingPeriods"
+                if series.lower() == "ubpr"
+                else "RetrieveReportingPeriods"
+            ),
         )
 
         if not validation_report["compatible"]:

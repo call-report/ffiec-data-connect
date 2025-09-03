@@ -17,12 +17,13 @@ Version: Phase 1 - Protocol Abstraction
 """
 
 import logging
+import threading
+import time
 import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
+
 import httpx
-import time
-import threading
 
 # Import Pydantic models for response validation
 from pydantic import ValidationError as PydanticValidationError
@@ -33,7 +34,7 @@ try:
 except ImportError:
     requests = None
 
-from .credentials import WebserviceCredentials, OAuth2Credentials
+from .credentials import OAuth2Credentials, WebserviceCredentials
 from .data_normalizer import DataNormalizer
 from .exceptions import (
     ConnectionError,
@@ -44,13 +45,12 @@ from .exceptions import (
     ValidationError,
 )
 from .models import (
-    ReportingPeriodsResponse,
-    UBPRReportingPeriodsResponse,
     InstitutionsResponse,
+    ReportingPeriodsResponse,
     RSSDIDsResponse,
     SubmissionsResponse,
+    UBPRReportingPeriodsResponse,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -993,9 +993,9 @@ class RateLimiter:
                 "hourly_limit": self.calls_per_hour,
                 "hourly_remaining": self.calls_per_hour - len(recent_calls),
                 "per_second_limit": self.calls_per_second,
-                "last_call_seconds_ago": now - self.last_call
-                if self.last_call
-                else None,
+                "last_call_seconds_ago": (
+                    now - self.last_call if self.last_call else None
+                ),
             }
 
 

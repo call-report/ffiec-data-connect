@@ -22,9 +22,12 @@ from ffiec_data_connect.config import (
 # Core imports - maintain backward compatibility
 from ffiec_data_connect.credentials import (
     CredentialType,
-    WebserviceCredentials,
     OAuth2Credentials,
+    WebserviceCredentials,
 )
+
+# REST API support - Data normalization for backward compatibility
+from ffiec_data_connect.data_normalizer import DataNormalizer
 from ffiec_data_connect.exceptions import (
     ConnectionError,
     CredentialError,
@@ -42,15 +45,9 @@ from ffiec_data_connect.methods import (
     collect_filers_since_date,
     collect_filers_submission_date_time,
     collect_reporting_periods,
-    collect_ubpr_reporting_periods,
     collect_ubpr_facsimile_data,
+    collect_ubpr_reporting_periods,
 )
-
-# SOAP client caching utilities
-from ffiec_data_connect.soap_cache import clear_soap_cache, get_cache_stats
-
-# REST API support - Data normalization for backward compatibility
-from ffiec_data_connect.data_normalizer import DataNormalizer
 
 # REST API support - Protocol adapters for automatic SOAP/REST selection
 from ffiec_data_connect.protocol_adapter import (
@@ -59,6 +56,9 @@ from ffiec_data_connect.protocol_adapter import (
     SOAPAdapter,
     create_protocol_adapter,
 )
+
+# SOAP client caching utilities
+from ffiec_data_connect.soap_cache import clear_soap_cache, get_cache_stats
 
 # Expose main classes for easier import
 __all__ = [

@@ -128,17 +128,21 @@ def _process_xml(
                         "quarter": row["quarter"],
                         "data_type": data_type,
                         # Set data fields based on type - use different null values for SOAP vs REST
-                        "int_data": np.int64(value)
-                        if data_type == "int"
-                        else (pd.NA if use_rest_nulls else np.nan),
+                        "int_data": (
+                            np.int64(value)
+                            if data_type == "int"
+                            else (pd.NA if use_rest_nulls else np.nan)
+                        ),
                         "float_data": (
                             np.float64(value)
                             if data_type == "float"
                             else (pd.NA if use_rest_nulls else np.nan)
                         ),
-                        "bool_data": np.bool_(value)
-                        if data_type == "bool"
-                        else (pd.NA if use_rest_nulls else np.nan),
+                        "bool_data": (
+                            np.bool_(value)
+                            if data_type == "bool"
+                            else (pd.NA if use_rest_nulls else np.nan)
+                        ),
                         "str_data": str(value) if data_type == "str" else None,
                     }
                     ret_data.append(new_dict)

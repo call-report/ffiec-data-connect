@@ -7,9 +7,9 @@ Credentials may be input via environment variables, or passing them as arguments
 """
 
 import os
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
-from datetime import datetime, timedelta
 
 import requests
 

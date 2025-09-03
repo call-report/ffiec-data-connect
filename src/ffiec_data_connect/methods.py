@@ -651,9 +651,9 @@ def collect_data(
                         "rssd": row["rssd"],
                         "quarter": row["quarter"],
                         "data_type": row["data_type"],
-                        "int_data": None
-                        if pd.isna(row["int_data"])
-                        else int(row["int_data"]),
+                        "int_data": (
+                            None if pd.isna(row["int_data"]) else int(row["int_data"])
+                        ),
                         "float_data": (
                             None
                             if pd.isna(row["float_data"])

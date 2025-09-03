@@ -11,22 +11,19 @@ Generated models provide:
 - Clear error messages for data issues
 """
 
-from .api_models import (
-    # Core data models
+from .api_models import (  # Core data models; Response models; Binary data models
     Error,
     Institution,
-    ReportingPeriod,
-    SubmissionInfo,
-    # Response models
-    ReportingPeriodsResponse,
-    UBPRReportingPeriodsResponse,
     InstitutionsResponse,
-    RSSDIDsResponse,
-    SubmissionsResponse,
-    # Binary data models
-    XBRLData,
     PDFData,
+    ReportingPeriod,
+    ReportingPeriodsResponse,
+    RSSDIDsResponse,
     SDFData,
+    SubmissionInfo,
+    SubmissionsResponse,
+    UBPRReportingPeriodsResponse,
+    XBRLData,
 )
 
 __all__ = [

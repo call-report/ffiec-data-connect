@@ -17,10 +17,9 @@ Version: Phase 0 - Data Normalization
 """
 
 import logging
-from typing import Any, Dict, List, Tuple
-from datetime import datetime
 import re
-
+from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -42,15 +41,15 @@ class DataNormalizer:
             "FDICCertNumber": lambda x: str(x) if x is not None else "",  # int → str
             "OCCChartNumber": lambda x: str(x) if x is not None else "",  # int → str
             "OTSDockNumber": lambda x: str(x) if x is not None else "",  # int → str
-            "PrimaryABARoutNumber": lambda x: str(x)
-            if x is not None
-            else "",  # int → str
+            "PrimaryABARoutNumber": lambda x: (
+                str(x) if x is not None else ""
+            ),  # int → str
             "ZIP": lambda x: DataNormalizer._fix_zip_code(
                 x
             ),  # Fix leading zeros (CRITICAL)
-            "HasFiledForReportingPeriod": lambda x: str(x).lower()
-            if x is not None
-            else "false",  # bool → str
+            "HasFiledForReportingPeriod": lambda x: (
+                str(x).lower() if x is not None else "false"
+            ),  # bool → str
             # Additional fields that may need normalization
             "InstitutionName": lambda x: str(x) if x is not None else "",
             "PhysicalStreetAddress": lambda x: str(x) if x is not None else "",
