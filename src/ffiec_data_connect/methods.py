@@ -591,7 +591,51 @@ def collect_data(
                         value="polars",
                         expected="polars package must be installed: pip install polars",
                     )
-                return pl.DataFrame(normalized_data)
+                # Convert to proper Polars format with schema (same as direct XBRL path)
+                if not normalized_data:
+                    schema = {
+                        "mdrm": pl.Utf8,
+                        "rssd": pl.Utf8,
+                        "quarter": pl.Utf8,
+                        "data_type": pl.Utf8,
+                        "int_data": pl.Int64,
+                        "float_data": pl.Float64,
+                        "bool_data": pl.Boolean,
+                        "str_data": pl.Utf8,
+                    }
+                    return pl.DataFrame([], schema=schema)
+                    
+                # Convert numpy types to native Python types for polars compatibility
+                polars_data = []
+                for row in normalized_data:
+                    polars_row = {
+                        "mdrm": row["mdrm"],
+                        "rssd": row["rssd"],
+                        "quarter": row["quarter"],
+                        "data_type": row["data_type"],
+                        "int_data": None if pd.isna(row["int_data"]) else int(row["int_data"]),
+                        "float_data": (
+                            None if pd.isna(row["float_data"]) else float(row["float_data"])
+                        ),
+                        "bool_data": (
+                            None if pd.isna(row["bool_data"]) else bool(row["bool_data"])
+                        ),
+                        "str_data": row["str_data"],
+                    }
+                    polars_data.append(polars_row)
+                    
+                # Create DataFrame with explicit schema to ensure correct types
+                schema = {
+                    "mdrm": pl.Utf8,
+                    "rssd": pl.Utf8,
+                    "quarter": pl.Utf8,
+                    "data_type": pl.Utf8,
+                    "int_data": pl.Int64,
+                    "float_data": pl.Float64,
+                    "bool_data": pl.Boolean,
+                    "str_data": pl.Utf8,
+                }
+                return pl.DataFrame(polars_data, schema=schema)
             
             return normalized_data
             
