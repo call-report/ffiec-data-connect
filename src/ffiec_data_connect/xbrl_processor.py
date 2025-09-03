@@ -9,6 +9,7 @@ from itertools import chain
 from typing import Any, Dict, List
 
 import numpy as np
+import pandas as pd
 
 # Use defusedxml for secure XML parsing (prevents XXE attacks)
 try:
@@ -123,12 +124,12 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
                         "rssd": row["rssd"],
                         "quarter": row["quarter"],
                         "data_type": data_type,
-                        # Set data fields based on type using numpy types - only one will be non-NaN
-                        "int_data": np.int64(value) if data_type == "int" else np.nan,
+                        # Set data fields based on type - use pd.NA for non-applicable types to support nullable dtypes
+                        "int_data": np.int64(value) if data_type == "int" else pd.NA,
                         "float_data": (
-                            np.float64(value) if data_type == "float" else np.nan
+                            np.float64(value) if data_type == "float" else pd.NA
                         ),
-                        "bool_data": np.bool_(value) if data_type == "bool" else np.nan,
+                        "bool_data": np.bool_(value) if data_type == "bool" else pd.NA,
                         "str_data": str(value) if data_type == "str" else None,
                     }
                     ret_data.append(new_dict)
@@ -182,7 +183,7 @@ def _process_xbrl_item(name, items, date_format):
         data_type = None
 
         if unit_type == "USD":
-            value = int(value) / 1000
+            value = int(value) // 1000  # Use integer division to keep result as int
             data_type = "int"
         elif unit_type == "PURE":
             value = float(value)

@@ -124,12 +124,14 @@ class ProtocolAdapter(ABC):
         pass
         
     @abstractmethod
-    def retrieve_filers_submission_datetime(self, reporting_period: str) -> List[Dict]:
+    def retrieve_filers_submission_datetime(self, reporting_period: str, 
+                                           since_date: Optional[str] = None) -> List[Dict]:
         """
         Retrieve filer submission date/time information.
         
         Args:
             reporting_period: Reporting period (MM/dd/yyyy)
+            since_date: Optional date to filter submissions since (MM/dd/yyyy)
             
         Returns:
             List of submission info dictionaries
@@ -294,8 +296,9 @@ class RESTAdapter(ProtocolAdapter):
             
         elif response.status_code == 400:
             raise ValidationError(
-                f"Invalid request parameters for {endpoint}: "
-                f"{response.text}"
+                field=endpoint,
+                value="request_parameters", 
+                expected=f"Valid parameters for {endpoint}. Error: {response.text}"
             )
             
         elif response.status_code == 401:
@@ -383,9 +386,9 @@ class RESTAdapter(ProtocolAdapter):
         except PydanticValidationError as e:
             logger.error(f"Schema validation failed for {endpoint}: {e}")
             raise ValidationError(
-                f"API response validation failed for {endpoint}: {e}",
                 field=endpoint,
-                value=str(data)[:200] + "..." if len(str(data)) > 200 else str(data)
+                value=str(data)[:200] + "..." if len(str(data)) > 200 else str(data),
+                expected=f"Valid API response schema for {endpoint}. Schema error: {e}"
             )
     
     def retrieve_reporting_periods(self, series: str) -> List[str]:
@@ -448,7 +451,11 @@ class RESTAdapter(ProtocolAdapter):
             Raw XBRL data bytes
         """
         try:
-            # Map series to correct format
+            # UBPR data requires different endpoint - route to specialized method
+            if series.lower() == "ubpr":
+                return self.retrieve_ubpr_xbrl_facsimile(rssd_id, reporting_period)
+            
+            # Call Report data uses RetrieveFacsimile endpoint
             series_mapped = "Call" if series.lower() == "call" else "UBPR"
             
             # ALL parameters are passed as headers per PDF!
@@ -475,7 +482,28 @@ class RESTAdapter(ProtocolAdapter):
             
             if response.status_code == 200:
                 logger.info(f"Successfully retrieved facsimile for RSSD {rssd_id}")
-                return response.content
+                
+                # Check if response is JSON (contains base64-encoded XBRL)
+                content_type = response.headers.get('content-type', '')
+                if 'json' in content_type.lower():
+                    try:
+                        # Response is a JSON string containing base64-encoded XBRL
+                        json_data = response.json()
+                        if isinstance(json_data, str):
+                            # Decode base64 to get actual XBRL bytes
+                            import base64
+                            decoded_xbrl = base64.b64decode(json_data)
+                            logger.debug(f"Successfully decoded base64 XBRL data: {len(decoded_xbrl)} bytes")
+                            return decoded_xbrl
+                        else:
+                            logger.warning(f"Unexpected JSON response format: {type(json_data)}")
+                            return response.content
+                    except Exception as e:
+                        logger.warning(f"Failed to decode JSON/base64 response: {e}, returning raw content")
+                        return response.content
+                else:
+                    # Non-JSON response, return as-is
+                    return response.content
             elif response.status_code == 404:
                 raise NoDataError(f"No data found for RSSD {rssd_id} for period {reporting_period}")
             elif response.status_code == 500:
@@ -570,13 +598,13 @@ class RESTAdapter(ProtocolAdapter):
             raise
     
     def retrieve_filers_submission_datetime(self, reporting_period: str, 
-                                           last_update: Optional[str] = None) -> List[Dict]:
+                                           since_date: Optional[str] = None) -> List[Dict]:
         """
         Retrieve filer submission date/time info via REST API.
         
         Args:
             reporting_period: Reporting period (MM/dd/yyyy)
-            last_update: Optional last update date/time filter
+            since_date: Optional date to filter submissions since (MM/dd/yyyy)
             
         Returns:
             List of submission info dictionaries (normalized to SOAP format)
@@ -588,8 +616,8 @@ class RESTAdapter(ProtocolAdapter):
         }
         
         # Per PDF, lastUpdateDateTime is required for this endpoint
-        if last_update:
-            params["lastUpdateDateTime"] = last_update
+        if since_date:
+            params["lastUpdateDateTime"] = since_date
         else:
             # Default to beginning of reporting period if not specified
             # Extract month/day/year from reporting period
@@ -697,7 +725,28 @@ class RESTAdapter(ProtocolAdapter):
             
             if response.status_code == 200:
                 logger.info(f"Successfully retrieved UBPR facsimile for RSSD {rssd_id}")
-                return response.content
+                
+                # Check if response is JSON (contains base64-encoded XBRL)
+                content_type = response.headers.get('content-type', '')
+                if 'json' in content_type.lower():
+                    try:
+                        # Response is a JSON string containing base64-encoded XBRL
+                        json_data = response.json()
+                        if isinstance(json_data, str):
+                            # Decode base64 to get actual XBRL bytes
+                            import base64
+                            decoded_xbrl = base64.b64decode(json_data)
+                            logger.debug(f"Successfully decoded base64 UBPR XBRL data: {len(decoded_xbrl)} bytes")
+                            return decoded_xbrl
+                        else:
+                            logger.warning(f"Unexpected JSON response format for UBPR: {type(json_data)}")
+                            return response.content
+                    except Exception as e:
+                        logger.warning(f"Failed to decode UBPR JSON/base64 response: {e}, returning raw content")
+                        return response.content
+                else:
+                    # Non-JSON response, return as-is
+                    return response.content
             elif response.status_code == 404:
                 raise NoDataError(f"No UBPR data found for RSSD {rssd_id} for period {reporting_period}")
             else:
@@ -787,13 +836,14 @@ class SOAPAdapter(ProtocolAdapter):
             self.session, self.credentials, reporting_period, since_date
         )
     
-    def retrieve_filers_submission_datetime(self, reporting_period: str) -> List[Dict]:
+    def retrieve_filers_submission_datetime(self, reporting_period: str, 
+                                           since_date: Optional[str] = None) -> List[Dict]:
         """Retrieve filer submission info via SOAP (delegates to existing implementation)."""
         from . import methods
         
-        # Use existing implementation
+        # Use existing implementation - note SOAP method expects since_date before reporting_period
         return methods.collect_filers_submission_date_time(
-            self.session, self.credentials, reporting_period
+            self.session, self.credentials, since_date or reporting_period, reporting_period
         )
     
     @property

@@ -32,6 +32,7 @@ from ffiec_data_connect import (
     xbrl_processor,
 )
 from ffiec_data_connect.exceptions import (
+    ConnectionError,
     NoDataError,
     ValidationError,
     raise_exception,
@@ -594,7 +595,7 @@ def collect_data(
             
             return normalized_data
             
-        except (ConnectionError, ffiec_connection.ConnectionError) as e:
+        except ConnectionError as e:
             # If REST API fails with server error, log and provide helpful message
             if "server error" in str(e).lower() or "500" in str(e):
                 logger.warning(
@@ -726,12 +727,12 @@ def collect_data(
                 "rssd": row["rssd"],
                 "quarter": row["quarter"],
                 "data_type": row["data_type"],
-                "int_data": None if np.isnan(row["int_data"]) else int(row["int_data"]),
+                "int_data": None if pd.isna(row["int_data"]) else int(row["int_data"]),
                 "float_data": (
-                    None if np.isnan(row["float_data"]) else float(row["float_data"])
+                    None if pd.isna(row["float_data"]) else float(row["float_data"])
                 ),
                 "bool_data": (
-                    None if np.isnan(row["bool_data"]) else bool(row["bool_data"])
+                    None if pd.isna(row["bool_data"]) else bool(row["bool_data"])
                 ),
                 "str_data": row["str_data"],
             }
