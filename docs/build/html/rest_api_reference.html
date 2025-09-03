@@ -92,15 +92,49 @@
   <section id="rest-api-reference">
 <h1>REST API Reference<a class="headerlink" href="#rest-api-reference" title="Link to this heading"></a></h1>
 <p>This section provides a complete reference for the FFIEC CDR REST API endpoints. The API uses OAuth2 Bearer token authentication with JWT tokens that are valid for 90 days.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>This is an UNOFFICIAL API Specification</strong></p>
+<p>This OpenAPI specification was reverse-engineered from official FFIEC documentation and extensive
+testing with the live API. While validated against actual API behavior, it should not be considered
+authoritative. The official documentation is CDR-PDD-SIS-611 v1.10.</p>
+</div>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p><strong>Authentication Requirements</strong></p>
+<p><strong>Non-Standard REST API Design</strong></p>
+<p>The FFIEC REST API deviates significantly from typical RESTful conventions:</p>
+<p><strong>Parameter Passing:</strong></p>
 <ul class="simple">
-<li><p>All parameters are passed as <strong>HTTP headers</strong>, not query parameters</p></li>
+<li><p>ALL parameters are passed as <strong>HTTP headers</strong>, not query parameters or path parameters</p></li>
+<li><p>This includes data that would typically be in the URL path (like RSSD IDs) or query string</p></li>
+<li><p>Headers are <strong>case-sensitive</strong> and must match exactly (e.g., <code class="docutils literal notranslate"><span class="pre">UserID</span></code> not <code class="docutils literal notranslate"><span class="pre">userid</span></code>)</p></li>
+</ul>
+<p><strong>HTTP Status Codes:</strong></p>
+<ul class="simple">
+<li><p>Status codes <strong>do not follow standard HTTP semantics</strong></p></li>
+<li><p>Client errors often return 5xx codes instead of appropriate 4xx codes</p></li>
+<li><p>Invalid requests may return 500 (Internal Server Error) instead of 400 (Bad Request)</p></li>
+</ul>
+<p><strong>Authentication Headers:</strong></p>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">UserID</span></code>: Your FFIEC PWS username (note capital ‘ID’)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Authentication</span></code>: Bearer {token} (NOT Authorization header)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Authentication</span></code>: Bearer {token} (NOT the standard <code class="docutils literal notranslate"><span class="pre">Authorization</span></code> header)</p></li>
 <li><p>JWT tokens begin with <code class="docutils literal notranslate"><span class="pre">ey</span></code> and end with <code class="docutils literal notranslate"><span class="pre">.</span></code></p></li>
 </ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Why Use ffiec-data-connect?</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">ffiec-data-connect</span></code> library abstracts away these API complexities, providing:</p>
+<ul class="simple">
+<li><p>Automatic header construction with correct casing</p></li>
+<li><p>Proper error code translation and handling</p></li>
+<li><p>Built-in retry logic for transient failures</p></li>
+<li><p>Data type normalization and validation</p></li>
+<li><p>A consistent, Pythonic interface</p></li>
+</ul>
+<p>This schema was developed during the creation of ffiec-data-connect and is provided as a
+reference for developers who need to understand the underlying API behavior.</p>
 </div>
 <section id="base-url">
 <h2>Base URL<a class="headerlink" href="#base-url" title="Link to this heading"></a></h2>

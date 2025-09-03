@@ -5,9 +5,48 @@ info:
     REST API for accessing FFIEC Call Report and UBPR data.
     This API requires OAuth2 Bearer token authentication with tokens valid for 90 days.
     
-    Base URL: https://ffieccdr.azure-api.us/public
+    ## IMPORTANT DISCLAIMERS
     
-    CRITICAL: ALL parameters are passed as HTTP headers, NOT query parameters!
+    **This OpenAPI specification is UNOFFICIAL and was reverse-engineered** from official FFIEC documentation 
+    and extensive testing with the live API. It is provided as a reference for developers but should not be 
+    considered authoritative. The official documentation is CDR-PDD-SIS-611 v1.10.
+    
+    ## API DESIGN CONSIDERATIONS
+    
+    The FFIEC REST API deviates from typical RESTful conventions in several important ways:
+    
+    ### Non-Standard Parameter Passing
+    - **ALL parameters are passed as HTTP headers**, not as query parameters or in the request path
+    - This includes data that would typically be path parameters (like RSSD IDs) or query parameters (like date ranges)
+    - Headers must be exact, including case sensitivity (e.g., `UserID` not `userid` or `UserId`)
+    
+    ### Non-Standard HTTP Status Codes
+    - Status codes do not follow conventional HTTP semantics
+    - **5xx codes are often returned for client errors** that should typically be 4xx codes
+    - Invalid request data may return 500 (Internal Server Error) instead of 400 (Bad Request)
+    - Authentication failures may not consistently return 401
+    
+    ### Case Sensitivity Issues
+    - **Header names are case-sensitive** and inconsistent across the API
+    - `UserID` uses capital 'ID', while other headers may use different casing conventions
+    - `Authentication` header (not the standard `Authorization`)
+    - Response field names also have inconsistent casing patterns
+    
+    ## USING THE ffiec-data-connect LIBRARY
+    
+    **The ffiec-data-connect Python library abstracts away these complexities**, providing a consistent, 
+    Pythonic interface that handles:
+    - Proper header construction and casing
+    - Error code translation and handling
+    - Automatic retry logic for transient failures
+    - Data type normalization and validation
+    
+    This OpenAPI schema was developed during the creation of ffiec-data-connect and is provided as a 
+    reference for developers who need to understand the underlying API behavior or implement their own clients.
+    
+    ## TECHNICAL DETAILS
+    
+    Base URL: https://ffieccdr.azure-api.us/public
     
     Authentication Headers Required:
     - UserID: Your FFIEC PWS username (note capital 'ID')

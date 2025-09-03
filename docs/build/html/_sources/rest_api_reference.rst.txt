@@ -3,13 +3,49 @@ REST API Reference
 
 This section provides a complete reference for the FFIEC CDR REST API endpoints. The API uses OAuth2 Bearer token authentication with JWT tokens that are valid for 90 days.
 
-.. important::
-   **Authentication Requirements**
+.. warning::
+   **This is an UNOFFICIAL API Specification**
    
-   - All parameters are passed as **HTTP headers**, not query parameters
+   This OpenAPI specification was reverse-engineered from official FFIEC documentation and extensive 
+   testing with the live API. While validated against actual API behavior, it should not be considered 
+   authoritative. The official documentation is CDR-PDD-SIS-611 v1.10.
+
+.. important::
+   **Non-Standard REST API Design**
+   
+   The FFIEC REST API deviates significantly from typical RESTful conventions:
+   
+   **Parameter Passing:**
+   
+   - ALL parameters are passed as **HTTP headers**, not query parameters or path parameters
+   - This includes data that would typically be in the URL path (like RSSD IDs) or query string
+   - Headers are **case-sensitive** and must match exactly (e.g., ``UserID`` not ``userid``)
+   
+   **HTTP Status Codes:**
+   
+   - Status codes **do not follow standard HTTP semantics**
+   - Client errors often return 5xx codes instead of appropriate 4xx codes
+   - Invalid requests may return 500 (Internal Server Error) instead of 400 (Bad Request)
+   
+   **Authentication Headers:**
+   
    - ``UserID``: Your FFIEC PWS username (note capital 'ID')
-   - ``Authentication``: Bearer {token} (NOT Authorization header)
+   - ``Authentication``: Bearer {token} (NOT the standard ``Authorization`` header)
    - JWT tokens begin with ``ey`` and end with ``.``
+
+.. note::
+   **Why Use ffiec-data-connect?**
+   
+   The ``ffiec-data-connect`` library abstracts away these API complexities, providing:
+   
+   - Automatic header construction with correct casing
+   - Proper error code translation and handling
+   - Built-in retry logic for transient failures
+   - Data type normalization and validation
+   - A consistent, Pythonic interface
+   
+   This schema was developed during the creation of ffiec-data-connect and is provided as a 
+   reference for developers who need to understand the underlying API behavior.
 
 Base URL
 --------
