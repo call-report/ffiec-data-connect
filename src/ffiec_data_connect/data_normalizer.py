@@ -17,7 +17,7 @@ Version: Phase 0 - Data Normalization
 """
 
 import logging
-from typing import Any, Dict, List, Union, Callable
+from typing import Any, Dict, List, Union, Callable, Tuple
 from datetime import datetime
 import re
 
@@ -200,6 +200,88 @@ class DataNormalizer:
             return str(date_value)
     
     @staticmethod
+    def normalize_for_validation(data: Any, endpoint: str, protocol: str = "REST") -> Tuple[Any, Dict]:
+        """
+        Normalize response data and return both normalized data and statistics.
+        
+        This method is designed to work with Pydantic validation by providing
+        both the normalized data and metadata about transformations applied.
+        
+        Args:
+            data: Raw response data from API
+            endpoint: API endpoint name  
+            protocol: Source protocol ("REST" or "SOAP")
+            
+        Returns:
+            Tuple of (normalized_data, normalization_stats)
+        """
+        if protocol != "REST":
+            return data, {"transformations": 0, "protocol": protocol}
+            
+        normalized = DataNormalizer.normalize_response(data, endpoint, protocol)
+        stats = DataNormalizer.get_normalization_stats(data, normalized, endpoint)
+        
+        return normalized, stats
+    
+    @staticmethod
+    def validate_pydantic_compatibility(data: Any, endpoint: str) -> Dict[str, Any]:
+        """
+        Check if normalized data is compatible with expected Pydantic models.
+        
+        This performs additional validation beyond basic normalization to ensure
+        data will pass Pydantic validation without issues.
+        
+        Args:
+            data: Normalized data
+            endpoint: API endpoint name
+            
+        Returns:
+            Dictionary with validation results and recommendations
+        """
+        validation_report = {
+            "endpoint": endpoint,
+            "compatible": True,
+            "warnings": [],
+            "recommendations": []
+        }
+        
+        try:
+            if endpoint == "RetrievePanelOfReporters":
+                if isinstance(data, list):
+                    for i, item in enumerate(data[:3]):  # Check first 3 items
+                        if isinstance(item, dict):
+                            # Check required fields
+                            if "ID_RSSD" not in item:
+                                validation_report["warnings"].append(f"Item {i} missing ID_RSSD")
+                                validation_report["compatible"] = False
+                            elif not isinstance(item["ID_RSSD"], str):
+                                validation_report["warnings"].append(f"Item {i} ID_RSSD not string: {type(item['ID_RSSD'])}")
+                                validation_report["compatible"] = False
+                                
+                            if "Name" not in item:
+                                validation_report["warnings"].append(f"Item {i} missing Name")
+                                validation_report["compatible"] = False
+                                
+                            # Check ZIP code format
+                            if "ZIP" in item and isinstance(item["ZIP"], str):
+                                if len(item["ZIP"]) == 4 and item["ZIP"].isdigit():
+                                    validation_report["warnings"].append(f"Item {i} ZIP missing leading zero: {item['ZIP']}")
+                                    validation_report["recommendations"].append("Apply DataNormalizer._fix_zip_code()")
+            
+            elif endpoint in ["RetrieveFilersSinceDate", "RSSDIDsResponse"]:
+                if isinstance(data, list):
+                    for i, item in enumerate(data[:3]):
+                        if not isinstance(item, str):
+                            validation_report["warnings"].append(f"RSSD ID {i} not string: {type(item)}")
+                            validation_report["compatible"] = False
+                            
+        except Exception as e:
+            validation_report["error"] = str(e)
+            validation_report["compatible"] = False
+            
+        return validation_report
+    
+    @staticmethod  
     def normalize_response(data: Any, endpoint: str, protocol: str = "REST") -> Any:
         """
         Normalize REST response to match SOAP format exactly.

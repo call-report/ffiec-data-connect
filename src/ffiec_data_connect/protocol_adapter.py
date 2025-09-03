@@ -24,6 +24,9 @@ import httpx
 import time
 import threading
 
+# Import Pydantic models for response validation
+from pydantic import ValidationError as PydanticValidationError
+
 # Keep requests import for SOAP adapter backward compatibility
 try:
     import requests
@@ -39,6 +42,16 @@ from .exceptions import (
     NoDataError,
     RateLimitError,
     ValidationError
+)
+from .models import (
+    ReportingPeriodsResponse,
+    UBPRReportingPeriodsResponse,
+    InstitutionsResponse,
+    RSSDIDsResponse,
+    SubmissionsResponse,
+    XBRLData,
+    PDFData,
+    SDFData
 )
 
 
@@ -62,7 +75,7 @@ class ProtocolAdapter(ABC):
             series: Report series (e.g., "call", "ubpr")
             
         Returns:
-            List of reporting period strings
+            List of reporting period strings (validated against schema)
         """
         pass
         
@@ -333,6 +346,39 @@ class RESTAdapter(ProtocolAdapter):
                 f"{response.status_code} - {response.text}"
             )
     
+    def _validate_response(self, data: Any, model_class, endpoint: str) -> Any:
+        """
+        Validate response data using Pydantic models.
+        
+        Args:
+            data: Raw response data
+            model_class: Pydantic model class for validation
+            endpoint: API endpoint name for error context
+            
+        Returns:
+            Validated data (unwrapped from RootModel if needed)
+            
+        Raises:
+            ValidationError: If data doesn't match schema
+        """
+        try:
+            if hasattr(model_class, 'root'):
+                # RootModel - validate and return the root data
+                validated = model_class(data)
+                return validated.root
+            else:
+                # Regular model - validate directly
+                validated = model_class(data)
+                return validated
+                
+        except PydanticValidationError as e:
+            logger.error(f"Schema validation failed for {endpoint}: {e}")
+            raise ValidationError(
+                f"API response validation failed for {endpoint}: {e}",
+                field=endpoint,
+                value=str(data)[:200] + "..." if len(str(data)) > 200 else str(data)
+            )
+    
     def retrieve_reporting_periods(self, series: str) -> List[str]:
         """
         Retrieve available reporting periods via REST API.
@@ -362,8 +408,18 @@ class RESTAdapter(ProtocolAdapter):
                 raw_response, "RetrieveReportingPeriods", "REST"
             )
             
-            logger.info(f"Retrieved {len(normalized)} reporting periods for {series}")
-            return normalized
+            # Validate response against schema
+            if series.lower() == "call":
+                validated = self._validate_response(
+                    normalized, ReportingPeriodsResponse, "RetrieveReportingPeriods"
+                )
+            else:
+                validated = self._validate_response(
+                    normalized, UBPRReportingPeriodsResponse, "RetrieveUBPRReportingPeriods"
+                )
+            
+            logger.info(f"Retrieved and validated {len(validated)} reporting periods for {series}")
+            return validated
             
         except Exception as e:
             logger.error(f"Failed to retrieve reporting periods for {series}: {e}")
@@ -453,8 +509,13 @@ class RESTAdapter(ProtocolAdapter):
                 raw_response, "RetrievePanelOfReporters", "REST"
             )
             
-            logger.info(f"Retrieved {len(normalized)} reporters for {reporting_period}")
-            return normalized
+            # Validate response against schema
+            validated = self._validate_response(
+                normalized, InstitutionsResponse, "RetrievePanelOfReporters"
+            )
+            
+            logger.info(f"Retrieved and validated {len(validated)} reporters for {reporting_period}")
+            return validated
             
         except Exception as e:
             logger.error(f"Failed to retrieve panel of reporters for {reporting_period}: {e}")
@@ -487,8 +548,13 @@ class RESTAdapter(ProtocolAdapter):
                 raw_response, "RetrieveFilersSinceDate", "REST"
             )
             
-            logger.info(f"Retrieved {len(normalized)} filers since {since_date}")
-            return normalized
+            # Validate response against schema
+            validated = self._validate_response(
+                normalized, RSSDIDsResponse, "RetrieveFilersSinceDate"
+            )
+            
+            logger.info(f"Retrieved and validated {len(validated)} filers since {since_date}")
+            return validated
             
         except Exception as e:
             logger.error(f"Failed to retrieve filers since {since_date}: {e}")
@@ -543,8 +609,13 @@ class RESTAdapter(ProtocolAdapter):
                 raw_response, "RetrieveFilersSubmissionDateTime", "REST"
             )
             
-            logger.info(f"Retrieved submission info for {len(normalized)} filers")
-            return normalized
+            # Validate response against schema
+            validated = self._validate_response(
+                normalized, SubmissionsResponse, "RetrieveFilersSubmissionDateTime"
+            )
+            
+            logger.info(f"Retrieved and validated submission info for {len(validated)} filers")
+            return validated
             
         except Exception as e:
             logger.error(f"Failed to retrieve filer submission info: {e}")
@@ -569,8 +640,13 @@ class RESTAdapter(ProtocolAdapter):
                 raw_response, "RetrieveUBPRReportingPeriods", "REST"
             )
             
-            logger.info(f"Retrieved {len(normalized)} UBPR reporting periods")
-            return normalized
+            # Validate response against schema
+            validated = self._validate_response(
+                normalized, UBPRReportingPeriodsResponse, "RetrieveUBPRReportingPeriods"
+            )
+            
+            logger.info(f"Retrieved and validated {len(validated)} UBPR reporting periods")
+            return validated
             
         except Exception as e:
             logger.error(f"Failed to retrieve UBPR reporting periods: {e}")
