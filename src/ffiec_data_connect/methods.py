@@ -517,6 +517,7 @@ def collect_data(
     series: str,
     output_type="list",
     date_output_format="string_original",
+    force_null_types: Optional[str] = None,
 ):
     """Return time series data from the FFIEC webservice for a given reporting period and RSSD ID
 
@@ -543,6 +544,10 @@ def collect_data(
         series (str): `call` or `ubpr`
         output_type (str): `list`, `pandas`, or `polars`
         date_output_format (str): `string_original`, `string_yyyymmdd`, or `python_format`
+        force_null_types (str, optional): Override null value handling. Options:
+            - None (default): Automatic based on API (SOAP uses numpy, REST uses pandas)
+            - "numpy": Force np.nan for null values (original behavior)
+            - "pandas": Force pd.NA for null values (better integer handling)
 
     Returns:
         list, pandas DataFrame, or polars DataFrame: Returns data in the specified format
@@ -551,6 +556,16 @@ def collect_data(
     _ = _output_type_validator(output_type)
     _ = _date_format_validator(date_output_format)
     _ = _credentials_validator(creds)
+    
+    # Validate force_null_types parameter
+    if force_null_types is not None and force_null_types not in ["numpy", "pandas"]:
+        raise_exception(
+            ValidationError,
+            f"Invalid force_null_types: {force_null_types}",
+            field="force_null_types",
+            value=force_null_types,
+            expected="None, 'numpy', or 'pandas'"
+        )
 
     # Check if we have OAuth2 credentials - attempt REST API
     from .credentials import OAuth2Credentials
@@ -579,8 +594,16 @@ def collect_data(
                     expected="bytes or str",
                 )
 
-            # Process the XBRL data
-            processed_ret = xbrl_processor._process_xml(ret_bytes, date_output_format)
+            # Process the XBRL data with appropriate null handling
+            # Determine whether to use REST nulls based on force_null_types
+            if force_null_types == "numpy":
+                use_rest_nulls = False  # Force numpy nulls
+            elif force_null_types == "pandas":
+                use_rest_nulls = True   # Force pandas nulls
+            else:
+                use_rest_nulls = True   # Default for REST is pandas nulls
+            
+            processed_ret = xbrl_processor._process_xml(ret_bytes, date_output_format, use_rest_nulls)
 
             # Apply data normalization for consistency
             from .data_normalizer import DataNormalizer
@@ -738,21 +761,41 @@ def collect_data(
             expected="bytes or str",
         )
 
-    processed_ret = xbrl_processor._process_xml(ret_bytes, date_output_format)
+    # Process with appropriate null handling for SOAP
+    # Determine whether to use REST nulls based on force_null_types
+    if force_null_types == "numpy":
+        use_rest_nulls = False  # Force numpy nulls
+    elif force_null_types == "pandas":
+        use_rest_nulls = True   # Force pandas nulls
+    else:
+        use_rest_nulls = False  # Default for SOAP is numpy nulls
+    
+    processed_ret = xbrl_processor._process_xml(ret_bytes, date_output_format, use_rest_nulls)
 
     if output_type == "list":
         return processed_ret
     elif output_type == "pandas":
-        # SOAP path: Create DataFrame with traditional pandas behavior (np.nan compatible)
+        # Create DataFrame with appropriate null handling
         df = pd.DataFrame(processed_ret)
         
-        # Enhanced nullable dtype support with backward compatibility
-        if "int_data" in df.columns:
-            df["int_data"] = df["int_data"].astype("Int64")  # Nullable integer
-        if "float_data" in df.columns:
-            df["float_data"] = df["float_data"].astype("float64")  # Regular float (supports NaN)
-        if "bool_data" in df.columns:
-            df["bool_data"] = df["bool_data"].astype("boolean")  # Nullable boolean
+        # If we're using pd.NA (either forced or REST default), need special handling
+        if use_rest_nulls:
+            # Convert pd.NA to appropriate null values for pandas dtypes
+            if "int_data" in df.columns:
+                df["int_data"] = df["int_data"].replace({pd.NA: None}).astype("Int64")
+            if "float_data" in df.columns:
+                df["float_data"] = df["float_data"].replace({pd.NA: np.nan}).astype("float64")
+            if "bool_data" in df.columns:
+                df["bool_data"] = df["bool_data"].replace({pd.NA: None}).astype("boolean")
+        else:
+            # Traditional SOAP path with np.nan - direct conversion
+            if "int_data" in df.columns:
+                df["int_data"] = df["int_data"].astype("Int64")  # Nullable integer
+            if "float_data" in df.columns:
+                df["float_data"] = df["float_data"].astype("float64")  # Regular float (supports NaN)
+            if "bool_data" in df.columns:
+                df["bool_data"] = df["bool_data"].astype("boolean")  # Nullable boolean
+        
         if "str_data" in df.columns:
             df["str_data"] = df["str_data"].astype("string")  # Pandas string dtype
         return df
@@ -1156,6 +1199,7 @@ def collect_ubpr_facsimile_data(
     reporting_period: Union[str, datetime],
     rssd_id: str,
     output_type="list",
+    force_null_types: Optional[str] = None,
 ) -> Union[bytes, list, pd.DataFrame]:
     """Retrieves UBPR XBRL facsimile data for a specific institution.
 
@@ -1168,6 +1212,10 @@ def collect_ubpr_facsimile_data(
         reporting_period: Reporting period date
         rssd_id: Institution RSSD ID
         output_type: Output format ("list", "pandas", "polars", or "bytes")
+        force_null_types (str, optional): Override null value handling. Options:
+            - None (default): Automatic based on API (REST uses pandas)
+            - "numpy": Force np.nan for null values
+            - "pandas": Force pd.NA for null values
 
     Returns:
         bytes, list, or pd.DataFrame: UBPR XBRL data
@@ -1176,6 +1224,16 @@ def collect_ubpr_facsimile_data(
     # Validate inputs
     _ = _output_type_validator(output_type)
     _ = _credentials_validator(creds)
+    
+    # Validate force_null_types parameter
+    if force_null_types is not None and force_null_types not in ["numpy", "pandas"]:
+        raise_exception(
+            ValidationError,
+            f"Invalid force_null_types: {force_null_types}",
+            field="force_null_types",
+            value=force_null_types,
+            expected="None, 'numpy', or 'pandas'"
+        )
 
     # Validate reporting period
     if not _is_valid_date_or_quarter(reporting_period):
@@ -1216,22 +1274,40 @@ def collect_ubpr_facsimile_data(
 
             # Process XBRL data if needed
             if isinstance(raw_data, bytes):
+                # Determine null handling
+                if force_null_types == "numpy":
+                    use_rest_nulls = False
+                elif force_null_types == "pandas":
+                    use_rest_nulls = True
+                else:
+                    use_rest_nulls = True  # Default for REST is pandas nulls
+                
                 if output_type == "list":
                     # Parse XBRL and return as list
-                    processed_data = xbrl_processor._process_xml(raw_data, "string_original", use_rest_nulls=True)
+                    processed_data = xbrl_processor._process_xml(raw_data, "string_original", use_rest_nulls)
                     return processed_data
                 elif output_type == "pandas":
-                    processed_data = xbrl_processor._process_xml(raw_data, "string_original", use_rest_nulls=True)
-                    # REST path: Handle pd.NA values for proper nullable dtypes
+                    processed_data = xbrl_processor._process_xml(raw_data, "string_original", use_rest_nulls)
                     df = pd.DataFrame(processed_data)
                     
-                    # Convert pd.NA to appropriate null values for pandas dtypes
-                    if "int_data" in df.columns:
-                        df["int_data"] = df["int_data"].replace({pd.NA: None}).astype("Int64")
-                    if "float_data" in df.columns:
-                        df["float_data"] = df["float_data"].replace({pd.NA: np.nan}).astype("float64")
-                    if "bool_data" in df.columns:
-                        df["bool_data"] = df["bool_data"].replace({pd.NA: None}).astype("boolean")
+                    # Handle null types based on what we're using
+                    if use_rest_nulls:
+                        # Convert pd.NA to appropriate null values for pandas dtypes
+                        if "int_data" in df.columns:
+                            df["int_data"] = df["int_data"].replace({pd.NA: None}).astype("Int64")
+                        if "float_data" in df.columns:
+                            df["float_data"] = df["float_data"].replace({pd.NA: np.nan}).astype("float64")
+                        if "bool_data" in df.columns:
+                            df["bool_data"] = df["bool_data"].replace({pd.NA: None}).astype("boolean")
+                    else:
+                        # Traditional np.nan path - direct conversion
+                        if "int_data" in df.columns:
+                            df["int_data"] = df["int_data"].astype("Int64")
+                        if "float_data" in df.columns:
+                            df["float_data"] = df["float_data"].astype("float64")
+                        if "bool_data" in df.columns:
+                            df["bool_data"] = df["bool_data"].astype("boolean")
+                    
                     if "str_data" in df.columns:
                         df["str_data"] = df["str_data"].astype("string")
                     

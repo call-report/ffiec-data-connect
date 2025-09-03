@@ -24,7 +24,9 @@ Data returned from the Webservice may be returned as a native Python data struct
    :caption: Contents:
 
    account_setup
+   development_setup
    modules
+   data_type_handling
    examples
    versionhistory
    licensedisclaimer

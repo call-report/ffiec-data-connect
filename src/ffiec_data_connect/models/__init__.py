@@ -17,14 +17,12 @@ from .api_models import (
     Institution,
     ReportingPeriod,
     SubmissionInfo,
-    
     # Response models
     ReportingPeriodsResponse,
     UBPRReportingPeriodsResponse,
     InstitutionsResponse,
     RSSDIDsResponse,
     SubmissionsResponse,
-    
     # Binary data models
     XBRLData,
     PDFData,
@@ -34,19 +32,17 @@ from .api_models import (
 __all__ = [
     # Core data models
     "Error",
-    "Institution", 
+    "Institution",
     "ReportingPeriod",
     "SubmissionInfo",
-    
     # Response models
     "ReportingPeriodsResponse",
-    "UBPRReportingPeriodsResponse", 
+    "UBPRReportingPeriodsResponse",
     "InstitutionsResponse",
     "RSSDIDsResponse",
     "SubmissionsResponse",
-    
     # Binary data models
     "XBRLData",
-    "PDFData", 
+    "PDFData",
     "SDFData",
 ]

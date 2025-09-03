@@ -1,0 +1,568 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Development Setup &mdash; FFIEC Data Connect 2.0.0rc4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=aa9da443"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FFIEC Webservice Data Connector" href="modules.html" />
+    <link rel="prev" title="FFIEC Account Setup Instructions" href="account_setup.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#clone-the-repository">Clone the Repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#set-up-virtual-environment">Set Up Virtual Environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-venv-built-in">Using venv (Built-in)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-conda">Using conda</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#install-dependencies">Install Dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#development-mode-installation">Development Mode Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#core-dependencies-only">Core Dependencies Only</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-code-in-development-mode">Running Code in Development Mode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-the-library-from-source">Using the Library from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#direct-path-import-alternative">Direct Path Import (Alternative)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-jupyter-notebooks">Using Jupyter Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-test-run">Basic Test Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-coverage">Test Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#specific-test-patterns">Specific Test Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#code-quality-tools">Code Quality Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#linting-and-formatting">Linting and Formatting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#type-checking">Type Checking</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#building-documentation">Building Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#making-changes">Making Changes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#development-workflow">Development Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#common-development-tasks">Common Development Tasks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#adding-a-new-feature">Adding a New Feature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugging">Debugging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logging">Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#project-structure">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#environment-variables">Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting-development-setup">Troubleshooting Development Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#import-errors">Import Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dependency-conflicts">Dependency Conflicts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#permission-errors">Permission Errors</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FFIEC Data Connect</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Development Setup</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/development_setup.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="development-setup">
+<h1>Development Setup<a class="headerlink" href="#development-setup" title="Link to this heading"></a></h1>
+<p>This guide explains how to set up and run the FFIEC Data Connect library in development mode without installing it via pip. This is useful for contributing to the library, testing changes, or debugging issues.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<section id="system-requirements">
+<h3>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Python 3.8 or higher</p></li>
+<li><p>Git for version control</p></li>
+<li><p>Virtual environment tool (venv, virtualenv, or conda)</p></li>
+</ul>
+</section>
+</section>
+<section id="clone-the-repository">
+<h2>Clone the Repository<a class="headerlink" href="#clone-the-repository" title="Link to this heading"></a></h2>
+<p>First, clone the repository from GitHub:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone the repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/call-report/ffiec-data-connect.git
+<span class="nb">cd</span><span class="w"> </span>ffiec-data-connect
+
+<span class="c1"># Or if you have a fork:</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/YOUR_USERNAME/ffiec-data-connect.git
+<span class="nb">cd</span><span class="w"> </span>ffiec-data-connect
+</pre></div>
+</div>
+</section>
+<section id="set-up-virtual-environment">
+<h2>Set Up Virtual Environment<a class="headerlink" href="#set-up-virtual-environment" title="Link to this heading"></a></h2>
+<p>It’s strongly recommended to use a virtual environment for development:</p>
+<section id="using-venv-built-in">
+<h3>Using venv (Built-in)<a class="headerlink" href="#using-venv-built-in" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create virtual environment</span>
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+
+<span class="c1"># Activate it</span>
+<span class="c1"># On macOS/Linux:</span>
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+
+<span class="c1"># On Windows:</span>
+venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+</pre></div>
+</div>
+</section>
+<section id="using-conda">
+<h3>Using conda<a class="headerlink" href="#using-conda" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create conda environment</span>
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>ffiec-dev<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
+
+<span class="c1"># Activate it</span>
+conda<span class="w"> </span>activate<span class="w"> </span>ffiec-dev
+</pre></div>
+</div>
+</section>
+</section>
+<section id="install-dependencies">
+<h2>Install Dependencies<a class="headerlink" href="#install-dependencies" title="Link to this heading"></a></h2>
+<section id="development-mode-installation">
+<h3>Development Mode Installation<a class="headerlink" href="#development-mode-installation" title="Link to this heading"></a></h3>
+<p>Install the package in “editable” or “development” mode. This allows you to make changes to the code and have them immediately reflected without reinstalling:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install in editable mode with development dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+
+<span class="c1"># If the above doesn&#39;t work, try:</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-dev.txt
+</pre></div>
+</div>
+</section>
+<section id="core-dependencies-only">
+<h3>Core Dependencies Only<a class="headerlink" href="#core-dependencies-only" title="Link to this heading"></a></h3>
+<p>If you only need the core dependencies without development tools:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install core dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+
+<span class="c1"># Or manually install required packages:</span>
+pip<span class="w"> </span>install<span class="w"> </span>pandas<span class="w"> </span>numpy<span class="w"> </span>requests<span class="w"> </span>zeep<span class="w"> </span>defusedxml
+
+<span class="c1"># Optional: Install polars for polars output support</span>
+pip<span class="w"> </span>install<span class="w"> </span>polars
+</pre></div>
+</div>
+</section>
+</section>
+<section id="verify-installation">
+<h2>Verify Installation<a class="headerlink" href="#verify-installation" title="Link to this heading"></a></h2>
+<p>Test that the development installation is working:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start Python interpreter</span>
+<span class="n">python</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n">ffiec_data_connect</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">methods</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Development setup successful!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="running-code-in-development-mode">
+<h2>Running Code in Development Mode<a class="headerlink" href="#running-code-in-development-mode" title="Link to this heading"></a></h2>
+<section id="using-the-library-from-source">
+<h3>Using the Library from Source<a class="headerlink" href="#using-the-library-from-source" title="Link to this heading"></a></h3>
+<p>When the library is installed in editable mode, you can use it as if it were installed normally:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Your script.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span><span class="p">,</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">ffiec_connection</span>
+
+<span class="c1"># Use the library normally</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">WebserviceCredentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+<span class="c1"># ... rest of your code</span>
+</pre></div>
+</div>
+</section>
+<section id="direct-path-import-alternative">
+<h3>Direct Path Import (Alternative)<a class="headerlink" href="#direct-path-import-alternative" title="Link to this heading"></a></h3>
+<p>If you prefer not to install in editable mode, you can add the source directory to your Python path:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add at the top of your script</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># Add the src directory to Python path</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;path/to/ffiec-data-connect/src&#39;</span><span class="p">))</span>
+
+<span class="c1"># Now import normally</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span>
+</pre></div>
+</div>
+</section>
+<section id="using-jupyter-notebooks">
+<h3>Using Jupyter Notebooks<a class="headerlink" href="#using-jupyter-notebooks" title="Link to this heading"></a></h3>
+<p>For Jupyter notebook development:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In the first cell</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/path/to/ffiec-data-connect/src&#39;</span><span class="p">)</span>
+
+<span class="c1"># Now you can import and use the library</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span><span class="p">,</span> <span class="n">credentials</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-tests">
+<h2>Running Tests<a class="headerlink" href="#running-tests" title="Link to this heading"></a></h2>
+<p>The library includes comprehensive tests. To run them:</p>
+<section id="basic-test-run">
+<h3>Basic Test Run<a class="headerlink" href="#basic-test-run" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all tests</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/
+
+<span class="c1"># Run specific test file</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_methods.py
+
+<span class="c1"># Run with verbose output</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+<section id="test-coverage">
+<h3>Test Coverage<a class="headerlink" href="#test-coverage" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run tests with coverage report</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/ffiec_data_connect<span class="w"> </span>--cov-report<span class="o">=</span>html
+
+<span class="c1"># View coverage report</span>
+open<span class="w"> </span>htmlcov/index.html<span class="w">  </span><span class="c1"># macOS</span>
+<span class="c1"># or</span>
+start<span class="w"> </span>htmlcov/index.html<span class="w">  </span><span class="c1"># Windows</span>
+</pre></div>
+</div>
+</section>
+<section id="specific-test-patterns">
+<h3>Specific Test Patterns<a class="headerlink" href="#specific-test-patterns" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run only unit tests</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/
+
+<span class="c1"># Run only integration tests</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/integration/
+
+<span class="c1"># Run tests matching a pattern</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;test_collect_data&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="code-quality-tools">
+<h2>Code Quality Tools<a class="headerlink" href="#code-quality-tools" title="Link to this heading"></a></h2>
+<section id="linting-and-formatting">
+<h3>Linting and Formatting<a class="headerlink" href="#linting-and-formatting" title="Link to this heading"></a></h3>
+<p>The project uses ruff for linting and formatting:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run linting</span>
+ruff<span class="w"> </span>check<span class="w"> </span>src/
+
+<span class="c1"># Auto-fix linting issues</span>
+ruff<span class="w"> </span>check<span class="w"> </span>src/<span class="w"> </span>--fix
+
+<span class="c1"># Format code</span>
+ruff<span class="w"> </span>format<span class="w"> </span>src/
+</pre></div>
+</div>
+</section>
+<section id="type-checking">
+<h3>Type Checking<a class="headerlink" href="#type-checking" title="Link to this heading"></a></h3>
+<p>If mypy is configured:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run type checking</span>
+mypy<span class="w"> </span>src/ffiec_data_connect
+</pre></div>
+</div>
+</section>
+</section>
+<section id="building-documentation">
+<h2>Building Documentation<a class="headerlink" href="#building-documentation" title="Link to this heading"></a></h2>
+<p>To build and test documentation locally:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install documentation dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>sphinx<span class="w"> </span>sphinx-rtd-theme
+
+<span class="c1"># Build HTML documentation</span>
+<span class="nb">cd</span><span class="w"> </span>docs
+make<span class="w"> </span>clean
+make<span class="w"> </span>html
+
+<span class="c1"># View documentation</span>
+open<span class="w"> </span>build/html/index.html<span class="w">  </span><span class="c1"># macOS</span>
+<span class="c1"># or</span>
+start<span class="w"> </span>build/html/index.html<span class="w">  </span><span class="c1"># Windows</span>
+</pre></div>
+</div>
+</section>
+<section id="making-changes">
+<h2>Making Changes<a class="headerlink" href="#making-changes" title="Link to this heading"></a></h2>
+<section id="development-workflow">
+<h3>Development Workflow<a class="headerlink" href="#development-workflow" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Create a feature branch</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/your-feature-name
+</pre></div>
+</div>
+</li>
+<li><p><strong>Make your changes</strong> in the source code</p></li>
+<li><p><strong>Test your changes</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run relevant tests</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_methods.py
+
+<span class="c1"># Check linting</span>
+ruff<span class="w"> </span>check<span class="w"> </span>src/
+</pre></div>
+</div>
+</li>
+<li><p><strong>Test manually</strong> with a script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># test_script.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span><span class="p">,</span> <span class="n">credentials</span>
+
+<span class="c1"># Test your changes</span>
+<span class="c1"># ...</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Commit your changes</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: description of your changes&quot;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="common-development-tasks">
+<h2>Common Development Tasks<a class="headerlink" href="#common-development-tasks" title="Link to this heading"></a></h2>
+<section id="adding-a-new-feature">
+<h3>Adding a New Feature<a class="headerlink" href="#adding-a-new-feature" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Write the feature code in the appropriate module</p></li>
+<li><p>Add tests in <code class="docutils literal notranslate"><span class="pre">tests/unit/</span></code> or <code class="docutils literal notranslate"><span class="pre">tests/integration/</span></code></p></li>
+<li><p>Update documentation if needed</p></li>
+<li><p>Run full test suite to ensure nothing broke</p></li>
+</ol>
+</section>
+<section id="debugging">
+<h3>Debugging<a class="headerlink" href="#debugging" title="Link to this heading"></a></h3>
+<p>For debugging, you can add breakpoints in the source code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In any source file</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pdb</span><span class="p">;</span> <span class="n">pdb</span><span class="o">.</span><span class="n">set_trace</span><span class="p">()</span>  <span class="c1"># Add breakpoint</span>
+
+<span class="c1"># Or use the built-in breakpoint (Python 3.7+)</span>
+<span class="nb">breakpoint</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Then run your script normally, and execution will pause at the breakpoint.</p>
+</section>
+<section id="logging">
+<h3>Logging<a class="headerlink" href="#logging" title="Link to this heading"></a></h3>
+<p>Enable debug logging to see detailed execution:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="c1"># Enable debug logging for the library</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;ffiec_data_connect&#39;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="project-structure">
+<h2>Project Structure<a class="headerlink" href="#project-structure" title="Link to this heading"></a></h2>
+<p>Understanding the project structure helps with development:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ffiec-data-connect/
+├── src/
+│   └── ffiec_data_connect/
+│       ├── __init__.py           # Package initialization
+│       ├── credentials.py        # Credential handling
+│       ├── methods.py            # Main API methods
+│       ├── methods_enhanced.py   # REST API enhancements
+│       ├── ffiec_connection.py   # SOAP connection handling
+│       ├── protocol_adapter.py   # REST/SOAP adapter
+│       ├── xbrl_processor.py     # XBRL data processing
+│       └── ...
+├── tests/
+│   ├── unit/                     # Unit tests
+│   └── integration/              # Integration tests
+├── docs/
+│   ├── source/                   # Documentation source (RST)
+│   └── build/                    # Built documentation
+├── requirements.txt              # Core dependencies
+├── requirements-dev.txt          # Development dependencies
+└── setup.py                      # Package configuration
+</pre></div>
+</div>
+</section>
+<section id="environment-variables">
+<h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Link to this heading"></a></h2>
+<p>For development, you may need to set environment variables:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># For testing with credentials (create .env file)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">FFIEC_USERNAME</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">FFIEC_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your_password&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">FFIEC_TOKEN</span><span class="o">=</span><span class="s2">&quot;your_token&quot;</span><span class="w">  </span><span class="c1"># For REST API</span>
+
+<span class="c1"># Or use a .env file with python-dotenv</span>
+pip<span class="w"> </span>install<span class="w"> </span>python-dotenv
+</pre></div>
+</div>
+<p>Then in your code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+
+<span class="n">username</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;FFIEC_USERNAME&#39;</span><span class="p">)</span>
+<span class="n">password</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;FFIEC_PASSWORD&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting-development-setup">
+<h2>Troubleshooting Development Setup<a class="headerlink" href="#troubleshooting-development-setup" title="Link to this heading"></a></h2>
+<section id="import-errors">
+<h3>Import Errors<a class="headerlink" href="#import-errors" title="Link to this heading"></a></h3>
+<p>If you get <code class="docutils literal notranslate"><span class="pre">ModuleNotFoundError</span></code>:</p>
+<ol class="arabic simple">
+<li><p>Ensure you’re in the activated virtual environment</p></li>
+<li><p>Verify the package is installed in editable mode: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">list</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">ffiec</span></code></p></li>
+<li><p>Check that the src directory is in your Python path</p></li>
+</ol>
+</section>
+<section id="dependency-conflicts">
+<h3>Dependency Conflicts<a class="headerlink" href="#dependency-conflicts" title="Link to this heading"></a></h3>
+<p>If you encounter dependency conflicts:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a fresh virtual environment</span>
+deactivate
+rm<span class="w"> </span>-rf<span class="w"> </span>venv/
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="permission-errors">
+<h3>Permission Errors<a class="headerlink" href="#permission-errors" title="Link to this heading"></a></h3>
+<p>On macOS/Linux, you might need to make scripts executable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>chmod<span class="w"> </span>+x<span class="w"> </span>scripts/*.py
+</pre></div>
+</div>
+</section>
+</section>
+<section id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
+<p>If you plan to contribute your changes back:</p>
+<ol class="arabic simple">
+<li><p>Fork the repository on GitHub</p></li>
+<li><p>Create a feature branch from <code class="docutils literal notranslate"><span class="pre">main</span></code> or <code class="docutils literal notranslate"><span class="pre">develop</span></code></p></li>
+<li><p>Make your changes following the project’s coding standards</p></li>
+<li><p>Write tests for new functionality</p></li>
+<li><p>Update documentation as needed</p></li>
+<li><p>Submit a pull request with a clear description</p></li>
+</ol>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="index.html"><span class="doc">Welcome to FFIEC Webservice Python Connector’s documentation!</span></a> - Main documentation</p></li>
+<li><p><a class="reference internal" href="data_type_handling.html"><span class="doc">Data Type Handling</span></a> - Understanding type handling</p></li>
+<li><p><a class="reference internal" href="examples.html"><span class="doc">Example Code</span></a> - Usage examples</p></li>
+<li><p><a class="reference external" href="https://github.com/call-report/ffiec-data-connect">GitHub Repository</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="account_setup.html" class="btn btn-neutral float-left" title="FFIEC Account Setup Instructions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="modules.html" class="btn btn-neutral float-right" title="FFIEC Webservice Data Connector" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

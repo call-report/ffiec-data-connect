@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; FFIEC Data Connect 1.0.0rc1 documentation</title>
+  <title>Index &mdash; FFIEC Data Connect 2.0.0rc4 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=77c1c56c"></script>
+      <script src="_static/documentation_options.js?v=aa9da443"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -42,7 +42,9 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
@@ -83,8 +85,10 @@
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -110,7 +114,13 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.BASE_URL">BASE_URL (RESTAdapter attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.constants.WebserviceConstants.base_url">base_url (WebserviceConstants attribute)</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.OAuth2Credentials.bearer_token">bearer_token (OAuth2Credentials property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.OAuth2Credentials.bearer_token">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -148,8 +158,6 @@
         <li><a href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_filers_on_reporting_period">(in module ffiec_data_connect.methods)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.collect_filers_since_date">collect_filers_since_date() (in module ffiec_data_connect)</a>
 
       <ul>
@@ -162,6 +170,8 @@
         <li><a href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_filers_submission_date_time">(in module ffiec_data_connect.methods)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_reporting_periods">collect_reporting_periods() (AsyncCompatibleClient method)</a>
 
       <ul>
@@ -174,7 +184,21 @@
 </li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.AsyncCompatibleClient.collect_time_series_async">collect_time_series_async() (AsyncCompatibleClient method)</a>
 </li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.collect_ubpr_facsimile_data">collect_ubpr_facsimile_data() (in module ffiec_data_connect)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_ubpr_facsimile_data">(in module ffiec_data_connect.methods)</a>
+</li>
+      </ul></li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.collect_ubpr_reporting_periods">collect_ubpr_reporting_periods() (in module ffiec_data_connect)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.methods.collect_ubpr_reporting_periods">(in module ffiec_data_connect.methods)</a>
+</li>
+      </ul></li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.ConnectionError">ConnectionError</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.exceptions.ConnectionError">[1]</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.create_protocol_adapter">create_protocol_adapter() (in module ffiec_data_connect)</a>
 </li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.CredentialError">CredentialError</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.exceptions.CredentialError">[1]</a>
 </li>
@@ -190,6 +214,12 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.DataNormalizer">DataNormalizer (class in ffiec_data_connect)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.DEFAULT_RATE_LIMIT">DEFAULT_RATE_LIMIT (RESTAdapter attribute)</a>
+</li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.disable_legacy_mode">disable_legacy_mode() (in module ffiec_data_connect)</a>
 </li>
   </ul></td>
@@ -278,7 +308,13 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.OAuth2Credentials.get_auth_headers">get_auth_headers() (OAuth2Credentials method)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.OAuth2Credentials.get_auth_headers">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.get_cache_stats">get_cache_stats() (in module ffiec_data_connect)</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.DataNormalizer.get_normalization_stats">get_normalization_stats() (DataNormalizer static method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -291,6 +327,14 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProxyProtocol.HTTPS">HTTPS (ProxyProtocol attribute)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.ProxyProtocol.HTTPS">[1]</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.OAuth2Credentials.is_expired">is_expired (OAuth2Credentials property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.OAuth2Credentials.is_expired">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -327,10 +371,26 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.CredentialType.NO_CREDENTIALS">NO_CREDENTIALS (CredentialType attribute)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.CredentialType.NO_CREDENTIALS">[1]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.NoDataError">NoDataError</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.exceptions.NoDataError">[1]</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.DataNormalizer.normalize_for_validation">normalize_for_validation() (DataNormalizer static method)</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.DataNormalizer.normalize_response">normalize_response() (DataNormalizer static method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.OAuth2Credentials">OAuth2Credentials (class in ffiec_data_connect)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.credentials.OAuth2Credentials">(class in ffiec_data_connect.credentials)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -339,14 +399,24 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.password">password (WebserviceCredentials property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.password">[1]</a>
 </li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProtocolAdapter.protocol_name">protocol_name (ProtocolAdapter property)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.protocol_name">(RESTAdapter property)</a>
+</li>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.SOAPAdapter.protocol_name">(SOAPAdapter property)</a>
+</li>
+      </ul></li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProtocolAdapter">ProtocolAdapter (class in ffiec_data_connect)</a>
+</li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_host">proxy_host (FFIECConnection property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_host">[1]</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_password">proxy_password (FFIECConnection property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_password">[1]</a>
 </li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_port">proxy_port (FFIECConnection property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_port">[1]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_protocol">proxy_protocol (FFIECConnection property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_protocol">[1]</a>
 </li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.proxy_user_name">proxy_user_name (FFIECConnection property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.proxy_user_name">[1]</a>
@@ -365,11 +435,57 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.exceptions.raise_exception">raise_exception() (in module ffiec_data_connect.exceptions)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.RateLimiter">RateLimiter (class in ffiec_data_connect)</a>
 </li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.RateLimitError">RateLimitError</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.exceptions.RateLimitError">[1]</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter">RESTAdapter (class in ffiec_data_connect)</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProtocolAdapter.retrieve_facsimile">retrieve_facsimile() (ProtocolAdapter method)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.retrieve_facsimile">(RESTAdapter method)</a>
+</li>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.SOAPAdapter.retrieve_facsimile">(SOAPAdapter method)</a>
+</li>
+      </ul></li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProtocolAdapter.retrieve_filers_since_date">retrieve_filers_since_date() (ProtocolAdapter method)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.retrieve_filers_since_date">(RESTAdapter method)</a>
+</li>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.SOAPAdapter.retrieve_filers_since_date">(SOAPAdapter method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProtocolAdapter.retrieve_filers_submission_datetime">retrieve_filers_submission_datetime() (ProtocolAdapter method)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.retrieve_filers_submission_datetime">(RESTAdapter method)</a>
+</li>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.SOAPAdapter.retrieve_filers_submission_datetime">(SOAPAdapter method)</a>
+</li>
+      </ul></li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProtocolAdapter.retrieve_panel_of_reporters">retrieve_panel_of_reporters() (ProtocolAdapter method)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.retrieve_panel_of_reporters">(RESTAdapter method)</a>
+</li>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.SOAPAdapter.retrieve_panel_of_reporters">(SOAPAdapter method)</a>
+</li>
+      </ul></li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.ProtocolAdapter.retrieve_reporting_periods">retrieve_reporting_periods() (ProtocolAdapter method)</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.retrieve_reporting_periods">(RESTAdapter method)</a>
+</li>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.SOAPAdapter.retrieve_reporting_periods">(SOAPAdapter method)</a>
+</li>
+      </ul></li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.retrieve_ubpr_reporting_periods">retrieve_ubpr_reporting_periods() (RESTAdapter method)</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.RESTAdapter.retrieve_ubpr_xbrl_facsimile">retrieve_ubpr_xbrl_facsimile() (RESTAdapter method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -381,13 +497,15 @@
 </li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.SessionError">SessionError</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.exceptions.SessionError">[1]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.CredentialType.SET_FROM_ENV">SET_FROM_ENV (CredentialType attribute)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.CredentialType.SET_FROM_ENV">[1]</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.CredentialType.SET_FROM_INIT">SET_FROM_INIT (CredentialType attribute)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.CredentialType.SET_FROM_INIT">[1]</a>
 </li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.set_legacy_errors">set_legacy_errors() (in module ffiec_data_connect)</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.SOAPAdapter">SOAPAdapter (class in ffiec_data_connect)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -397,9 +515,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.test_connection">test_connection() (FFIECConnection method)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.test_connection">[1]</a>
 </li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.OAuth2Credentials.test_credentials">test_credentials() (OAuth2Credentials method)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.OAuth2Credentials.test_credentials">[1]</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.test_credentials">(WebserviceCredentials method)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.test_credentials">[1]</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.test_credentials">test_credentials() (WebserviceCredentials method)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.test_credentials">[1]</a>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.OAuth2Credentials.token_expires">token_expires (OAuth2Credentials property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.OAuth2Credentials.token_expires">[1]</a>
+</li>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.DataNormalizer.TYPE_COERCIONS">TYPE_COERCIONS (DataNormalizer attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -409,18 +535,28 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.use_legacy_errors">use_legacy_errors() (in module ffiec_data_connect)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.FFIECConnection.use_proxy">use_proxy (FFIECConnection property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.ffiec_connection.FFIECConnection.use_proxy">[1]</a>
 </li>
-      <li><a href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.username">username (WebserviceCredentials property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.username">[1]</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.OAuth2Credentials.username">username (OAuth2Credentials property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.OAuth2Credentials.username">[1]</a>
+
+      <ul>
+        <li><a href="ffiec_data_connect.html#ffiec_data_connect.WebserviceCredentials.username">(WebserviceCredentials property)</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.credentials.WebserviceCredentials.username">[1]</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.DataNormalizer.validate_pydantic_compatibility">validate_pydantic_compatibility() (DataNormalizer static method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ffiec_data_connect.html#ffiec_data_connect.DataNormalizer.VALIDATION_RULES">VALIDATION_RULES (DataNormalizer attribute)</a>
+</li>
       <li><a href="ffiec_data_connect.html#ffiec_data_connect.ValidationError">ValidationError</a>, <a href="ffiec_data_connect.html#ffiec_data_connect.exceptions.ValidationError">[1]</a>
 </li>
   </ul></td>

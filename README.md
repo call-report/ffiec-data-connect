@@ -2,6 +2,8 @@
 
 The FFIEC Data Connect Python library (`ffiec_data_connect`) downloads data from the FFIEC (Federal Financial Institution Examination Council) via both SOAP and REST APIs.
 
+**The SOAP API is being deprecated by FFIEC in 2026. Users are advised to transition to the REST API before this date.**
+
 ## Key Features
 
 - **Dual Protocol Support**: Supports both SOAP (legacy) and REST (new) APIs

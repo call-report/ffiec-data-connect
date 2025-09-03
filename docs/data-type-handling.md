@@ -1,13 +1,23 @@
 # Data Type Handling in FFIEC Data Connect
 
-FFIEC Data Connect provides robust data type handling across multiple output formats to ensure data integrity and precision from the original XBRL source through to your final data structure.
+FFIEC Data Connect provides robust data type handling across multiple protocols (SOAP/REST) and output formats, ensuring data integrity and precision from the original XBRL source through to your final data structure.
 
 ## Overview
 
-The library supports three output formats, each with optimized type handling:
+The library manages data types across three dimensions:
 
+### 1. Protocol Layer (SOAP vs REST)
+- **SOAP API**: Original behavior using `np.nan` for nulls (100% backward compatible)
+- **REST API**: Enhanced behavior using `pd.NA` for better integer preservation
+
+### 2. Processing Layer
+- Automatic XBRL type detection
+- Numpy type conversion for consistency
+- Protocol-specific null handling
+
+### 3. Output Formats
 - **`list`**: Raw Python data types (dict format)
-- **`pandas`**: Pandas DataFrames with nullable type support
+- **`pandas`**: Pandas DataFrames with nullable type support  
 - **`polars`**: Polars DataFrames with direct conversion for maximum precision
 
 ## Type Conversion Pipeline
