@@ -260,7 +260,6 @@ class FFIECConnection(object):
 
         # are we using a proxy?
         if self._use_proxy:
-
             # check that we have a hostname, port, and protocol. If not, raise an error
             if (
                 self.proxy_host is None

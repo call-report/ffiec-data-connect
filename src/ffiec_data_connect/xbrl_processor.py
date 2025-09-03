@@ -39,12 +39,13 @@ from ffiec_data_connect.exceptions import XMLParsingError, raise_exception
 re_date = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
-def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
+def _process_xml(data: bytes, output_date_format: str, use_rest_nulls: bool = False) -> List[Dict[str, Any]]:
     """Process XBRL XML data securely with XXE prevention.
 
     Args:
         data: Raw XML bytes from FFIEC webservice
         output_date_format: Format for date output ('string_original', 'string_yyyymmdd', 'python_format')
+        use_rest_nulls: If True, use pd.NA for REST API compatibility; if False, use np.nan for SOAP compatibility
 
     Returns:
         List of processed data dictionaries
@@ -124,12 +125,12 @@ def _process_xml(data: bytes, output_date_format: str) -> List[Dict[str, Any]]:
                         "rssd": row["rssd"],
                         "quarter": row["quarter"],
                         "data_type": data_type,
-                        # Set data fields based on type - use pd.NA for non-applicable types to support nullable dtypes
-                        "int_data": np.int64(value) if data_type == "int" else pd.NA,
+                        # Set data fields based on type - use different null values for SOAP vs REST
+                        "int_data": np.int64(value) if data_type == "int" else (pd.NA if use_rest_nulls else np.nan),
                         "float_data": (
-                            np.float64(value) if data_type == "float" else pd.NA
+                            np.float64(value) if data_type == "float" else (pd.NA if use_rest_nulls else np.nan)
                         ),
-                        "bool_data": np.bool_(value) if data_type == "bool" else pd.NA,
+                        "bool_data": np.bool_(value) if data_type == "bool" else (pd.NA if use_rest_nulls else np.nan),
                         "str_data": str(value) if data_type == "str" else None,
                     }
                     ret_data.append(new_dict)

@@ -20,7 +20,11 @@ from ffiec_data_connect.config import (
 )
 
 # Core imports - maintain backward compatibility
-from ffiec_data_connect.credentials import CredentialType, WebserviceCredentials, OAuth2Credentials
+from ffiec_data_connect.credentials import (
+    CredentialType,
+    WebserviceCredentials,
+    OAuth2Credentials,
+)
 from ffiec_data_connect.exceptions import (
     ConnectionError,
     CredentialError,
@@ -38,6 +42,8 @@ from ffiec_data_connect.methods import (
     collect_filers_since_date,
     collect_filers_submission_date_time,
     collect_reporting_periods,
+    collect_ubpr_reporting_periods,
+    collect_ubpr_facsimile_data,
 )
 
 # SOAP client caching utilities
@@ -51,7 +57,7 @@ from ffiec_data_connect.protocol_adapter import (
     ProtocolAdapter,
     RESTAdapter,
     SOAPAdapter,
-    create_protocol_adapter
+    create_protocol_adapter,
 )
 
 # Expose main classes for easier import
@@ -67,6 +73,9 @@ __all__ = [
     "collect_filers_since_date",
     "collect_filers_submission_date_time",
     "collect_filers_on_reporting_period",
+    # UBPR methods (REST API only)
+    "collect_ubpr_reporting_periods",
+    "collect_ubpr_facsimile_data",
     # Enums
     "CredentialType",
     "ProxyProtocol",
@@ -92,7 +101,7 @@ __all__ = [
     # REST API support
     "DataNormalizer",
     "ProtocolAdapter",
-    "RESTAdapter", 
+    "RESTAdapter",
     "SOAPAdapter",
     "create_protocol_adapter",
     # Version

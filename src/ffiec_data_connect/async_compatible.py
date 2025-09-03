@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from ffiec_data_connect import credentials, ffiec_connection, methods
+from ffiec_data_connect.credentials import OAuth2Credentials
 
 
 class RateLimiter:
@@ -79,18 +80,19 @@ class AsyncCompatibleClient:
         self.max_concurrent = max_concurrent
         self.rate_limiter = RateLimiter(rate_limit) if rate_limit else None
         self.executor = executor or ThreadPoolExecutor(max_workers=max_concurrent)
-        
+
         # Enhanced for dual protocol support
         from .credentials import OAuth2Credentials
+
         self._is_rest_client = isinstance(credentials, OAuth2Credentials)
-        
+
         if self._is_rest_client:
             # REST clients don't need connection caching
             self._connection_cache = {}
         else:
             # SOAP clients use connection caching
             self._connection_cache: Dict[int, ffiec_connection.FFIECConnection] = {}
-            
+
         self._lock = threading.Lock()
         self._owned_executor = executor is None  # Track if we created the executor
 

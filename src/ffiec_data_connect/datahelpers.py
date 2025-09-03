@@ -100,13 +100,21 @@ def _normalize_output_from_reporter_panel(
         else:
             new_row["address"] = temp_str
 
-    # Process Zip
+    # Process Zip (handle both "Zip" and "ZIP" for REST API compatibility)
+    zip_field = None
     if "Zip" in row_keys:
-        temp_str = str(row["Zip"]).zfill(5)
+        zip_field = "Zip"
+    elif "ZIP" in row_keys:
+        zip_field = "ZIP"
+
+    if zip_field:
+        temp_str = str(row[zip_field]).zfill(5)
         if temp_str == "0" or temp_str == "":
             new_row["zip"] = temp_str
         else:
             new_row["zip"] = temp_str
+    else:
+        new_row["zip"] = None
 
     # Process FilingType
     if "FilingType" in row_keys:
