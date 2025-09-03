@@ -59,15 +59,18 @@ class AsyncCompatibleClient:
 
     def __init__(
         self,
-        credentials: credentials.WebserviceCredentials,
+        credentials: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
         max_concurrent: int = 5,
         rate_limit: Optional[float] = 10,  # requests per second
         executor: Optional[ThreadPoolExecutor] = None,
     ) -> None:
         """Initialize the async-compatible client.
 
+        **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+        For better performance, use OAuth2Credentials for REST API access.
+
         Args:
-            credentials: FFIEC webservice credentials
+            credentials: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
             max_concurrent: Maximum concurrent requests
             rate_limit: Maximum requests per second (None to disable)
             executor: Optional thread pool executor to use
@@ -76,7 +79,18 @@ class AsyncCompatibleClient:
         self.max_concurrent = max_concurrent
         self.rate_limiter = RateLimiter(rate_limit) if rate_limit else None
         self.executor = executor or ThreadPoolExecutor(max_workers=max_concurrent)
-        self._connection_cache: Dict[int, ffiec_connection.FFIECConnection] = {}
+        
+        # Enhanced for dual protocol support
+        from .credentials import OAuth2Credentials
+        self._is_rest_client = isinstance(credentials, OAuth2Credentials)
+        
+        if self._is_rest_client:
+            # REST clients don't need connection caching
+            self._connection_cache = {}
+        else:
+            # SOAP clients use connection caching
+            self._connection_cache: Dict[int, ffiec_connection.FFIECConnection] = {}
+            
         self._lock = threading.Lock()
         self._owned_executor = executor is None  # Track if we created the executor
 
@@ -105,16 +119,30 @@ class AsyncCompatibleClient:
         if self.rate_limiter:
             self.rate_limiter.wait_if_needed()
 
-        conn = self._get_connection()
-        return methods.collect_data(
-            conn,
-            self.credentials,
-            reporting_period,
-            rssd_id,
-            series,
-            output_type,
-            date_output_format,
-        )
+        # Enhanced for dual protocol support
+        if self._is_rest_client:
+            # REST API doesn't need a connection object
+            return methods.collect_data(
+                None,
+                self.credentials,
+                reporting_period,
+                rssd_id,
+                series,
+                output_type,
+                date_output_format,
+            )
+        else:
+            # SOAP API uses cached connection
+            conn = self._get_connection()
+            return methods.collect_data(
+                conn,
+                self.credentials,
+                reporting_period,
+                rssd_id,
+                series,
+                output_type,
+                date_output_format,
+            )
 
     def collect_reporting_periods(
         self,
@@ -135,10 +163,18 @@ class AsyncCompatibleClient:
         if self.rate_limiter:
             self.rate_limiter.wait_if_needed()
 
-        conn = self._get_connection()
-        return methods.collect_reporting_periods(
-            conn, self.credentials, series, output_type, date_output_format
-        )
+        # Enhanced for dual protocol support
+        if self._is_rest_client:
+            # REST API doesn't need a connection object
+            return methods.collect_reporting_periods(
+                None, self.credentials, series, output_type, date_output_format
+            )
+        else:
+            # SOAP API uses cached connection
+            conn = self._get_connection()
+            return methods.collect_reporting_periods(
+                conn, self.credentials, series, output_type, date_output_format
+            )
 
     def collect_data_parallel(
         self,

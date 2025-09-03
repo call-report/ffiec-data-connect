@@ -9,6 +9,7 @@ Credentials may be input via environment variables, or passing them as arguments
 import os
 from enum import Enum
 from typing import Optional
+from datetime import datetime, timedelta
 
 import requests
 
@@ -30,6 +31,213 @@ class CredentialType(Enum):
     NO_CREDENTIALS = 0
     SET_FROM_INIT = 1
     SET_FROM_ENV = 2
+
+
+class OAuth2Credentials:
+    """
+    OAuth2-based credentials for REST API access - Phase 0 Implementation.
+    
+    This credential type supports the new FFIEC REST API that uses OAuth2
+    Bearer tokens for authentication instead of username/password pairs.
+    
+    Key Features:
+    - OAuth2 Bearer token authentication (90-day lifecycle)
+    - Token expiration tracking and validation
+    - Immutable after initialization for security
+    - Compatible with automatic protocol selection
+    
+    Args:
+        username: FFIEC username (for UserID header)
+        bearer_token: OAuth2 bearer token (90-day lifecycle)
+        token_expires: Optional token expiration datetime
+        
+    Example:
+        ```python
+        # Create OAuth2 credentials for REST API
+        creds = OAuth2Credentials(
+            username="your_ffiec_username",
+            bearer_token="your_90_day_bearer_token",
+            token_expires=datetime(2024, 3, 15)  # Optional
+        )
+        
+        # Use with existing methods (automatic REST API selection)
+        periods = collect_reporting_periods(session, creds)
+        ```
+    """
+    
+    def __init__(self, username: str, bearer_token: str, 
+                 token_expires: Optional[datetime] = None):
+        """
+        Initialize OAuth2 credentials for REST API access.
+        
+        Args:
+            username: FFIEC username (for UserID header)
+            bearer_token: OAuth2 bearer token (90-day lifecycle)  
+            token_expires: Token expiration datetime (optional)
+            
+        Raises:
+            CredentialError: If required credentials are missing or invalid
+        """
+        # Validate required parameters
+        if not username or not username.strip():
+            raise_exception(
+                CredentialError,
+                "Username is required for OAuth2 credentials",
+                "OAuth2 credentials require a valid FFIEC username for the UserID header. "
+                "Please provide your FFIEC webservice username.",
+                credential_source="oauth2_init"
+            )
+            
+        if not bearer_token or not bearer_token.strip():
+            raise_exception(
+                CredentialError,
+                "Bearer token is required for OAuth2 credentials",
+                "OAuth2 credentials require a valid bearer token. "
+                "Please obtain a 90-day bearer token from your FFIEC PWS account.",
+                credential_source="oauth2_init"
+            )
+        
+        # Set credentials (immutable after this point)
+        self._username = username.strip()
+        self._bearer_token = bearer_token.strip()
+        self._token_expires = token_expires
+        
+        # Set credential type for compatibility (before marking initialized)
+        self.credential_source = CredentialType.SET_FROM_INIT
+        self._initialized = True
+        
+        # Validate token format (basic check)
+        if len(self._bearer_token) < 20:
+            raise_exception(
+                CredentialError,
+                "Bearer token appears invalid (too short)",
+                "Bearer token appears to be invalid. FFIEC OAuth2 tokens should be longer. "
+                "Please verify you copied the complete token from your PWS account.",
+                credential_source="oauth2_init"
+            )
+    
+    @property
+    def username(self) -> str:
+        """
+        Get the FFIEC username.
+        
+        Returns:
+            Username for UserID header
+        """
+        return self._username
+    
+    @property  
+    def bearer_token(self) -> str:
+        """
+        Get the OAuth2 bearer token.
+        
+        Returns:
+            Bearer token for authentication
+        """
+        return self._bearer_token
+    
+    @property
+    def token_expires(self) -> Optional[datetime]:
+        """
+        Get token expiration datetime.
+        
+        Returns:
+            Token expiration datetime or None if not set
+        """
+        return self._token_expires
+    
+    @property
+    def is_expired(self) -> bool:
+        """
+        Check if token is expired or expires within 24 hours.
+        
+        Returns:
+            True if token is expired or expires soon, False otherwise
+        """
+        if not self._token_expires:
+            # No expiration date set - assume valid
+            return False
+            
+        # Consider expired if expires within 24 hours
+        warning_time = datetime.now() + timedelta(hours=24)
+        return self._token_expires <= warning_time
+    
+    def get_auth_headers(self) -> dict:
+        """
+        Get authentication headers for REST API requests.
+        
+        Returns:
+            Dictionary containing required authentication headers
+        """
+        return {
+            "UserId": self._username,  # Note: lowercase 'd' in UserId
+            "Authentication": f"Bearer {self._bearer_token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+    
+    def test_credentials(self, session: requests.Session = None) -> bool:
+        """
+        Test OAuth2 credentials against REST API (placeholder).
+        
+        Note: This will be implemented when REST adapter is available.
+        For now, validates token format and expiration.
+        
+        Args:
+            session: Optional requests session (for future compatibility)
+            
+        Returns:
+            True if credentials appear valid, False otherwise
+        """
+        # Basic validation
+        if not self._username or not self._bearer_token:
+            return False
+            
+        # Check if token is expired
+        if self.is_expired:
+            print("Warning: OAuth2 token is expired or expires within 24 hours.")
+            return False
+            
+        # TODO: Implement actual REST API test call when adapter is ready
+        print("OAuth2 credentials appear valid (full validation pending REST adapter).")
+        return True
+    
+    def __str__(self) -> str:
+        """String representation masking sensitive data."""
+        username_display = self._mask_sensitive_string(self._username)
+        token_display = self._mask_sensitive_string(self._bearer_token)
+        
+        expiry_info = ""
+        if self._token_expires:
+            if self.is_expired:
+                expiry_info = ", status='EXPIRED'"
+            else:
+                days_remaining = (self._token_expires - datetime.now()).days
+                expiry_info = f", expires_in='{days_remaining} days'"
+        
+        return f"OAuth2Credentials(username='{username_display}', token='{token_display}'{expiry_info})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
+    def _mask_sensitive_string(self, value: str) -> str:
+        """Mask sensitive string data, showing only first and last character."""
+        if not value:
+            return "***"
+        if len(value) <= 2:
+            return "*" * len(value)
+        return f"{value[0]}{'*' * (len(value) - 2)}{value[-1]}"
+    
+    # Prevent modification after initialization (immutable for security)
+    def __setattr__(self, name: str, value) -> None:
+        if getattr(self, "_initialized", False) and not name.startswith("_") and name != "credential_source":
+            raise_exception(
+                CredentialError,
+                f"Cannot modify {name} after initialization",
+                f"Cannot modify {name} after initialization. OAuth2Credentials are immutable for security.",
+                credential_source="oauth2_modification"
+            )
+        super().__setattr__(name, value)
 
 
 class WebserviceCredentials(object):

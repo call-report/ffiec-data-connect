@@ -259,11 +259,11 @@ def _date_format_validator(date_format: str) -> bool:
     return True
 
 
-def _credentials_validator(creds: credentials.WebserviceCredentials) -> bool:
+def _credentials_validator(creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"]) -> bool:
     """Internal function to validate the credentials
 
     Args:
-        creds (credentials.WebserviceCredentials): the credentials to validate
+        creds: Either WebserviceCredentials or OAuth2Credentials
 
     Returns:
         bool: True if valid
@@ -271,24 +271,26 @@ def _credentials_validator(creds: credentials.WebserviceCredentials) -> bool:
     Raises:
         ValidationError: If credentials are invalid
     """
-    if not isinstance(creds, credentials.WebserviceCredentials):
+    from .credentials import OAuth2Credentials
+    
+    if not isinstance(creds, (credentials.WebserviceCredentials, OAuth2Credentials)):
         raise_exception(
             ValidationError,
             "Invalid credentials type",
             field="credentials",
             value=type(creds).__name__,
-            expected="WebserviceCredentials instance",
+            expected="WebserviceCredentials or OAuth2Credentials instance",
         )
     return True
 
 
 def _session_validator(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session],
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
 ) -> bool:
     """Internal function to validate the session
 
     Args:
-        session (requests.Session): the session to validate
+        session: The session to validate (can be None for REST API)
 
     Returns:
         bool: True if valid
@@ -296,7 +298,10 @@ def _session_validator(
     Raises:
         ValidationError: If session is invalid
     """
-    if isinstance(session, ffiec_connection.FFIECConnection):
+    # Allow None for REST API usage
+    if session is None:
+        return True
+    elif isinstance(session, ffiec_connection.FFIECConnection):
         return True
     elif isinstance(session, requests.Session):
         return True
@@ -378,13 +383,16 @@ def _return_client_session(
 
 
 def collect_reporting_periods(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session],
-    creds: credentials.WebserviceCredentials,
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     series="call",
-    output_type="list",
+    output_type="list", 
     date_output_format="string_original",
 ) -> Union[list, pd.Series]:
     """Returns list of reporting periods available for access via the FFIEC webservice
+    
+    **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+    For better performance, use OAuth2Credentials for REST API access.
 
     | Note on `date_output_format`:
 
@@ -394,8 +402,8 @@ def collect_reporting_periods(
 
 
     Args:
-        session (requests.Session): The requests session object to use for the request.
-        creds (credentials.WebserviceCredentials): The credentials to use for the request.
+        session: The session object (can be None for REST API)
+        creds: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
         series (str, optional): `call` or `ubpr`
         output_type (str): `list` or `pandas`
         date_output_format: `string_original`, `string_yyyymmdd`, or `python_format`
@@ -408,8 +416,16 @@ def collect_reporting_periods(
     _ = _output_type_validator(output_type)
     _ = _date_format_validator(date_output_format)
     _ = _credentials_validator(creds)
+    
+    # Check if we have OAuth2 credentials - use enhanced method
+    from .credentials import OAuth2Credentials
+    if isinstance(creds, OAuth2Credentials):
+        from .methods_enhanced import collect_reporting_periods_enhanced
+        return collect_reporting_periods_enhanced(session, creds, series, output_type, date_output_format)
+    
+    # Original SOAP implementation for WebserviceCredentials
     _ = _session_validator(session)
-
+    
     # we have a session and valid credentials, so try to log in
     client = _client_factory(session, creds)
 
@@ -480,8 +496,8 @@ def _client_factory(
 
 
 def collect_data(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session],
-    creds: credentials.WebserviceCredentials,
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     reporting_period: Union[str, datetime],
     rssd_id: str,
     series: str,
@@ -489,6 +505,9 @@ def collect_data(
     date_output_format="string_original",
 ):
     """Return time series data from the FFIEC webservice for a given reporting period and RSSD ID
+    
+    **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+    For better performance, use OAuth2Credentials for REST API access.
 
     Translates the input reporting period to a FFIEC-formatted date
     Transforms the output to a pandas dataframe if output_type is 'pandas', otherwise returns a list
@@ -503,8 +522,8 @@ def collect_data(
     * ``#Qyyyy``, where ``#`` is the quarter number and ``yyyy`` is the year.
 
     Args:
-        session (FFIECConnection or requests.Session): The requests session object to use for the request.
-        creds (WebserviceCredentials): The credentials to use for the request.
+        session: The session object (can be None for REST API)
+        creds: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
         reporting_period (str or datetime): Reporting period.
         rssd_id (str): The RSSD ID of the entity for which you want to retrieve data.
         series (str): `call` or `ubpr`
@@ -518,6 +537,14 @@ def collect_data(
     _ = _output_type_validator(output_type)
     _ = _date_format_validator(date_output_format)
     _ = _credentials_validator(creds)
+    
+    # Check if we have OAuth2 credentials - use enhanced method
+    from .credentials import OAuth2Credentials
+    if isinstance(creds, OAuth2Credentials):
+        from .methods_enhanced import collect_data_enhanced
+        return collect_data_enhanced(session, creds, reporting_period, rssd_id, series, output_type, date_output_format)
+    
+    # Original SOAP implementation for WebserviceCredentials
     _ = _session_validator(session)
 
     client = _client_factory(session, creds)
@@ -657,13 +684,18 @@ def collect_data(
 
 
 def collect_filers_since_date(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session],
-    creds: credentials.WebserviceCredentials,
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     reporting_period: Union[str, datetime],
     since_date: Union[str, datetime],
     output_type="list",
 ) -> Union[list, pd.Series]:
-    """Retrieves the ID RSSDs of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
+    """Retrieves data from FFIEC webservice.
+    
+    **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+    For better performance, use OAuth2Credentials for REST API access.
+
+Retrieves the ID RSSDs of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
 
     | `Valid arguments for the ``since_date`` argument:
 
@@ -691,6 +723,14 @@ def collect_filers_since_date(
     # conduct standard validation on function input arguments
     _ = _output_type_validator(output_type)
     _ = _credentials_validator(creds)
+    
+    # Check if we have OAuth2 credentials - use enhanced method
+    from .credentials import OAuth2Credentials
+    if isinstance(creds, OAuth2Credentials):
+        from .methods_enhanced import collect_filers_since_date_enhanced
+        return collect_filers_since_date_enhanced(session, creds, reporting_period, since_date, output_type)
+    
+    # Original SOAP implementation for WebserviceCredentials  
     _ = _session_validator(session)
 
     is_valid_reporting_period = _is_valid_date_or_quarter(reporting_period)
@@ -723,14 +763,19 @@ def collect_filers_since_date(
 
 
 def collect_filers_submission_date_time(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session],
-    creds: credentials.WebserviceCredentials,
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     since_date: Union[str, datetime],
     reporting_period: Union[str, datetime],
     output_type: str = "list",
     date_output_format: str = "string_original",
 ) -> Union[list, pd.DataFrame]:
-    """Retrieves the ID RSSDs and DateTime of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
+    """Retrieves data from FFIEC webservice.
+    
+    **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+    For better performance, use OAuth2Credentials for REST API access.
+
+Retrieves the ID RSSDs and DateTime of the reporters who have filed after a given date for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
 
     | Note on `date_output_format`:
 
@@ -754,6 +799,14 @@ def collect_filers_submission_date_time(
     _ = _output_type_validator(output_type)
     _ = _date_format_validator(date_output_format)
     _ = _credentials_validator(creds)
+    
+    # Check if we have OAuth2 credentials - use enhanced method
+    from .credentials import OAuth2Credentials
+    if isinstance(creds, OAuth2Credentials):
+        from .methods_enhanced import collect_filers_submission_date_time_enhanced
+        return collect_filers_submission_date_time_enhanced(session, creds, since_date, reporting_period, date_output_format, output_type)
+    
+    # Original SOAP implementation for WebserviceCredentials  
     _ = _session_validator(session)
 
     is_valid_reporting_period = _is_valid_date_or_quarter(reporting_period)
@@ -814,12 +867,17 @@ def collect_filers_submission_date_time(
 
 
 def collect_filers_on_reporting_period(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session],
-    creds: credentials.WebserviceCredentials,
+    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     reporting_period: Union[str, datetime],
     output_type="list",
 ) -> Union[list, pd.DataFrame]:
-    """Retrieves the Financial Institutions in a Panel of Reporters for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
+    """Retrieves data from FFIEC webservice.
+    
+    **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+    For better performance, use OAuth2Credentials for REST API access.
+
+    Retrieves the Financial Institutions in a Panel of Reporters for a given reporting period. Note that this function only reports on Call Report filings, not UBPR filings.
 
     | `Valid arguments for the ``reporting_period`` argument:
 
@@ -830,10 +888,9 @@ def collect_filers_on_reporting_period(
     * For the above types, the date must be the last day in the quarter (e.g. March 31, June 30, September 30, or December 31)
     * ``#Qyyyy``, where ``#`` is the quarter number and ``yyyy`` is the year.
 
-
     Args:
-        session (ffiec_connection.FFIECConnection or requests.Session): The requests session object to use for the request.
-        creds (credentials.WebserviceCredentials): The credentials to use for the request.
+        session: The session object (can be None for REST API)
+        creds: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
         reporting_period (str or datetime): The reporting period to use for the request.
     Returns:
         list or pd.DataFrame: List of dicts or pandas DataFrame containing the rssd id of the filer, and the following fields: "id_rssd", "fdic_cert_number", "occ_chart_number", "ots_dock_number", "primary_aba_rout_number", "name", "state", "city", "address", "filing_type", "has_filed_for_reporting_period"
@@ -842,6 +899,14 @@ def collect_filers_on_reporting_period(
     # conduct standard validation on function input arguments
     _ = _output_type_validator(output_type)
     _ = _credentials_validator(creds)
+    
+    # Check if we have OAuth2 credentials - use enhanced method
+    from .credentials import OAuth2Credentials
+    if isinstance(creds, OAuth2Credentials):
+        from .methods_enhanced import collect_filers_on_reporting_period_enhanced
+        return collect_filers_on_reporting_period_enhanced(session, creds, reporting_period, output_type)
+    
+    # Original SOAP implementation for WebserviceCredentials  
     _ = _session_validator(session)
 
     is_valid_reporting_period = _is_valid_date_or_quarter(reporting_period)

@@ -20,7 +20,7 @@ from ffiec_data_connect.config import (
 )
 
 # Core imports - maintain backward compatibility
-from ffiec_data_connect.credentials import CredentialType, WebserviceCredentials
+from ffiec_data_connect.credentials import CredentialType, WebserviceCredentials, OAuth2Credentials
 from ffiec_data_connect.exceptions import (
     ConnectionError,
     CredentialError,
@@ -43,10 +43,51 @@ from ffiec_data_connect.methods import (
 # SOAP client caching utilities
 from ffiec_data_connect.soap_cache import clear_soap_cache, get_cache_stats
 
+# Phase 0 - Data format analysis and normalization (REST API support)
+from ffiec_data_connect.data_normalizer import DataNormalizer
+from ffiec_data_connect.format_analyzer import APIFormatAnalyzer
+from ffiec_data_connect.financial_analyzer import FinancialDataAnalyzer
+
+# Phase 1 - Protocol adapters and enhanced methods
+from ffiec_data_connect.protocol_adapter import (
+    ProtocolAdapter,
+    RESTAdapter,
+    SOAPAdapter,
+    RateLimiter,
+    create_protocol_adapter
+)
+from ffiec_data_connect.methods_enhanced import EnhancedMethodsHelper
+
+# Phase 2 - Performance benchmarking tools
+from ffiec_data_connect.performance_benchmark import (
+    PerformanceBenchmark,
+    BenchmarkResult,
+    ComparisonReport,
+    quick_benchmark,
+    benchmark_async_client,
+    print_performance_report
+)
+
+# Phase 2 - Production monitoring and observability
+from ffiec_data_connect.monitoring import (
+    MetricsCollector,
+    PerformanceMonitor,
+    MigrationTracker,
+    APICallRecord,
+    MetricData,
+    get_metrics_collector,
+    get_performance_monitor,
+    get_migration_tracker,
+    monitor_api_call,
+    record_protocol_usage,
+    get_monitoring_summary
+)
+
 # Expose main classes for easier import
 __all__ = [
     # Core classes
     "WebserviceCredentials",
+    "OAuth2Credentials",  # Phase 0 - REST API support
     "FFIECConnection",
     "AsyncCompatibleClient",
     # Methods (backward compatible)
@@ -77,6 +118,17 @@ __all__ = [
     # SOAP Caching
     "clear_soap_cache",
     "get_cache_stats",
+    # Phase 0 - Data format analysis and normalization
+    "DataNormalizer",
+    "APIFormatAnalyzer", 
+    "FinancialDataAnalyzer",
+    # Phase 1 - Protocol adapters and enhanced methods
+    "ProtocolAdapter",
+    "RESTAdapter", 
+    "SOAPAdapter",
+    "RateLimiter",
+    "create_protocol_adapter",
+    "EnhancedMethodsHelper",
     # Version
     "__version__",
 ]
