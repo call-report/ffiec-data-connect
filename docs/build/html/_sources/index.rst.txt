@@ -38,6 +38,7 @@ Data returned from the APIs may be returned as:
    rest_api_reference
    data_type_handling
    examples
+   troubleshooting
    versionhistory
    licensedisclaimer
 

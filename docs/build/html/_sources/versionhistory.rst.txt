@@ -1,9 +1,34 @@
 Version History
 ===============
 
+Version 2.0.0rc5 - Release Candidate 5
+-------------------------------------
+Date: 2025-01-XX
+
+**🎯 Latest Release Candidate**
+
+Enhanced documentation, comprehensive test coverage, and final API refinements before stable release.
+
+**🔄 Recent Updates**
+
+* **Comprehensive Test Suite**: Added 30+ new tests for OAuth2, force_null_types, and protocol adapters
+* **Enhanced Documentation**: 
+  - Microsoft Entra ID migration instructions and troubleshooting
+  - REST API reference with complete OpenAPI specification
+  - Comprehensive troubleshooting guide for common issues
+  - Updated Python 3.10+ requirement throughout documentation
+* **API Refinements**: 
+  - Added ``force_null_types`` parameter to override default null handling
+  - Improved JWT token validation with proper length and format checking
+  - Enhanced error messages and validation feedback
+* **Developer Experience**:
+  - Updated development setup instructions
+  - Added reverse-engineered OpenAPI schema integration
+  - Fixed GitHub URLs to use call-report organization
+
 Version 1.0.0 - Production Ready
 --------------------------------
-Date: 2025-01-XX
+Date: 2025-01-XX (Upcoming)
 
 **🎉 Major Release - Enterprise Grade**
 

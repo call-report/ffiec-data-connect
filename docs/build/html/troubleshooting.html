@@ -1,0 +1,619 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Troubleshooting &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0ee5205a"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Version History" href="versionhistory.html" />
+    <link rel="prev" title="Example Code" href="examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#authentication-issues">Authentication Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#jwt-token-problems">JWT Token Problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#header-name-issues">Header Name Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#account-setup-issues">Account Setup Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#microsoft-callback-link-problems">Microsoft Callback Link Problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#migration-failures">Migration Failures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#token-generation-issues">Token Generation Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#api-usage-issues">API Usage Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#soap-vs-rest-confusion">SOAP vs REST Confusion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-issues">Data Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#integer-display-with-decimals">Integer Display with Decimals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#empty-datasets">Empty Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#common-error-messages">Common Error Messages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#http-status-codes">HTTP Status Codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#library-error-messages">Library Error Messages</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-issues">Performance Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#slow-response-times">Slow Response Times</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#memory-issues">Memory Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#migration-and-legacy-issues">Migration and Legacy Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#soap-to-rest-migration">SOAP to REST Migration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#legacy-token-expiration">Legacy Token Expiration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-help">Getting Help</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#when-to-contact-support">When to Contact Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debug-information-to-provide">Debug Information to Provide</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#additional-resources">Additional Resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FFIEC Data Connect</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Troubleshooting</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/troubleshooting.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="troubleshooting">
+<h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h1>
+<p>This guide covers common issues and their solutions when using the FFIEC Data Connect library.</p>
+<section id="authentication-issues">
+<h2>Authentication Issues<a class="headerlink" href="#authentication-issues" title="Link to this heading"></a></h2>
+<section id="jwt-token-problems">
+<h3>JWT Token Problems<a class="headerlink" href="#jwt-token-problems" title="Link to this heading"></a></h3>
+<p><strong>“Invalid bearer token” or Authentication Failed</strong></p>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>Symptom</strong>: Getting authentication errors despite having valid credentials</p>
+<p><strong>Common Causes</strong>:</p>
+<ol class="arabic">
+<li><p><strong>Using website password instead of JWT token</strong></p>
+<p>❌ <strong>Wrong</strong>: Using your FFIEC account password</p>
+<p>✅ <strong>Correct</strong>: Using the JWT token generated from your PWS account</p>
+</li>
+<li><p><strong>Token expiration</strong></p>
+<ul class="simple">
+<li><p>JWT tokens expire after <strong>90 days</strong></p></li>
+<li><p>Tokens are considered expired if they expire within <strong>24 hours</strong> (warning threshold)</p></li>
+<li><p>Check your token expiration date in the PWS portal</p></li>
+</ul>
+</li>
+<li><p><strong>Invalid token format</strong></p>
+<ul class="simple">
+<li><p>Valid JWT tokens <strong>must start with</strong> <code class="docutils literal notranslate"><span class="pre">ey</span></code></p></li>
+<li><p>Valid JWT tokens <strong>must end with</strong> <code class="docutils literal notranslate"><span class="pre">.</span></code></p></li>
+<li><p>Minimum length: 20 characters</p></li>
+<li><p>Example: <code class="docutils literal notranslate"><span class="pre">eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJBY2Nlc3MgVG9rZW4ifQ.</span></code></p></li>
+</ul>
+</li>
+</ol>
+</div>
+<p><strong>Solution</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="c1"># Check your token format and expiration</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;eyJhbGci...&quot;</span><span class="p">,</span>  <span class="c1"># JWT token, NOT password!</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Check if token is expired</span>
+<span class="k">if</span> <span class="n">creds</span><span class="o">.</span><span class="n">is_expired</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Token is expired or expires within 24 hours - generate a new one!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="header-name-issues">
+<h3>Header Name Issues<a class="headerlink" href="#header-name-issues" title="Link to this heading"></a></h3>
+<p><strong>“Authentication header not recognized”</strong></p>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>Symptom</strong>: REST API returns authentication errors despite valid token</p>
+<p><strong>Common Causes</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Wrong header name</strong>: Using <code class="docutils literal notranslate"><span class="pre">Authorization</span></code> instead of <code class="docutils literal notranslate"><span class="pre">Authentication</span></code></p></li>
+<li><p><strong>Case sensitivity</strong>: Using <code class="docutils literal notranslate"><span class="pre">userid</span></code> instead of <code class="docutils literal notranslate"><span class="pre">UserID</span></code></p></li>
+</ol>
+</div>
+<p>The FFIEC REST API uses non-standard header names:</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Correct REST API Headers</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Header Name</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">UserID</span></code></p></td>
+<td><p>Your FFIEC username (note capital ‘ID’)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Authentication</span></code></p></td>
+<td><p>Bearer token (NOT <code class="docutils literal notranslate"><span class="pre">Authorization</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Solution</strong>: The library handles this automatically, but if making direct API calls:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;UserID&quot;</span><span class="p">:</span> <span class="s2">&quot;your_username&quot;</span><span class="p">,</span>           <span class="c1"># Not &quot;userid&quot; or &quot;UserId&quot;</span>
+    <span class="s2">&quot;Authentication&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer token...&quot;</span><span class="p">,</span>  <span class="c1"># Not &quot;Authorization&quot;</span>
+    <span class="s2">&quot;dataSeries&quot;</span><span class="p">:</span> <span class="s2">&quot;Call&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="account-setup-issues">
+<h2>Account Setup Issues<a class="headerlink" href="#account-setup-issues" title="Link to this heading"></a></h2>
+<section id="microsoft-callback-link-problems">
+<h3>Microsoft Callback Link Problems<a class="headerlink" href="#microsoft-callback-link-problems" title="Link to this heading"></a></h3>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>Symptom</strong>: After completing Microsoft verification, you see a blank page or error</p>
+<p><strong>Solution</strong>: Manually navigate to the login page:</p>
+<p><a class="reference external" href="https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx">https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx</a></p>
+</div>
+<p>This is a known issue with the Microsoft Entra ID callback process.</p>
+</section>
+<section id="migration-failures">
+<h3>Migration Failures<a class="headerlink" href="#migration-failures" title="Link to this heading"></a></h3>
+<p><strong>“Migration invitation link doesn’t work”</strong></p>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>Symptom</strong>: Cannot complete account migration from invitation email</p>
+<p><strong>Solutions</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Try again</strong>: Some migrations fail on first attempt</p></li>
+<li><p><strong>Clear browser cache</strong> and try the invitation link again</p></li>
+<li><p><strong>Create new account</strong>: If migration continues to fail, create a new account instead</p></li>
+<li><p><strong>Contact help desk</strong>: <a class="reference external" href="mailto:cdr&#46;help&#37;&#52;&#48;cdr&#46;ffiec&#46;gov">cdr<span>&#46;</span>help<span>&#64;</span>cdr<span>&#46;</span>ffiec<span>&#46;</span>gov</a></p></li>
+</ol>
+</div>
+<p><strong>After successful migration</strong>:</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>You <strong>MUST generate a new JWT token</strong> after migration. Old tokens become invalid immediately.</p>
+</div>
+</section>
+<section id="token-generation-issues">
+<h3>Token Generation Issues<a class="headerlink" href="#token-generation-issues" title="Link to this heading"></a></h3>
+<p><strong>“Cannot find token generation option”</strong></p>
+<ol class="arabic simple">
+<li><p>Log into <a class="reference external" href="https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx">https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx</a></p></li>
+<li><p>Navigate to <strong>Account Details</strong> or <strong>Token Management</strong> tab</p></li>
+<li><p>Look for <strong>Generate Token</strong> or <strong>REST API Token</strong> section</p></li>
+<li><p>New tokens are valid for 90 days</p></li>
+</ol>
+</section>
+</section>
+<section id="api-usage-issues">
+<h2>API Usage Issues<a class="headerlink" href="#api-usage-issues" title="Link to this heading"></a></h2>
+<section id="soap-vs-rest-confusion">
+<h3>SOAP vs REST Confusion<a class="headerlink" href="#soap-vs-rest-confusion" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">API Comparison</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Aspect</p></th>
+<th class="head"><p>SOAP (Legacy)</p></th>
+<th class="head"><p>REST (Modern)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Credentials</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials(username,</span> <span class="pre">password)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">OAuth2Credentials(username,</span> <span class="pre">token,</span> <span class="pre">expires)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Session</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">FFIECConnection()</span></code> object required</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code> (no session needed)</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Date Format</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MM/DD/YYYY</span></code> (e.g., “12/31/2023”)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code> (e.g., “2023-12-31”)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Rate Limit</strong></p></td>
+<td><p>1,000 requests/hour</p></td>
+<td><p>2,500 requests/hour</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Status</strong></p></td>
+<td><p>⚠️ <strong>Deprecated Feb 28, 2026</strong></p></td>
+<td><p>✅ <strong>Recommended</strong></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Solution</strong>: Use REST API for new implementations:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ REST API (Recommended)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span><span class="p">,</span> <span class="n">collect_data</span>
+
+<span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">token_expires</span><span class="o">=...</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># session=None for REST</span>
+
+<span class="c1"># ❌ SOAP API (Deprecated)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">WebserviceCredentials</span><span class="p">,</span> <span class="n">FFIECConnection</span>
+
+<span class="n">creds</span> <span class="o">=</span> <span class="n">WebserviceCredentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+<span class="n">session</span> <span class="o">=</span> <span class="n">FFIECConnection</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">,</span> <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="data-issues">
+<h2>Data Issues<a class="headerlink" href="#data-issues" title="Link to this heading"></a></h2>
+<section id="integer-display-with-decimals">
+<h3>Integer Display with Decimals<a class="headerlink" href="#integer-display-with-decimals" title="Link to this heading"></a></h3>
+<p><strong>“My integer data shows as 100.0 instead of 100”</strong></p>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>Symptom</strong>: Integer values display with decimal points (e.g., <code class="docutils literal notranslate"><span class="pre">100.0</span></code> instead of <code class="docutils literal notranslate"><span class="pre">100</span></code>)</p>
+<p><strong>Cause</strong>: Default null handling uses <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> which converts integers to floats</p>
+<p><strong>Solution</strong>: Use <code class="docutils literal notranslate"><span class="pre">force_null_types=&quot;pandas&quot;</span></code> parameter:</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Force pandas null handling for better integer display</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;12345&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">,</span>
+    <span class="n">force_null_types</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span>  <span class="c1"># Keeps integers as integers</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="empty-datasets">
+<h3>Empty Datasets<a class="headerlink" href="#empty-datasets" title="Link to this heading"></a></h3>
+<p><strong>“collect_data returns empty list”</strong></p>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>Common Causes</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Wrong reporting period</strong>: Institution didn’t file for that period</p></li>
+<li><p><strong>Wrong RSSD ID</strong>: Institution ID doesn’t exist or is inactive</p></li>
+<li><p><strong>Wrong series</strong>: Requesting “ubpr” for institution that doesn’t have UBPR data</p></li>
+<li><p><strong>Date format mismatch</strong>: Using SOAP format with REST API or vice versa</p></li>
+</ol>
+</div>
+<p><strong>Debugging Steps</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Check if institution exists in the reporting period</span>
+<span class="n">filers</span> <span class="o">=</span> <span class="n">collect_filers_on_reporting_period</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span>
+<span class="p">)</span>
+<span class="n">your_rssd</span> <span class="o">=</span> <span class="s2">&quot;12345&quot;</span>
+<span class="n">institution_exists</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">filer</span><span class="p">[</span><span class="s1">&#39;id_rssd&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">your_rssd</span> <span class="k">for</span> <span class="n">filer</span> <span class="ow">in</span> <span class="n">filers</span><span class="p">)</span>
+
+<span class="c1"># 2. Check available reporting periods</span>
+<span class="n">periods</span> <span class="o">=</span> <span class="n">collect_reporting_periods</span><span class="p">(</span><span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available periods: </span><span class="si">{</span><span class="n">periods</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Show first 5</span>
+
+<span class="c1"># 3. Try different series</span>
+<span class="k">for</span> <span class="n">series</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;call&quot;</span><span class="p">,</span> <span class="s2">&quot;ubpr&quot;</span><span class="p">]:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">series</span><span class="o">=</span><span class="n">series</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">series</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> records&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">series</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="common-error-messages">
+<h2>Common Error Messages<a class="headerlink" href="#common-error-messages" title="Link to this heading"></a></h2>
+<section id="http-status-codes">
+<h3>HTTP Status Codes<a class="headerlink" href="#http-status-codes" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">Common HTTP Errors</span><a class="headerlink" href="#id3" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 10.0%" />
+<col style="width: 30.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Code</p></th>
+<th class="head"><p>Meaning</p></th>
+<th class="head"><p>Solutions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>401</p></td>
+<td><p>Unauthorized</p></td>
+<td><p>Check token validity, regenerate if expired</p></td>
+</tr>
+<tr class="row-odd"><td><p>403</p></td>
+<td><p>Forbidden</p></td>
+<td><p>Verify headers are correct (<code class="docutils literal notranslate"><span class="pre">UserID</span></code>, <code class="docutils literal notranslate"><span class="pre">Authentication</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p>404</p></td>
+<td><p>Not Found</p></td>
+<td><p>Check endpoint URL, verify RSSD ID exists</p></td>
+</tr>
+<tr class="row-odd"><td><p>429</p></td>
+<td><p>Rate Limited</p></td>
+<td><p>Wait before next request, consider using REST (higher limits)</p></td>
+</tr>
+<tr class="row-even"><td><p>500</p></td>
+<td><p>Server Error</p></td>
+<td><p>Often client error (invalid params), check request format</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="library-error-messages">
+<h3>Library Error Messages<a class="headerlink" href="#library-error-messages" title="Link to this heading"></a></h3>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>“Bearer token appears invalid (too short)”</strong></p>
+<p>Token must be at least 20 characters. Ensure you copied the complete JWT token.</p>
+</div>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>“JWT token must start with ‘ey’ and end with ‘.’”</strong></p>
+<p>Invalid token format. Generate a new token from PWS portal.</p>
+</div>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>“Token is expired or expires within 24 hours”</strong></p>
+<p>Generate a new 90-day token from your PWS account.</p>
+</div>
+<div class="admonition error">
+<p class="admonition-title">Error</p>
+<p><strong>“force_null_types must be ‘numpy’ or ‘pandas’”</strong></p>
+<p>Invalid parameter value. Use <code class="docutils literal notranslate"><span class="pre">force_null_types=&quot;pandas&quot;</span></code> for better integer display.</p>
+</div>
+</section>
+</section>
+<section id="performance-issues">
+<h2>Performance Issues<a class="headerlink" href="#performance-issues" title="Link to this heading"></a></h2>
+<section id="slow-response-times">
+<h3>Slow Response Times<a class="headerlink" href="#slow-response-times" title="Link to this heading"></a></h3>
+<p><strong>“API calls are very slow”</strong></p>
+<p><strong>Solutions</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Use REST API</strong> instead of SOAP (significantly faster)</p></li>
+<li><p><strong>Check rate limits</strong>: Don’t exceed 2,500 requests/hour (REST) or 1,000/hour (SOAP)</p></li>
+<li><p><strong>Use session reuse</strong> for SOAP (automatic in library)</p></li>
+<li><p><strong>Consider AsyncCompatibleClient</strong> for concurrent requests</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For high-performance scenarios</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncCompatibleClient</span>
+
+<span class="k">async</span> <span class="k">with</span> <span class="n">AsyncCompatibleClient</span><span class="p">(</span><span class="n">creds</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">collect_data_async</span><span class="p">(</span><span class="n">rssd_id</span><span class="o">=</span><span class="n">rssd</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rssd</span> <span class="ow">in</span> <span class="n">rssd_list</span>
+    <span class="p">]</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="memory-issues">
+<h3>Memory Issues<a class="headerlink" href="#memory-issues" title="Link to this heading"></a></h3>
+<p><strong>“Out of memory when processing large datasets”</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Use ``output_type=”polars”``</strong> for better memory efficiency</p></li>
+<li><p><strong>Process in batches</strong> rather than all at once</p></li>
+<li><p><strong>Use specific date ranges</strong> instead of all available periods</p></li>
+</ol>
+</section>
+</section>
+<section id="migration-and-legacy-issues">
+<h2>Migration and Legacy Issues<a class="headerlink" href="#migration-and-legacy-issues" title="Link to this heading"></a></h2>
+<section id="soap-to-rest-migration">
+<h3>SOAP to REST Migration<a class="headerlink" href="#soap-to-rest-migration" title="Link to this heading"></a></h3>
+<p><strong>“How do I migrate from SOAP to REST?”</strong></p>
+<table class="docutils align-default" id="id4">
+<caption><span class="caption-text">Migration Checklist</span><a class="headerlink" href="#id4" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SOAP (Old)</p></th>
+<th class="head"><p>REST (New)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Generate Security Token</p></td>
+<td><p>Generate JWT Token (90-day)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials(user,</span> <span class="pre">password)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">OAuth2Credentials(user,</span> <span class="pre">token,</span> <span class="pre">expires)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FFIECConnection()</span></code> session</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">session=None</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Date: <code class="docutils literal notranslate"><span class="pre">&quot;12/31/2023&quot;</span></code></p></td>
+<td><p>Date: <code class="docutils literal notranslate"><span class="pre">&quot;2023-12-31&quot;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Rate limit: 1,000/hour</p></td>
+<td><p>Rate limit: 2,500/hour</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Migration Code Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Before (SOAP)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">WebserviceCredentials</span><span class="p">,</span> <span class="n">FFIECConnection</span>
+
+<span class="n">soap_creds</span> <span class="o">=</span> <span class="n">WebserviceCredentials</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;password&quot;</span><span class="p">)</span>
+<span class="n">soap_session</span> <span class="o">=</span> <span class="n">FFIECConnection</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="n">soap_session</span><span class="p">,</span> <span class="n">soap_creds</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;12/31/2023&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+
+<span class="c1"># After (REST)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
+
+<span class="n">rest_creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;jwt_token&quot;</span><span class="p">,</span> <span class="n">expires_date</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">rest_creds</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="legacy-token-expiration">
+<h3>Legacy Token Expiration<a class="headerlink" href="#legacy-token-expiration" title="Link to this heading"></a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Important</strong>: All legacy SOAP security tokens will expire on <strong>February 28, 2026</strong>.</p>
+<p>You must migrate to REST API before this date.</p>
+</div>
+</section>
+</section>
+<section id="getting-help">
+<h2>Getting Help<a class="headerlink" href="#getting-help" title="Link to this heading"></a></h2>
+<section id="when-to-contact-support">
+<h3>When to Contact Support<a class="headerlink" href="#when-to-contact-support" title="Link to this heading"></a></h3>
+<p>Contact the FFIEC Help Desk (<a class="reference external" href="mailto:cdr&#46;help&#37;&#52;&#48;cdr&#46;ffiec&#46;gov">cdr<span>&#46;</span>help<span>&#64;</span>cdr<span>&#46;</span>ffiec<span>&#46;</span>gov</a>) for:</p>
+<ul class="simple">
+<li><p>Account setup and migration issues</p></li>
+<li><p>PWS portal access problems</p></li>
+<li><p>Token generation problems</p></li>
+<li><p>Questions about data availability</p></li>
+</ul>
+<p><strong>Before contacting support</strong>:</p>
+<ol class="arabic simple">
+<li><p>Check this troubleshooting guide</p></li>
+<li><p>Verify your token is valid and not expired</p></li>
+<li><p>Try with a different RSSD ID or reporting period</p></li>
+<li><p>Check the library’s GitHub issues: <a class="reference external" href="https://github.com/call-report/ffiec-data-connect/issues">https://github.com/call-report/ffiec-data-connect/issues</a></p></li>
+</ol>
+</section>
+<section id="debug-information-to-provide">
+<h3>Debug Information to Provide<a class="headerlink" href="#debug-information-to-provide" title="Link to this heading"></a></h3>
+<p>When reporting issues, include:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fdc</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Library version: </span><span class="si">{</span><span class="n">fdc</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Python version: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Credential type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">creds</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># For REST credentials</span>
+<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">creds</span><span class="p">,</span> <span class="s1">&#39;is_expired&#39;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Token expired: </span><span class="si">{</span><span class="n">creds</span><span class="o">.</span><span class="n">is_expired</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Include</strong>:
+- Complete error messages and stack traces
+- Anonymized code snippets showing the issue
+- RSSD ID and reporting period (if data-related)
+- Whether using SOAP or REST API</p>
+</section>
+</section>
+<section id="additional-resources">
+<h2>Additional Resources<a class="headerlink" href="#additional-resources" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Official FFIEC Documentation</strong>: CDR-PDD-SIS-611 v1.10</p></li>
+<li><p><strong>Library Documentation</strong>: <a class="reference external" href="https://ffiec-data-connect.readthedocs.io/">https://ffiec-data-connect.readthedocs.io/</a></p></li>
+<li><p><strong>GitHub Repository</strong>: <a class="reference external" href="https://github.com/call-report/ffiec-data-connect">https://github.com/call-report/ffiec-data-connect</a></p></li>
+<li><p><strong>REST API Reference</strong>: <a class="reference internal" href="rest_api_reference.html"><span class="doc">REST API Reference</span></a></p></li>
+<li><p><strong>Account Setup</strong>: <a class="reference internal" href="account_setup.html"><span class="doc">FFIEC Account Setup Instructions</span></a></p></li>
+<li><p><strong>Examples</strong>: <a class="reference internal" href="examples.html"><span class="doc">Example Code</span></a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples.html" class="btn btn-neutral float-left" title="Example Code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="versionhistory.html" class="btn btn-neutral float-right" title="Version History" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
