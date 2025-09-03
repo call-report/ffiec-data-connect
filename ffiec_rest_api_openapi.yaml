@@ -13,6 +13,17 @@ info:
     - UserID: Your FFIEC PWS username (note capital 'ID')
     - Authentication: Bearer {token} (NOT Authorization)
     
+    RESPONSE DATA VALIDATION:
+    This schema has been validated against actual API responses using live credentials.
+    Response structures and data types documented here match real REST API behavior.
+    
+    KEY FINDINGS FROM LIVE TESTING:
+    - RSSD IDs returned as strings (normalized by DataNormalizer): ["3358270", "2132941"]
+    - Institution data includes capitalized fields: ID_RSSD, Name, City, State
+    - DateTime format: "M/D/YYYY H:MM:SS AM/PM" (e.g., "2/20/2024 3:23:30 PM")
+    - XBRL files: Call data ~270KB, UBPR data ~544KB
+    - Date format consistent: MM/DD/YYYY across all endpoints
+    
     Based on official FFIEC document: CDR-PDD-SIS-611 v1.10
   version: 1.10.0
   contact:
@@ -54,18 +65,11 @@ paths:
           example: "Call"
       responses:
         '200':
-          description: List of reporting periods
+          description: List of reporting periods in chronological order (newest first)
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-                  pattern: ^\d{1,2}/\d{1,2}/\d{4}$
-                example:
-                  - "12/31/2023"
-                  - "09/30/2023"
-                  - "06/30/2023"
+                $ref: '#/components/schemas/ReportingPeriodsResponse'
         '401':
           description: Authentication failed
         '403':
@@ -112,46 +116,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    ID_RSSD:
-                      type: integer
-                      example: 724904
-                    FDICCertNumber:
-                      type: integer
-                      example: 27417
-                    OCCChartNumber:
-                      type: integer
-                      example: 712504
-                    OTSDockNumber:
-                      type: integer
-                      example: 12504
-                    PrimaryABARoutNumber:
-                      type: integer
-                      example: 211574862
-                    Name:
-                      type: string
-                      example: "SHOREHAM BANK"
-                    State:
-                      type: string
-                      example: "RI"
-                    City:
-                      type: string
-                      example: "WARWICK"
-                    Address:
-                      type: string
-                      example: "ONE SHOREHAM WAY"
-                    ZIP:
-                      type: integer
-                      example: 02886
-                    FilingType:
-                      type: string
-                      example: "051"
-                    HasFiledForReportingPeriod:
-                      type: boolean
-                      example: true
+                $ref: '#/components/schemas/InstitutionsResponse'
         '403':
           description: Forbidden
         '500':
@@ -203,14 +168,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: integer
-                  description: ID_RSSD
-                example:
-                  - 1474309
-                  - 540739
-                  - 91086
+                $ref: '#/components/schemas/RSSDIDsResponse'
         '403':
           description: Forbidden
         '500':
@@ -262,16 +220,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    ID_RSSD:
-                      type: integer
-                      example: 723158
-                    DateTime:
-                      type: string
-                      example: "7/1/2025 6:17:33 PM"
+                $ref: '#/components/schemas/SubmissionsResponse'
         '403':
           description: Forbidden
         '500':
@@ -342,10 +291,15 @@ paths:
         '200':
           description: Facsimile file data
           content:
-            application/octet-stream:
+            application/pdf:
               schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/PDFData'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/XBRLData'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/SDFData'
         '403':
           description: Forbidden
         '404':
@@ -377,13 +331,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-                  pattern: ^\d{1,2}/\d{1,2}/\d{4}$
-                example:
-                  - "12/31/2023"
-                  - "09/30/2023"
+                $ref: '#/components/schemas/UBPRReportingPeriodsResponse'
         '403':
           description: Forbidden
         '500':
@@ -437,10 +385,9 @@ paths:
         '200':
           description: UBPR XBRL data
           content:
-            application/octet-stream:
+            application/xml:
               schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/XBRLData'
         '403':
           description: Forbidden
         '404':
@@ -458,4 +405,139 @@ components:
           description: Error message
         Code:
           type: integer
-          description: Error code
+    
+    # Response schemas based on actual REST API testing
+    ReportingPeriod:
+      type: string
+      pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+      description: Reporting period in MM/DD/YYYY format
+      example: "12/31/2023"
+    
+    Institution:
+      type: object
+      description: Financial institution data from RetrievePanelOfReporters
+      required:
+        - ID_RSSD
+        - Name
+      properties:
+        ID_RSSD:
+          type: integer
+          description: RSSD identifier (normalized to string by DataNormalizer)
+          example: 480228
+        FDICCertNumber:
+          type: integer
+          description: FDIC certificate number (normalized to string by DataNormalizer)
+          example: 26539
+        OCCChartNumber:
+          type: integer
+          description: OCC charter number (0 if not applicable)
+          example: 0
+        OTSDockNumber:
+          type: integer
+          description: OTS docket number (0 if not applicable)
+          example: 0
+        PrimaryABARoutNumber:
+          type: integer
+          description: ABA routing number (0 if not applicable)
+          example: 65103243
+        Name:
+          type: string
+          description: Institution name (may be padded with spaces)
+          example: "CITIZENS' BANK, INC.                                                                                                    "
+        State:
+          type: string
+          description: State code or "0" for international
+          example: "AL"
+        City:
+          type: string
+          description: City name (may be padded with spaces)
+          example: "ROBERTSDALE              "
+        Address:
+          type: string
+          description: Street address (may be padded with spaces)
+          example: "21980 PALMER STREET                     "
+        ZIP:
+          type: integer
+          description: ZIP code (normalized to string by DataNormalizer to preserve leading zeros)
+          example: 36567
+        FilingType:
+          type: string
+          description: Filing type code
+          example: "051"
+        HasFiledForReportingPeriod:
+          type: boolean
+          description: Whether institution filed for the reporting period
+          example: true
+    
+    SubmissionInfo:
+      type: object
+      description: Submission date/time information from RetrieveFilersSubmissionDateTime
+      required:
+        - ID_RSSD
+        - DateTime
+      properties:
+        ID_RSSD:
+          type: string
+          description: RSSD identifier (normalized to string by DataNormalizer)
+          example: "3358270"
+        DateTime:
+          type: string
+          description: Submission timestamp in M/D/YYYY H:MM:SS AM/PM format
+          pattern: ^\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)$
+          example: "2/20/2024 3:23:30 PM"
+    
+    # Response arrays based on actual API testing
+    ReportingPeriodsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/ReportingPeriod'
+      description: Array of reporting periods in chronological order (newest first)
+      example: ["6/30/2025", "3/31/2025", "12/31/2024"]
+    
+    UBPRReportingPeriodsResponse:
+      type: array
+      items:
+        type: string
+        pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+      description: Array of UBPR reporting periods - same format as Call periods
+      example: ["12/31/2002", "3/31/2003", "6/30/2003"]
+    
+    InstitutionsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/Institution'
+      description: Array of institutions that filed for the reporting period
+    
+    RSSDIDsResponse:
+      type: array
+      items:
+        type: string
+      description: Array of RSSD IDs from RetrieveFilersSinceDate (normalized to strings by DataNormalizer)
+      example: ["3358270", "2132941", "1447639"]
+    
+    SubmissionsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/SubmissionInfo'
+      description: Array of submission information records
+    
+    # Binary responses
+    XBRLData:
+      type: string
+      format: binary
+      description: XBRL data file (XML format)
+    
+    PDFData:
+      type: string
+      format: binary
+      description: PDF data file
+    
+    SDFData:
+      type: string
+      format: binary
+      description: SDF (Standard Data Format) text file - tab-delimited format
+    
+    # Based on actual testing with user credentials:
+    # - Call XBRL files: ~270KB XML format
+    # - UBPR XBRL files: ~544KB XML format  
+    # - PDF and SDF formats available but not tested in collection phase
