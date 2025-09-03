@@ -362,13 +362,22 @@ class RESTAdapter(ProtocolAdapter):
             ValidationError: If data doesn't match schema
         """
         try:
-            if hasattr(model_class, 'root'):
-                # RootModel - validate and return the root data
-                validated = model_class(data)
-                return validated.root
+            # First validate the data
+            validated = model_class(data)
+            
+            # Check if this is a RootModel by looking for the root attribute on the instance
+            if hasattr(validated, 'root'):
+                # RootModel - return the root data
+                root_data = validated.root
+                
+                # Handle nested RootModels (e.g., List[ReportingPeriod] where ReportingPeriod is also RootModel)
+                if isinstance(root_data, list) and root_data and hasattr(root_data[0], 'root'):
+                    # Extract the root values from nested RootModel objects
+                    return [item.root for item in root_data]
+                else:
+                    return root_data
             else:
-                # Regular model - validate directly
-                validated = model_class(data)
+                # Regular model - return the validated instance
                 return validated
                 
         except PydanticValidationError as e:
