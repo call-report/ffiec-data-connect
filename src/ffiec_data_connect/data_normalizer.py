@@ -19,7 +19,7 @@ Version: Phase 0 - Data Normalization
 import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class DataNormalizer:
     }
 
     @staticmethod
-    def _fix_zip_code(zip_value) -> str:
+    def _fix_zip_code(zip_value: Union[str, int, None]) -> str:
         """
         Fix ZIP code precision loss from REST API.
 
@@ -141,7 +141,7 @@ class DataNormalizer:
             return str(zip_value)
 
     @staticmethod
-    def _normalize_datetime(dt_value) -> str:
+    def _normalize_datetime(dt_value: Union[str, datetime, None]) -> str:
         """
         Normalize datetime format to match SOAP API format.
 
@@ -167,7 +167,7 @@ class DataNormalizer:
             return str(dt_value)
 
     @staticmethod
-    def _normalize_date_string(date_value) -> str:
+    def _normalize_date_string(date_value: Union[str, None]) -> str:
         """
         Normalize date string format for reporting periods.
 
@@ -196,7 +196,7 @@ class DataNormalizer:
     @staticmethod
     def normalize_for_validation(
         data: Any, endpoint: str, protocol: str = "REST"
-    ) -> Tuple[Any, Dict]:
+    ) -> Tuple[Any, Dict[str, Any]]:
         """
         Normalize response data and return both normalized data and statistics.
 
@@ -344,7 +344,9 @@ class DataNormalizer:
             return data
 
     @staticmethod
-    def _apply_normalizations(data: Any, coercions: Dict, endpoint: str) -> Any:
+    def _apply_normalizations(
+        data: Any, coercions: Dict[str, Any], endpoint: str
+    ) -> Any:
         """Apply normalization rules to data structure."""
 
         # Handle binary data preservation
@@ -377,7 +379,9 @@ class DataNormalizer:
             return data
 
     @staticmethod
-    def _normalize_object(obj: Dict, coercions: Dict, context: str) -> Dict:
+    def _normalize_object(
+        obj: Dict[str, Any], coercions: Dict[str, Any], context: str
+    ) -> Dict[str, Any]:
         """Apply type coercions to dictionary object."""
         if not isinstance(obj, dict):
             return obj
@@ -444,7 +448,7 @@ class DataNormalizer:
             logger.error(f"Validation failed for {endpoint}: {e}")
 
     @staticmethod
-    def _validate_object(obj: Dict, context: str, errors: List[str]) -> None:
+    def _validate_object(obj: Dict[str, Any], context: str, errors: List[str]) -> None:
         """Validate individual object meets format requirements."""
 
         for field, value in obj.items():
@@ -478,7 +482,7 @@ class DataNormalizer:
     @staticmethod
     def get_normalization_stats(
         data_before: Any, data_after: Any, endpoint: str
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """
         Generate statistics about normalization transformations applied.
 
@@ -536,8 +540,8 @@ class DataNormalizer:
 
     @staticmethod
     def _count_object_changes(
-        before: Dict, after: Dict, path: str, stats: Dict
-    ) -> Dict:
+        before: Dict[str, Any], after: Dict[str, Any], path: str, stats: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Count changes between before/after objects."""
         for key in before.keys():
             if key in after:

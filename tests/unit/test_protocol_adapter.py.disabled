@@ -33,7 +33,7 @@ class TestProtocolAdapterFactory:
         """Test REST adapter creation from OAuth2Credentials."""
         creds = OAuth2Credentials(
             username="test",
-            bearer_token="eyJhbGci.",
+            bearer_token="ey_test_jwt_token_12345.",
             token_expires=datetime.now() + timedelta(days=90)
         )
         adapter = create_protocol_adapter(creds)
@@ -108,7 +108,7 @@ class TestRESTAdapter:
         """Setup test fixtures."""
         self.creds = OAuth2Credentials(
             username="test",
-            bearer_token="eyJhbGci.",
+            bearer_token="ey_test_jwt_token_12345.",
             token_expires=datetime.now() + timedelta(days=90)
         )
         self.adapter = RESTAdapter(self.creds)
@@ -204,7 +204,7 @@ class TestProtocolAdapterErrorHandling:
 
         creds = OAuth2Credentials(
             username="test",
-            bearer_token="eyJhbGci.",
+            bearer_token="ey_test_jwt_token_12345.",
             token_expires=datetime.now() - timedelta(days=1)  # Expired
         )
         adapter = RESTAdapter(creds)
@@ -232,7 +232,7 @@ class TestProtocolAdapterIntegration:
 
         creds = OAuth2Credentials(
             username="test",
-            bearer_token="eyJhbGci.",
+            bearer_token="ey_test_jwt_token_12345.",
             token_expires=datetime.now() + timedelta(days=90)
         )
 
@@ -258,7 +258,7 @@ class TestProtocolAdapterIntegration:
         # REST uses YYYY-MM-DD format  
         rest_creds = OAuth2Credentials(
             username="test",
-            bearer_token="eyJhbGci.",
+            bearer_token="ey_test_jwt_token_12345.",
             token_expires=datetime.now() + timedelta(days=90)
         )
         rest_adapter = create_protocol_adapter(rest_creds)

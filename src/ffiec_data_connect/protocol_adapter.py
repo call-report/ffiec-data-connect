@@ -94,7 +94,9 @@ class ProtocolAdapter(ABC):
         pass
 
     @abstractmethod
-    def retrieve_panel_of_reporters(self, reporting_period: str) -> List[Dict]:
+    def retrieve_panel_of_reporters(
+        self, reporting_period: str
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve panel of reporters for a reporting period.
 
@@ -125,7 +127,7 @@ class ProtocolAdapter(ABC):
     @abstractmethod
     def retrieve_filers_submission_datetime(
         self, reporting_period: str, since_date: Optional[str] = None
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve filer submission date/time information.
 
@@ -138,27 +140,27 @@ class ProtocolAdapter(ABC):
         """
         pass
 
-    @abstractmethod 
+    @abstractmethod
     def retrieve_ubpr_reporting_periods(self) -> List[str]:
         """
         Retrieve UBPR reporting periods.
-        
+
         Returns:
             List of available UBPR reporting periods
         """
         pass
-    
+
     @abstractmethod
     def retrieve_ubpr_xbrl_facsimile(
         self, rssd_id: Union[str, int], reporting_period: str
     ) -> bytes:
         """
         Retrieve UBPR XBRL facsimile data.
-        
+
         Args:
             rssd_id: Institution RSSD ID
             reporting_period: Reporting period
-            
+
         Returns:
             Raw UBPR XBRL data bytes
         """
@@ -227,8 +229,8 @@ class RESTAdapter(ProtocolAdapter):
     def _make_request(
         self,
         endpoint: str,
-        params: Optional[Dict] = None,
-        additional_headers: Optional[Dict] = None,
+        params: Optional[Dict[str, Any]] = None,
+        additional_headers: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """
         Make authenticated REST request with rate limiting and error handling.
@@ -377,7 +379,7 @@ class RESTAdapter(ProtocolAdapter):
                 f"{response.status_code} - {response.text}"
             )
 
-    def _validate_response(self, data: Any, model_class, endpoint: str) -> Any:
+    def _validate_response(self, data: Any, model_class: Any, endpoint: str) -> Any:
         """
         Validate response data using Pydantic models.
 
@@ -467,7 +469,7 @@ class RESTAdapter(ProtocolAdapter):
             logger.info(
                 f"Retrieved and validated {len(validated)} reporting periods for {series}"
             )
-            return validated
+            return validated  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error(f"Failed to retrieve reporting periods for {series}: {e}")
@@ -566,13 +568,17 @@ class RESTAdapter(ProtocolAdapter):
             else:
                 self._handle_response(response, "RetrieveFacsimile")
                 # If we get here, raise an error as we didn't get expected data
-                raise ConnectionError(f"Unexpected response status {response.status_code} for RetrieveFacsimile")
+                raise ConnectionError(
+                    f"Unexpected response status {response.status_code} for RetrieveFacsimile"
+                )
 
         except Exception as e:
             logger.error(f"Failed to retrieve facsimile for RSSD {rssd_id}: {e}")
             raise
 
-    def retrieve_panel_of_reporters(self, reporting_period: str) -> List[Dict]:
+    def retrieve_panel_of_reporters(
+        self, reporting_period: str
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve panel of reporters via REST API.
 
@@ -605,7 +611,7 @@ class RESTAdapter(ProtocolAdapter):
             logger.info(
                 f"Retrieved and validated {len(validated)} reporters for {reporting_period}"
             )
-            return validated
+            return validated  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error(
@@ -649,7 +655,7 @@ class RESTAdapter(ProtocolAdapter):
             logger.info(
                 f"Retrieved and validated {len(validated)} filers since {since_date}"
             )
-            return validated
+            return validated  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error(f"Failed to retrieve filers since {since_date}: {e}")
@@ -657,7 +663,7 @@ class RESTAdapter(ProtocolAdapter):
 
     def retrieve_filers_submission_datetime(
         self, reporting_period: str, since_date: Optional[str] = None
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve filer submission date/time info via REST API.
 
@@ -715,7 +721,7 @@ class RESTAdapter(ProtocolAdapter):
             logger.info(
                 f"Retrieved and validated submission info for {len(validated)} filers"
             )
-            return validated
+            return validated  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error(f"Failed to retrieve filer submission info: {e}")
@@ -748,7 +754,7 @@ class RESTAdapter(ProtocolAdapter):
             logger.info(
                 f"Retrieved and validated {len(validated)} UBPR reporting periods"
             )
-            return validated
+            return validated  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error(f"Failed to retrieve UBPR reporting periods: {e}")
@@ -828,7 +834,9 @@ class RESTAdapter(ProtocolAdapter):
             else:
                 self._handle_response(response, "RetrieveUBPRXBRLFacsimile")
                 # If we get here, raise an error as we didn't get expected data
-                raise ConnectionError(f"Unexpected response status {response.status_code} for RetrieveUBPRXBRLFacsimile")
+                raise ConnectionError(
+                    f"Unexpected response status {response.status_code} for RetrieveUBPRXBRLFacsimile"
+                )
 
         except Exception as e:
             logger.error(f"Failed to retrieve UBPR facsimile for RSSD {rssd_id}: {e}")
@@ -838,6 +846,10 @@ class RESTAdapter(ProtocolAdapter):
     def protocol_name(self) -> str:
         """Return the protocol name."""
         return "REST"
+
+    def is_rest(self) -> bool:
+        """Return True since this is a REST adapter."""
+        return True
 
 
 class SOAPAdapter(ProtocolAdapter):
@@ -895,11 +907,17 @@ class SOAPAdapter(ProtocolAdapter):
         from . import methods
 
         # Use existing implementation
-        return methods.collect_data(
-            self.session, self.credentials, reporting_period, str(rssd_id), series=series
+        return methods.collect_data(  # type: ignore[no-any-return]
+            self.session,
+            self.credentials,
+            reporting_period,
+            str(rssd_id),
+            series=series,
         )
 
-    def retrieve_panel_of_reporters(self, reporting_period: str) -> List[Dict]:
+    def retrieve_panel_of_reporters(
+        self, reporting_period: str
+    ) -> List[Dict[str, Any]]:
         """Retrieve panel of reporters via SOAP (delegates to existing implementation)."""
         from . import methods
 
@@ -921,7 +939,7 @@ class SOAPAdapter(ProtocolAdapter):
 
     def retrieve_filers_submission_datetime(
         self, reporting_period: str, since_date: Optional[str] = None
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """Retrieve filer submission info via SOAP (delegates to existing implementation)."""
         from . import methods
 
@@ -936,22 +954,21 @@ class SOAPAdapter(ProtocolAdapter):
     def retrieve_ubpr_reporting_periods(self) -> List[str]:
         """Retrieve UBPR reporting periods via SOAP (delegates to existing implementation)."""
         from . import methods
-        
+
         # Use existing SOAP implementation
-        return methods.collect_ubpr_reporting_periods(
-            self.session, self.credentials
-        )
-    
+        return methods.collect_ubpr_reporting_periods(self.session, self.credentials)
+
     def retrieve_ubpr_xbrl_facsimile(
         self, rssd_id: Union[str, int], reporting_period: str
     ) -> bytes:
         """Retrieve UBPR XBRL facsimile via SOAP (delegates to existing implementation)."""
-        from . import methods
-        
-        # Use existing SOAP implementation  
+        # Use existing SOAP implementation
         # Note: SOAP methods return processed data, not raw bytes like REST
         # This cast maintains interface compatibility
         from typing import cast
+
+        from . import methods
+
         result = methods.collect_ubpr_facsimile_data(
             self.session, self.credentials, str(rssd_id), reporting_period
         )
@@ -961,6 +978,10 @@ class SOAPAdapter(ProtocolAdapter):
     def protocol_name(self) -> str:
         """Return the protocol name."""
         return "SOAP"
+
+    def is_rest(self) -> bool:
+        """Return False since this is a SOAP adapter."""
+        return False
 
 
 class RateLimiter:
@@ -1077,13 +1098,15 @@ def create_protocol_adapter(
         logger.info("Creating REST adapter for OAuth2 credentials")
         # REST adapter expects httpx.Client, not requests.Session
         from typing import cast
+
         client_session = cast(Optional["httpx.Client"], session)
         return RESTAdapter(credentials, session=client_session)
 
     elif isinstance(credentials, WebserviceCredentials):
-        logger.info("Creating SOAP adapter for WebserviceCredentials") 
+        logger.info("Creating SOAP adapter for WebserviceCredentials")
         # SOAP adapter expects requests.Session
         from typing import cast
+
         soap_session = cast(Optional["requests.Session"], session)
         return SOAPAdapter(credentials, session=soap_session)
 

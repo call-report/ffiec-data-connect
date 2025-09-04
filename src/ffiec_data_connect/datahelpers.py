@@ -19,7 +19,7 @@ def _normalize_output_from_reporter_panel(
     """
 
     new_row: Dict[str, Optional[Union[str, bool]]] = {}
-    row_keys = list(helpers.serialize_object(row).keys())
+    row_keys = list(helpers.serialize_object(row).keys())  # type: ignore[no-untyped-call]
 
     # process ID_RSSD
     if "ID_RSSD" in row_keys:

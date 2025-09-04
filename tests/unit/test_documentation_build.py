@@ -212,8 +212,8 @@ class TestDocumentationBuild:
             pytest.skip("docs/source/conf.py not found")
 
         # Try to import and validate conf.py
-        import sys
         import importlib.util
+        import sys
 
         spec = importlib.util.spec_from_file_location("conf", str(conf_py))
         if spec is None or spec.loader is None:

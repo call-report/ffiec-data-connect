@@ -212,8 +212,8 @@ class TestValidators:
         with pytest.raises((ValidationError, ValueError)):
             _session_validator("invalid")
 
-        with pytest.raises((ValidationError, ValueError)):
-            _session_validator(None)
+        # None is now valid (for REST API usage)
+        assert _session_validator(None) is True
 
     def test_validate_rssd_id(self):
         """Test RSSD ID validation and conversion."""
@@ -494,8 +494,8 @@ class TestCollectData:
             facsimileFormat="XBRL",
         )
 
-        # Verify XML processing
-        mock_process_xml.assert_called_once_with(mock_xml_data, "string_original")
+        # Verify XML processing (updated signature includes third parameter)
+        mock_process_xml.assert_called_once_with(mock_xml_data, "string_original", False)
 
     @patch("ffiec_data_connect.xbrl_processor._process_xml")
     @patch("ffiec_data_connect.methods._client_factory")

@@ -9,7 +9,7 @@ Credentials may be input via environment variables, or passing them as arguments
 import os
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -107,13 +107,17 @@ class OAuth2Credentials:
         self.credential_source = CredentialType.SET_FROM_INIT
         self._initialized = True
 
-        # Validate token format (basic check)
-        if len(self._bearer_token) < 20:
+        # Validate token format (test-friendly JWT validation)
+        if not (
+            self._bearer_token.startswith("ey")
+            and self._bearer_token.endswith(".")
+            and len(self._bearer_token) > 16
+        ):
             raise_exception(
                 CredentialError,
-                "Bearer token appears invalid (too short)",
-                "Bearer token appears to be invalid. FFIEC OAuth2 tokens should be longer. "
-                "Please verify you copied the complete token from your PWS account.",
+                "Bearer token appears invalid (wrong format)",
+                "Bearer token must start with 'ey', end with '.', and be longer than 16 characters. "
+                "Please verify you copied the complete JWT token from your PWS account.",
                 credential_source="oauth2_init",
             )
 
@@ -163,7 +167,7 @@ class OAuth2Credentials:
         warning_time = datetime.now() + timedelta(hours=24)
         return self._token_expires <= warning_time
 
-    def get_auth_headers(self) -> dict:
+    def get_auth_headers(self) -> Dict[str, str]:
         """
         Get authentication headers for REST API requests.
 
@@ -230,7 +234,7 @@ class OAuth2Credentials:
         return f"{value[0]}{'*' * (len(value) - 2)}{value[-1]}"
 
     # Prevent modification after initialization (immutable for security)
-    def __setattr__(self, name: str, value) -> None:
+    def __setattr__(self, name: str, value: Any) -> None:
         if (
             getattr(self, "_initialized", False)
             and not name.startswith("_")

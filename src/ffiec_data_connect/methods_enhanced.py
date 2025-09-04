@@ -7,23 +7,12 @@ full backward compatibility with the original SOAP implementations.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Union
+from types import ModuleType
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-# Polars import - optional
-try:
-    import polars as pl
-
-    POLARS_AVAILABLE = True
-except ImportError:
-    POLARS_AVAILABLE = False
-    pl = None
-
 from ffiec_data_connect.credentials import OAuth2Credentials
-
-# Pydantic models are handled at the protocol adapter level
-# No direct model imports needed in enhanced methods
 from ffiec_data_connect.data_normalizer import DataNormalizer
 from ffiec_data_connect.exceptions import (
     ConnectionError,
@@ -38,6 +27,16 @@ from ffiec_data_connect.methods import (
     _output_type_validator,
 )
 from ffiec_data_connect.protocol_adapter import create_protocol_adapter
+
+# Polars import - optional
+pl: Optional[ModuleType]
+try:
+    import polars as pl
+
+    POLARS_AVAILABLE = True
+except ImportError:
+    POLARS_AVAILABLE = False
+    pl = None
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +91,7 @@ def collect_reporting_periods_enhanced(
     series: str = "call",
     output_type: str = "list",
     date_output_format: str = "string_original",
-) -> Union[List[str], pd.DataFrame, "pl.DataFrame"]:
+) -> Union[List[str], pd.DataFrame, Any]:
     """Enhanced REST implementation for collect_reporting_periods
 
     Args:
@@ -113,7 +112,7 @@ def collect_reporting_periods_enhanced(
 
     try:
         # Create protocol adapter
-        adapter = create_protocol_adapter(creds, session)
+        adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
 
         # Call appropriate REST endpoint
         if series.lower() == "call":
@@ -159,7 +158,7 @@ def collect_reporting_periods_enhanced(
         if output_type == "pandas":
             return pd.DataFrame({"reporting_period": processed_periods})
         elif output_type == "polars" and POLARS_AVAILABLE:
-            return pl.DataFrame({"reporting_period": processed_periods})
+            return pl.DataFrame({"reporting_period": processed_periods})  # type: ignore[union-attr]
         else:
             return processed_periods
 
@@ -175,7 +174,7 @@ def collect_filers_on_reporting_period_enhanced(
     creds: "OAuth2Credentials",  # Forward reference to avoid circular imports
     reporting_period: Union[str, datetime],
     output_type: str = "list",
-) -> Union[List[Dict], pd.DataFrame]:
+) -> Union[List[Dict[str, Any]], pd.DataFrame]:
     """Enhanced REST implementation for collect_filers_on_reporting_period
 
     Args:
@@ -205,6 +204,7 @@ def collect_filers_on_reporting_period_enhanced(
         )
 
     # Convert to FFIEC format
+    ffiec_date: Optional[str]
     if isinstance(reporting_period, datetime):
         ffiec_date = _create_ffiec_date_from_datetime(reporting_period)
     else:
@@ -220,7 +220,8 @@ def collect_filers_on_reporting_period_enhanced(
 
     try:
         # Create protocol adapter and call REST endpoint
-        adapter = create_protocol_adapter(creds, session)
+        assert ffiec_date is not None  # Already checked above
+        adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
         normalized_filers = adapter.retrieve_panel_of_reporters(ffiec_date)
 
         logger.debug(f"Retrieved {len(normalized_filers)} filers")
@@ -236,7 +237,7 @@ def collect_filers_on_reporting_period_enhanced(
         if output_type == "pandas":
             return pd.DataFrame(normalized_filers)
         elif output_type == "polars" and POLARS_AVAILABLE:
-            return pl.DataFrame(normalized_filers)
+            return pl.DataFrame(normalized_filers)  # type: ignore[union-attr]
         else:
             return normalized_filers
 
@@ -294,6 +295,8 @@ def collect_filers_since_date_enhanced(
         )
 
     # Convert dates to FFIEC format
+    ffiec_reporting_period: Optional[str]
+    ffiec_since_date: Optional[str]
     if isinstance(reporting_period, datetime):
         ffiec_reporting_period = _create_ffiec_date_from_datetime(reporting_period)
     else:
@@ -315,7 +318,9 @@ def collect_filers_since_date_enhanced(
 
     try:
         # Create protocol adapter and call REST endpoint
-        adapter = create_protocol_adapter(creds, session)
+        assert ffiec_reporting_period is not None  # Already checked above
+        assert ffiec_since_date is not None  # Already checked above
+        adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
         rssd_ids = adapter.retrieve_filers_since_date(
             ffiec_reporting_period, ffiec_since_date
         )
@@ -329,7 +334,7 @@ def collect_filers_since_date_enhanced(
         if output_type == "pandas":
             return pd.DataFrame({"rssd_id": string_rssd_ids})
         elif output_type == "polars" and POLARS_AVAILABLE:
-            return pl.DataFrame({"rssd_id": string_rssd_ids})
+            return pl.DataFrame({"rssd_id": string_rssd_ids})  # type: ignore[union-attr]
         else:
             return string_rssd_ids
 
@@ -347,7 +352,7 @@ def collect_filers_submission_date_time_enhanced(
     reporting_period: Union[str, datetime],
     output_type: str = "list",
     date_output_format: str = "string_original",
-) -> Union[List[Dict], pd.DataFrame, "pl.DataFrame"]:
+) -> Union[List[Dict[str, Any]], pd.DataFrame, Any]:
     """Enhanced REST implementation for collect_filers_submission_date_time
 
     Args:
@@ -389,6 +394,8 @@ def collect_filers_submission_date_time_enhanced(
         )
 
     # Convert dates to FFIEC format
+    ffiec_reporting_period: Optional[str]
+    ffiec_since_date: Optional[str]
     if isinstance(reporting_period, datetime):
         ffiec_reporting_period = _create_ffiec_date_from_datetime(reporting_period)
     else:
@@ -410,7 +417,9 @@ def collect_filers_submission_date_time_enhanced(
 
     try:
         # Create protocol adapter and call REST endpoint
-        adapter = create_protocol_adapter(creds, session)
+        assert ffiec_reporting_period is not None  # Already checked above
+        assert ffiec_since_date is not None  # Already checked above
+        adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
         submissions = adapter.retrieve_filers_submission_datetime(
             ffiec_reporting_period, ffiec_since_date
         )
@@ -428,7 +437,8 @@ def collect_filers_submission_date_time_enhanced(
                         submission.ID_RSSD
                     ),  # SOAP returns 'rssd', not 'id_rssd'
                     "datetime": _format_datetime_for_output(
-                        submission.DateTime, date_output_format
+                        submission.DateTime,  # type: ignore[attr-defined]
+                        date_output_format,
                     ),
                 }
             else:
@@ -447,7 +457,7 @@ def collect_filers_submission_date_time_enhanced(
         if output_type == "pandas":
             return pd.DataFrame(processed_submissions)
         elif output_type == "polars" and POLARS_AVAILABLE:
-            return pl.DataFrame(processed_submissions)
+            return pl.DataFrame(processed_submissions)  # type: ignore[union-attr]
         else:
             return processed_submissions
 

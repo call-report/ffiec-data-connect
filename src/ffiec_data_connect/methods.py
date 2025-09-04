@@ -6,7 +6,9 @@ The methods contained in this module are utilized to call and collect data from 
 
 import logging
 import re
-from typing import Optional, Union
+from datetime import datetime
+from typing import Any, List, Optional, Union
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -20,8 +22,6 @@ try:
 except ImportError:
     POLARS_AVAILABLE = False
     pl = None  # type: ignore
-from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from zeep import Client
 
@@ -395,10 +395,10 @@ def _return_client_session(
 def collect_reporting_periods(
     session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
     creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
-    series="call",
-    output_type="list",
-    date_output_format="string_original",
-) -> Union[list, pd.Series]:
+    series: str = "call",
+    output_type: str = "list",
+    date_output_format: str = "string_original",
+) -> Union[List[str], pd.Series]:
     """Returns list of reporting periods available for access via the FFIEC webservice
 
     **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -516,10 +516,10 @@ def collect_data(
     reporting_period: Union[str, datetime],
     rssd_id: str,
     series: str,
-    output_type="list",
-    date_output_format="string_original",
+    output_type: str = "list",
+    date_output_format: str = "string_original",
     force_null_types: Optional[str] = None,
-):
+) -> Any:
     """Return time series data from the FFIEC webservice for a given reporting period and RSSD ID
 
     **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -576,15 +576,20 @@ def collect_data(
 
         try:
             # Cast session type for protocol adapter compatibility
-            from typing import cast, TYPE_CHECKING
+            from typing import TYPE_CHECKING, cast
+
             if TYPE_CHECKING:
                 import httpx
-            adapter = create_protocol_adapter(creds, cast(Union["requests.Session", "httpx.Client", None], session))
+            adapter = create_protocol_adapter(
+                creds, cast(Union["requests.Session", "httpx.Client", None], session)
+            )
 
             # Attempt to retrieve data via REST API
             logger.debug(f"Attempting to retrieve data via REST API for RSSD {rssd_id}")
             # Convert reporting_period to string format for API
-            reporting_period_str = _convert_any_date_to_ffiec_format(reporting_period) or str(reporting_period)
+            reporting_period_str = _convert_any_date_to_ffiec_format(
+                reporting_period
+            ) or str(reporting_period)
             raw_data = adapter.retrieve_facsimile(rssd_id, reporting_period_str, series)
 
             # Process the raw data (assuming it's XBRL format)
@@ -716,6 +721,10 @@ def collect_data(
 
     # Session should not be None after validation for SOAP
     assert session is not None, "Session should not be None after validation for SOAP"
+    # This SOAP path is only for WebserviceCredentials after OAuth2 routing
+    assert isinstance(
+        creds, credentials.WebserviceCredentials
+    ), "SOAP path requires WebserviceCredentials"
     client = _client_factory(session, creds)
 
     reporting_period_ffiec = _return_ffiec_reporting_date(reporting_period)
@@ -885,8 +894,8 @@ def collect_filers_since_date(
     creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     reporting_period: Union[str, datetime],
     since_date: Union[str, datetime],
-    output_type="list",
-) -> Union[list, pd.Series]:
+    output_type: str = "list",
+) -> Union[List[Any], pd.Series]:
     """Retrieves data from FFIEC webservice.
 
         **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -972,7 +981,7 @@ def collect_filers_submission_date_time(
     reporting_period: Union[str, datetime],
     output_type: str = "list",
     date_output_format: str = "string_original",
-) -> Union[list, pd.DataFrame]:
+) -> Union[List[Any], pd.DataFrame]:
     """Retrieves data from FFIEC webservice.
 
         **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -1080,8 +1089,8 @@ def collect_filers_on_reporting_period(
     session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
     creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     reporting_period: Union[str, datetime],
-    output_type="list",
-) -> Union[list, pd.DataFrame]:
+    output_type: str = "list",
+) -> Union[List[Any], pd.DataFrame]:
     """Retrieves data from FFIEC webservice.
 
     **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -1153,9 +1162,9 @@ def collect_filers_on_reporting_period(
 def collect_ubpr_reporting_periods(
     session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
     creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
-    output_type="list",
-    date_output_format="string_original",
-) -> Union[list, pd.DataFrame]:
+    output_type: str = "list",
+    date_output_format: str = "string_original",
+) -> Union[List[Any], pd.DataFrame]:
     """Retrieves UBPR reporting periods from FFIEC API.
 
     **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -1183,7 +1192,7 @@ def collect_ubpr_reporting_periods(
         try:
             from .protocol_adapter import create_protocol_adapter
 
-            adapter = create_protocol_adapter(creds, session)
+            adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
             raw_periods = adapter.retrieve_ubpr_reporting_periods()
 
             # Handle output type conversion
@@ -1218,9 +1227,9 @@ def collect_ubpr_facsimile_data(
     creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
     reporting_period: Union[str, datetime],
     rssd_id: str,
-    output_type="list",
+    output_type: str = "list",
     force_null_types: Optional[str] = None,
-) -> Union[bytes, list, pd.DataFrame]:
+) -> Union[bytes, List[Any], pd.DataFrame]:
     """Retrieves UBPR XBRL facsimile data for a specific institution.
 
     **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -1273,6 +1282,7 @@ def collect_ubpr_facsimile_data(
             from .protocol_adapter import create_protocol_adapter
 
             # Convert reporting period to FFIEC format
+            ffiec_date: Optional[str]
             if isinstance(reporting_period, datetime):
                 ffiec_date = _create_ffiec_date_from_datetime(reporting_period)
             else:
@@ -1285,7 +1295,8 @@ def collect_ubpr_facsimile_data(
                         value=str(reporting_period),
                     )
 
-            adapter = create_protocol_adapter(creds, session)
+            assert ffiec_date is not None  # Helps mypy understand control flow
+            adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
             raw_data = adapter.retrieve_ubpr_xbrl_facsimile(rssd_id, ffiec_date)
 
             # Handle output type

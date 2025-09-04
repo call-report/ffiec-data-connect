@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Type
 
 
 def raise_exception(
-    exception_class: Type[Exception], legacy_message: str, *args, **kwargs
+    exception_class: Type[Exception], legacy_message: str, *args: Any, **kwargs: Any
 ) -> None:
     """Raise an exception with legacy compatibility support.
 

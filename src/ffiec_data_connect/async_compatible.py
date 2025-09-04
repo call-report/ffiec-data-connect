@@ -88,10 +88,10 @@ class AsyncCompatibleClient:
 
         if self._is_rest_client:
             # REST clients don't need connection caching
-            self._connection_cache = {}
+            self._connection_cache: Dict[int, ffiec_connection.FFIECConnection] = {}
         else:
             # SOAP clients use connection caching
-            self._connection_cache: Dict[int, ffiec_connection.FFIECConnection] = {}
+            self._connection_cache = {}
 
         self._lock = threading.Lock()
         self._owned_executor = executor is None  # Track if we created the executor
@@ -105,7 +105,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Union[List[Dict], Any]:
+    ) -> Union[List[Dict[str, Any]], Any]:
         """Standard synchronous method - backward compatible.
 
         Args:
@@ -151,7 +151,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Union[List, Any]:
+    ) -> Union[List[str], Any]:
         """Get available reporting periods - backward compatible.
 
         Args:
@@ -186,7 +186,7 @@ class AsyncCompatibleClient:
         output_type: str = "list",
         date_output_format: str = "string_original",
         progress_callback: Optional[Callable[[str, Any], None]] = None,
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect data for multiple banks in parallel (sync interface).
 
         Args:
@@ -239,7 +239,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect multiple periods for one bank in parallel (sync interface).
 
         Args:
@@ -290,7 +290,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Union[List[Dict], Any]:
+    ) -> Union[List[Dict[str, Any]], Any]:
         """Async version - runs sync code in thread pool.
 
         Args:
@@ -325,7 +325,7 @@ class AsyncCompatibleClient:
         output_type: str = "list",
         date_output_format: str = "string_original",
         progress_callback: Optional[Callable[[str, Any], None]] = None,
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect data for multiple banks with rate limiting and progress tracking.
 
         Args:
@@ -387,7 +387,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect multiple periods for one bank in parallel (async).
 
         Args:
@@ -451,7 +451,7 @@ class AsyncCompatibleClient:
         """Sync context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Sync context manager exit - cleanup."""
         self.close()
 
@@ -459,6 +459,6 @@ class AsyncCompatibleClient:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Async context manager exit - cleanup."""
         self.close()

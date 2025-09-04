@@ -6,7 +6,7 @@ This module provides secure XML/XBRL processing with XXE attack prevention.
 import re
 from datetime import datetime
 from itertools import chain
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
@@ -130,7 +130,7 @@ def _process_xml(
                         # Set data fields based on type - use different null values for SOAP vs REST
                         "int_data": (
                             np.int64(value)
-                            if data_type == "int"
+                            if data_type == "int" and value is not None
                             else (pd.NA if use_rest_nulls else np.nan)
                         ),
                         "float_data": (
@@ -168,7 +168,9 @@ def _create_ffiec_date_from_datetime(indate: datetime) -> str:
     return mmddyyyy
 
 
-def _process_xbrl_item(name, items, date_format):
+def _process_xbrl_item(
+    name: str, items: Union[Dict[str, Any], List[Dict[str, Any]]], date_format: str
+) -> List[Dict[str, Any]]:
     # incoming is a data dictionary
     results = []
     if not isinstance(items, list):
@@ -178,10 +180,17 @@ def _process_xbrl_item(name, items, date_format):
         unit_type = item.get("@unitRef")
         value = item.get("#text")
         mdrm = name.replace("cc:", "").replace("uc:", "")
+
+        if context is None:
+            continue  # Skip items without context
+
         rssd = context.split("_")[1]
         # date = int(context.split('_')[2].replace("-",''))
 
-        quarter = re_date.findall(context)[0]
+        matches = re_date.findall(context)
+        if not matches:
+            continue  # Skip items without valid date
+        quarter = matches[0]
 
         # transform the date to the requested date format
         if date_format == "string_original":
@@ -195,13 +204,13 @@ def _process_xbrl_item(name, items, date_format):
 
         data_type = None
 
-        if unit_type == "USD":
+        if unit_type == "USD" and value is not None:
             value = int(value) // 1000  # Use integer division to keep result as int
             data_type = "int"
-        elif unit_type == "PURE":
+        elif unit_type == "PURE" and value is not None:
             value = float(value)
             data_type = "float"
-        elif unit_type == "NON-MONETARY":
+        elif unit_type == "NON-MONETARY" and value is not None:
             value = float(value)
             data_type = "float"
         elif value == "true":

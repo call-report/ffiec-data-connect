@@ -126,16 +126,16 @@ class SOAPClientCache:
     ) -> Client:
         """Create a new SOAP client."""
         # Create WSSE token
-        wsse = UsernameToken(credentials.username, credentials.password)
+        wsse = UsernameToken(credentials.username, credentials.password)  # type: ignore[no-untyped-call]
 
         # Create transport with session
         transport = None
         if hasattr(session, "session"):
             # FFIECConnection object
-            transport = Transport(session=session.session)
+            transport = Transport(session=session.session)  # type: ignore[no-untyped-call]
         else:
             # Direct requests.Session
-            transport = Transport(session=session)
+            transport = Transport(session=session)  # type: ignore[no-untyped-call]
 
         # Create settings for better performance
         settings = Settings(
@@ -145,7 +145,7 @@ class SOAPClientCache:
         )
 
         # Create client
-        return Client(
+        return Client(  # type: ignore[no-untyped-call]
             wsdl=config.wsdl_url, wsse=wsse, transport=transport, settings=settings
         )
 
