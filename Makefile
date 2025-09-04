@@ -9,7 +9,7 @@ lint:
 	python -m flake8 src/ tests/
 
 type-check:
-	python -m mypy --package ffiec_data_connect
+	python -m mypy src/ffiec_data_connect
 
 # Combined quality check target
 check-all: format lint type-check test

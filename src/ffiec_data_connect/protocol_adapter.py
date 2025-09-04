@@ -32,7 +32,7 @@ from pydantic import ValidationError as PydanticValidationError
 try:
     import requests
 except ImportError:
-    requests = None
+    requests = None  # type: ignore
 
 from .credentials import OAuth2Credentials, WebserviceCredentials
 from .data_normalizer import DataNormalizer
@@ -539,6 +539,8 @@ class RESTAdapter(ProtocolAdapter):
                 )
             else:
                 self._handle_response(response, "RetrieveFacsimile")
+                # If we get here, raise an error as we didn't get expected data
+                raise ConnectionError(f"Unexpected response status {response.status_code} for RetrieveFacsimile")
 
         except Exception as e:
             logger.error(f"Failed to retrieve facsimile for RSSD {rssd_id}: {e}")
@@ -799,6 +801,8 @@ class RESTAdapter(ProtocolAdapter):
                 )
             else:
                 self._handle_response(response, "RetrieveUBPRXBRLFacsimile")
+                # If we get here, raise an error as we didn't get expected data
+                raise ConnectionError(f"Unexpected response status {response.status_code} for RetrieveUBPRXBRLFacsimile")
 
         except Exception as e:
             logger.error(f"Failed to retrieve UBPR facsimile for RSSD {rssd_id}: {e}")
@@ -866,7 +870,7 @@ class SOAPAdapter(ProtocolAdapter):
 
         # Use existing implementation
         return methods.collect_data(
-            self.session, self.credentials, reporting_period, rssd_id, series=series
+            self.session, self.credentials, reporting_period, str(rssd_id), series=series
         )
 
     def retrieve_panel_of_reporters(self, reporting_period: str) -> List[Dict]:
@@ -930,7 +934,7 @@ class RateLimiter:
         self.min_interval = 1.0 / calls_per_second
 
         self.last_call = 0.0
-        self.call_history = []  # Timestamps of recent calls
+        self.call_history: list[float] = []  # Timestamps of recent calls
         self.lock = threading.Lock()
 
         logger.debug(
@@ -1001,7 +1005,7 @@ class RateLimiter:
 
 def create_protocol_adapter(
     credentials: Union[WebserviceCredentials, OAuth2Credentials],
-    session: Optional["requests.Session"] = None,
+    session: Union[Optional["requests.Session"], Optional["httpx.Client"]] = None,
 ) -> ProtocolAdapter:
     """
     Factory function to create appropriate protocol adapter based on credential type.
@@ -1021,11 +1025,17 @@ def create_protocol_adapter(
     """
     if isinstance(credentials, OAuth2Credentials):
         logger.info("Creating REST adapter for OAuth2 credentials")
-        return RESTAdapter(credentials, session=session)
+        # REST adapter expects httpx.Client, not requests.Session
+        from typing import cast
+        client_session = cast(Optional["httpx.Client"], session)
+        return RESTAdapter(credentials, session=client_session)
 
     elif isinstance(credentials, WebserviceCredentials):
-        logger.info("Creating SOAP adapter for WebserviceCredentials")
-        return SOAPAdapter(credentials, session=session)
+        logger.info("Creating SOAP adapter for WebserviceCredentials") 
+        # SOAP adapter expects requests.Session
+        from typing import cast
+        soap_session = cast(Optional["requests.Session"], session)
+        return SOAPAdapter(credentials, session=soap_session)
 
     else:
         raise CredentialError(

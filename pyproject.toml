@@ -212,6 +212,9 @@ warn_unreachable = false
 strict_equality = false
 show_error_codes = true
 ignore_missing_imports = true
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = [

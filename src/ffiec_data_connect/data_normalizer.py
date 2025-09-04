@@ -34,7 +34,7 @@ class DataNormalizer:
 
     # Normalization rules discovered from format analysis
     # These ensure REST responses match SOAP format exactly
-    TYPE_COERCIONS = {
+    TYPE_COERCIONS: Dict[str, Dict[str, Any]] = {
         "RetrievePanelOfReporters": {
             # Critical fields that change type between protocols
             "ID_RSSD": lambda x: str(x),  # int → str (CRITICAL)
@@ -234,7 +234,7 @@ class DataNormalizer:
         Returns:
             Dictionary with validation results and recommendations
         """
-        validation_report = {
+        validation_report: Dict[str, Any] = {
             "endpoint": endpoint,
             "compatible": True,
             "warnings": [],
@@ -424,7 +424,7 @@ class DataNormalizer:
         if not data:
             return
 
-        validation_errors = []
+        validation_errors: list[str] = []
 
         try:
             if isinstance(data, list):
