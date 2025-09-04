@@ -662,7 +662,7 @@ def collect_data(
                     polars_row = {
                         "mdrm": row["mdrm"],
                         "rssd": row["rssd"],
-                        "id_rssd": row["id_rssd"],  # Dual field support
+                        "id_rssd": row.get("id_rssd", row["rssd"]),  # Dual field support with fallback
                         "quarter": row["quarter"],
                         "data_type": row["data_type"],
                         "int_data": (
@@ -863,7 +863,7 @@ def collect_data(
             polars_row = {
                 "mdrm": row["mdrm"],
                 "rssd": row["rssd"],
-                "id_rssd": row["id_rssd"],  # Dual field support
+                "id_rssd": row.get("id_rssd", row["rssd"]),  # Dual field support with fallback
                 "quarter": row["quarter"],
                 "data_type": row["data_type"],
                 "int_data": None if pd.isna(row["int_data"]) else int(row["int_data"]),
