@@ -138,6 +138,32 @@ class ProtocolAdapter(ABC):
         """
         pass
 
+    @abstractmethod 
+    def retrieve_ubpr_reporting_periods(self) -> List[str]:
+        """
+        Retrieve UBPR reporting periods.
+        
+        Returns:
+            List of available UBPR reporting periods
+        """
+        pass
+    
+    @abstractmethod
+    def retrieve_ubpr_xbrl_facsimile(
+        self, rssd_id: Union[str, int], reporting_period: str
+    ) -> bytes:
+        """
+        Retrieve UBPR XBRL facsimile data.
+        
+        Args:
+            rssd_id: Institution RSSD ID
+            reporting_period: Reporting period
+            
+        Returns:
+            Raw UBPR XBRL data bytes
+        """
+        pass
+
     @property
     @abstractmethod
     def protocol_name(self) -> str:
@@ -906,6 +932,30 @@ class SOAPAdapter(ProtocolAdapter):
             since_date or reporting_period,
             reporting_period,
         )
+
+    def retrieve_ubpr_reporting_periods(self) -> List[str]:
+        """Retrieve UBPR reporting periods via SOAP (delegates to existing implementation)."""
+        from . import methods
+        
+        # Use existing SOAP implementation
+        return methods.collect_ubpr_reporting_periods(
+            self.session, self.credentials
+        )
+    
+    def retrieve_ubpr_xbrl_facsimile(
+        self, rssd_id: Union[str, int], reporting_period: str
+    ) -> bytes:
+        """Retrieve UBPR XBRL facsimile via SOAP (delegates to existing implementation)."""
+        from . import methods
+        
+        # Use existing SOAP implementation  
+        # Note: SOAP methods return processed data, not raw bytes like REST
+        # This cast maintains interface compatibility
+        from typing import cast
+        result = methods.collect_ubpr_facsimile_data(
+            self.session, self.credentials, str(rssd_id), reporting_period
+        )
+        return cast(bytes, result)
 
     @property
     def protocol_name(self) -> str:

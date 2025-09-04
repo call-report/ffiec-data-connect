@@ -441,6 +441,7 @@ def collect_reporting_periods(
     _ = _session_validator(session)
 
     # we have a session and valid credentials, so try to log in
+    assert session is not None, "Session should not be None after validation for SOAP"
     client = _client_factory(session, creds)
 
     # scope ret outside the if statement
@@ -574,11 +575,17 @@ def collect_data(
         from .protocol_adapter import create_protocol_adapter
 
         try:
-            adapter = create_protocol_adapter(creds, session)
+            # Cast session type for protocol adapter compatibility
+            from typing import cast, TYPE_CHECKING
+            if TYPE_CHECKING:
+                import httpx
+            adapter = create_protocol_adapter(creds, cast(Union["requests.Session", "httpx.Client", None], session))
 
             # Attempt to retrieve data via REST API
             logger.debug(f"Attempting to retrieve data via REST API for RSSD {rssd_id}")
-            raw_data = adapter.retrieve_facsimile(rssd_id, reporting_period, series)
+            # Convert reporting_period to string format for API
+            reporting_period_str = _convert_any_date_to_ffiec_format(reporting_period) or str(reporting_period)
+            raw_data = adapter.retrieve_facsimile(rssd_id, reporting_period_str, series)
 
             # Process the raw data (assuming it's XBRL format)
             if isinstance(raw_data, bytes):
@@ -707,6 +714,8 @@ def collect_data(
     # Original SOAP implementation for WebserviceCredentials
     _ = _session_validator(session)
 
+    # Session should not be None after validation for SOAP
+    assert session is not None, "Session should not be None after validation for SOAP"
     client = _client_factory(session, creds)
 
     reporting_period_ffiec = _return_ffiec_reporting_date(reporting_period)
@@ -933,6 +942,8 @@ def collect_filers_since_date(
             )
         )
 
+    # Session should not be None after validation for SOAP
+    assert session is not None, "Session should not be None after validation for SOAP"
     client = _client_factory(session, creds)
 
     # convert our input dates to the ffiec input date format
@@ -1019,15 +1030,13 @@ def collect_filers_submission_date_time(
         )
 
     # we have a session and valid credentials, so try to log in
-    client = _client_factory(session, creds)
-
     # convert our input dates to the ffiec input date format
     since_date_ffiec = _convert_any_date_to_ffiec_format(since_date)
     reporting_period_datetime_ffiec = _return_ffiec_reporting_date(reporting_period)
 
     # send the request
-
     # first, create the client
+    assert session is not None, "Session should not be None after validation for SOAP"
     client = _client_factory(session, creds)
 
     ret = client.service.RetrieveFilersSubmissionDateTime(
@@ -1122,6 +1131,7 @@ def collect_filers_on_reporting_period(
             )
         )
 
+    assert session is not None, "Session should not be None after validation for SOAP"
     client = _client_factory(session, creds)
     reporting_period_datetime_ffiec = _return_ffiec_reporting_date(reporting_period)
 
