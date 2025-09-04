@@ -6,7 +6,6 @@ expensive recreation and improve performance.
 """
 
 import hashlib
-import hmac
 import threading
 import weakref
 from dataclasses import asdict, dataclass
@@ -51,11 +50,11 @@ class SOAPClientConfig:
         # Derive a key from credentials for cache identification
         # Using 1000 iterations which is fast enough for caching but secure
         credential_key = hashlib.pbkdf2_hmac(
-            'sha256',
+            "sha256",
             credentials.password.encode(),  # This is the data to derive from
             salt,  # Salt includes username for uniqueness
             1000,  # Number of iterations
-            dklen=16  # Output 16 bytes (32 hex chars)
+            dklen=16,  # Output 16 bytes (32 hex chars)
         ).hex()
 
         # Extract proxy configuration if available
