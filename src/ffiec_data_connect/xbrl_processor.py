@@ -225,7 +225,8 @@ def _process_xbrl_item(
         results.append(
             {
                 "mdrm": mdrm,
-                "rssd": rssd,
+                "rssd": rssd,  # Institution RSSD ID
+                "id_rssd": rssd,  # Institution RSSD ID (same data, dual field support)
                 "value": value,
                 "data_type": data_type,
                 "quarter": quarter,

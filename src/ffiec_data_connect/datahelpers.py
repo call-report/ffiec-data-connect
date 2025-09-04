@@ -21,11 +21,16 @@ def _normalize_output_from_reporter_panel(
     new_row: Dict[str, Optional[Union[str, bool]]] = {}
     row_keys = list(helpers.serialize_object(row).keys())  # type: ignore[no-untyped-call]
 
-    # process ID_RSSD
+    # process ID_RSSD - provide both field names for compatibility
+    # NOTE: Property names were inconsistent in earlier code, so we provide both
+    # 'rssd' and 'id_rssd' to reduce need to refactor existing user code
     if "ID_RSSD" in row_keys:
-        new_row["id_rssd"] = str(row["ID_RSSD"])
+        rssd_value = str(row["ID_RSSD"])
+        new_row["id_rssd"] = rssd_value  # Institution RSSD ID
+        new_row["rssd"] = rssd_value  # Institution RSSD ID (same data)
     else:
         new_row["id_rssd"] = None
+        new_row["rssd"] = None
 
     # process FDIC CERT NUMBER
     if "FDICCertNumber" in row_keys:

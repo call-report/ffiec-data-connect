@@ -358,7 +358,7 @@ class AsyncCompatibleClient:
 
                     if progress_callback:
                         if asyncio.iscoroutinefunction(progress_callback):
-                            await progress_callback(rssd_id, result)
+                            await progress_callback(rssd_id, result)  # type: ignore[attr-defined]
                         else:
                             progress_callback(rssd_id, result)
 
@@ -367,7 +367,7 @@ class AsyncCompatibleClient:
                     error_result = {"error": str(e), "rssd_id": rssd_id}
                     if progress_callback:
                         if asyncio.iscoroutinefunction(progress_callback):
-                            await progress_callback(rssd_id, error_result)
+                            await progress_callback(rssd_id, error_result)  # type: ignore[attr-defined]
                         else:
                             progress_callback(rssd_id, error_result)
                     return rssd_id, error_result

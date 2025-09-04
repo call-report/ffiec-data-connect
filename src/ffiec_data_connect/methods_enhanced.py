@@ -184,7 +184,12 @@ def collect_filers_on_reporting_period_enhanced(
         output_type: Output format ("list", "pandas", or "polars")
 
     Returns:
-        List of filer dictionaries or DataFrame
+        List of filer dictionaries or DataFrame containing:
+        - "rssd"/"id_rssd": Institution RSSD ID (both field names provided for compatibility)
+        - Other filer fields as documented in main function
+
+        NOTE: Property names were inconsistent in earlier code, so both 'rssd' and 'id_rssd'
+        are provided with identical data to reduce need to refactor existing user code.
     """
     logger.debug(
         f"collect_filers_on_reporting_period_enhanced called for period={reporting_period}"
@@ -332,9 +337,14 @@ def collect_filers_since_date_enhanced(
 
         # Handle output type conversion
         if output_type == "pandas":
-            return pd.DataFrame({"rssd_id": string_rssd_ids})
+            # Provide dual column names for compatibility
+            df = pd.DataFrame({"rssd_id": string_rssd_ids})
+            df["rssd"] = df["rssd_id"]  # Dual field support
+            return df
         elif output_type == "polars" and POLARS_AVAILABLE:
-            return pl.DataFrame({"rssd_id": string_rssd_ids})  # type: ignore[union-attr]
+            # Provide dual column names for compatibility
+            data_dict = {"rssd_id": string_rssd_ids, "rssd": string_rssd_ids}
+            return pl.DataFrame(data_dict)  # type: ignore[union-attr]
         else:
             return string_rssd_ids
 
@@ -431,22 +441,22 @@ def collect_filers_submission_date_time_enhanced(
         for submission in submissions:
             # Handle both dict and Pydantic model objects
             if hasattr(submission, "ID_RSSD"):
-                # It's a Pydantic model object - match original SOAP field names
+                # It's a Pydantic model object - provide both field names for compatibility
+                rssd_value = str(submission.ID_RSSD)
                 processed_sub = {
-                    "rssd": str(
-                        submission.ID_RSSD
-                    ),  # SOAP returns 'rssd', not 'id_rssd'
+                    "rssd": rssd_value,  # Institution RSSD ID
+                    "id_rssd": rssd_value,  # Institution RSSD ID (same data, dual field support)
                     "datetime": _format_datetime_for_output(
                         submission.DateTime,  # type: ignore[attr-defined]
                         date_output_format,
                     ),
                 }
             else:
-                # It's a dictionary - match original SOAP field names
+                # It's a dictionary - provide both field names for compatibility
+                rssd_value = str(submission.get("ID_RSSD", ""))
                 processed_sub = {
-                    "rssd": str(
-                        submission.get("ID_RSSD", "")
-                    ),  # SOAP returns 'rssd', not 'id_rssd'
+                    "rssd": rssd_value,  # Institution RSSD ID
+                    "id_rssd": rssd_value,  # Institution RSSD ID (same data, dual field support)
                     "datetime": _format_datetime_for_output(
                         submission.get("DateTime", ""), date_output_format
                     ),

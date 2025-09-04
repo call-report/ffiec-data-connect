@@ -51,6 +51,7 @@ This release candidate marks the transition to a public, production-ready librar
 - **Improved Integer Display**: Pandas nulls preserve integer types (100 vs 100.0)
 - **Protocol-Specific Defaults**: REST uses pandas nulls, SOAP uses numpy nulls
 - **Data Type Consistency**: Maintains type integrity across protocol boundaries
+- **Field Name Compatibility**: All functions provide both 'rssd' and 'id_rssd' fields for backward compatibility
 
 #### Comprehensive Error Handling
 - **Protocol-Specific Errors**: Different error types for REST vs SOAP issues

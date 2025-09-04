@@ -26,6 +26,7 @@ The FFIEC Data Connect Python library (`ffiec_data_connect`) downloads data from
 - **Higher Rate Limits**: REST API allows 2500 requests/hour vs 1000 for SOAP
 - **Data Normalization**: Ensures consistency between SOAP and REST responses
 - **Multiple Output Formats**: Returns data as Python lists, Pandas DataFrames, or Polars DataFrames
+- **Field Name Compatibility**: Provides both `rssd` and `id_rssd` field names to support existing code
 
 ### Disclaimer
 
@@ -39,6 +40,32 @@ The FFIEC Data Connect library provides a Python interface to both the SOAP-base
 - **REST API**: Modern RESTful interface with OAuth2 (uses `OAuth2Credentials`)
 
 The library automatically selects the appropriate protocol based on the credentials you provide.
+
+## Field Name Compatibility
+
+**Important**: Property names were inconsistent in earlier versions of this library. To reduce the need to refactor existing user code, all functions that return RSSD data now provide **both field names** with identical data:
+
+- `"rssd"`: Institution RSSD ID 
+- `"id_rssd"`: Institution RSSD ID (same data, different field name)
+
+### Usage Examples
+
+```python
+# Both of these work identically:
+rssd_id = filer.get("rssd")      
+rssd_id = filer.get("id_rssd")   
+
+# Defensive programming (recommended for production):
+rssd_id = filer.get("rssd") or filer.get("id_rssd")
+```
+
+### Affected Functions
+
+This dual field name support applies to:
+- `collect_filers_on_reporting_period()`
+- `collect_filers_submission_date_time()` 
+- All REST and SOAP implementations
+- All output formats (list, pandas, polars)
 
 ## Installation
 

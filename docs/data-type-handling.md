@@ -43,6 +43,7 @@ The XBRL processor (`xbrl_processor.py`) converts XBRL values to numpy types for
 {
     'mdrm': 'RCON2170',           # MDRM code (string)
     'rssd': '480228',             # RSSD ID (string) 
+    'id_rssd': '480228',          # RSSD ID (same data, dual field support)
     'quarter': '2023-12-31',      # Reporting period (string)
     'data_type': 'int',           # Detected type
     'int_data': np.int64(1500000),    # Integer data (or np.nan)
@@ -56,6 +57,34 @@ The XBRL processor (`xbrl_processor.py`) converts XBRL values to numpy types for
 - Only one data field contains the actual value; others are `np.nan` or `None`
 - Preserves original precision from XBRL source
 - Uses numpy types for consistent downstream processing
+- Provides dual field names (`rssd` and `id_rssd`) for backward compatibility
+
+## Field Name Compatibility
+
+**Important**: Property names were inconsistent in earlier versions of this library. To reduce the need to refactor existing user code, all functions that return RSSD data now provide **both field names** with identical data:
+
+- `"rssd"`: Institution RSSD ID
+- `"id_rssd"`: Institution RSSD ID (same data, different field name)
+
+### Usage Examples
+
+```python
+# Both of these work identically:
+rssd_id = data_record.get("rssd")      
+rssd_id = data_record.get("id_rssd")   
+
+# Defensive programming (recommended for production):
+rssd_id = data_record.get("rssd") or data_record.get("id_rssd")
+```
+
+### Affected Functions and Data Structures
+
+This dual field name support applies to:
+- `collect_filers_on_reporting_period()`
+- `collect_filers_submission_date_time()` 
+- `collect_data()` (via XBRL processor)
+- All REST and SOAP implementations
+- All output formats (list, pandas, polars)
 
 ## Output Format Details
 

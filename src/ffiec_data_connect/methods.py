@@ -646,6 +646,7 @@ def collect_data(
                     schema = {
                         "mdrm": pl.Utf8,
                         "rssd": pl.Utf8,
+                        "id_rssd": pl.Utf8,  # Dual field support
                         "quarter": pl.Utf8,
                         "data_type": pl.Utf8,
                         "int_data": pl.Int64,
@@ -661,6 +662,7 @@ def collect_data(
                     polars_row = {
                         "mdrm": row["mdrm"],
                         "rssd": row["rssd"],
+                        "id_rssd": row["id_rssd"],  # Dual field support
                         "quarter": row["quarter"],
                         "data_type": row["data_type"],
                         "int_data": (
@@ -684,6 +686,7 @@ def collect_data(
                 schema = {
                     "mdrm": pl.Utf8,
                     "rssd": pl.Utf8,
+                    "id_rssd": pl.Utf8,  # Dual field support
                     "quarter": pl.Utf8,
                     "data_type": pl.Utf8,
                     "int_data": pl.Int64,
@@ -722,9 +725,9 @@ def collect_data(
     # Session should not be None after validation for SOAP
     assert session is not None, "Session should not be None after validation for SOAP"
     # This SOAP path is only for WebserviceCredentials after OAuth2 routing
-    assert isinstance(
-        creds, credentials.WebserviceCredentials
-    ), "SOAP path requires WebserviceCredentials"
+    assert isinstance(creds, credentials.WebserviceCredentials), (
+        "SOAP path requires WebserviceCredentials"
+    )
     client = _client_factory(session, creds)
 
     reporting_period_ffiec = _return_ffiec_reporting_date(reporting_period)
@@ -844,6 +847,7 @@ def collect_data(
             schema = {
                 "mdrm": pl.Utf8,
                 "rssd": pl.Utf8,
+                "id_rssd": pl.Utf8,  # Dual field support
                 "quarter": pl.Utf8,
                 "data_type": pl.Utf8,
                 "int_data": pl.Int64,
@@ -859,6 +863,7 @@ def collect_data(
             polars_row = {
                 "mdrm": row["mdrm"],
                 "rssd": row["rssd"],
+                "id_rssd": row["id_rssd"],  # Dual field support
                 "quarter": row["quarter"],
                 "data_type": row["data_type"],
                 "int_data": None if pd.isna(row["int_data"]) else int(row["int_data"]),
@@ -876,6 +881,7 @@ def collect_data(
         schema = {
             "mdrm": pl.Utf8,
             "rssd": pl.Utf8,
+            "id_rssd": pl.Utf8,  # Dual field support
             "quarter": pl.Utf8,
             "data_type": pl.Utf8,
             "int_data": pl.Int64,
@@ -968,7 +974,10 @@ def collect_filers_since_date(
     if output_type == "list":
         return ret
     elif output_type == "pandas":
-        return pd.DataFrame(ret, columns=["rssd_id"])
+        # Provide dual column names for compatibility
+        df = pd.DataFrame(ret, columns=["rssd_id"])
+        df["rssd"] = df["rssd_id"]  # Dual field support
+        return df
     else:
         # for now, default is to return a list
         return ret
@@ -1004,7 +1013,12 @@ def collect_filers_submission_date_time(
             date_output_format (str, optional): string_original or python_datetime. Defaults to "string_original".
 
         Returns:
-            any: List of dicts or pandas DataFrame containing the rssd id of the filer, and the submission date and time, in Washington DC timezone.
+            any: List of dicts or pandas DataFrame containing the following fields:
+            - "rssd"/"id_rssd": Institution RSSD ID (both field names provided for compatibility)
+            - "datetime": Submission date and time in Washington DC timezone
+
+            NOTE: Property names were inconsistent in earlier code, so both 'rssd' and 'id_rssd'
+            are provided with identical data to reduce need to refactor existing user code.
     """
 
     # conduct standard validation on function input arguments
@@ -1054,8 +1068,17 @@ def collect_filers_submission_date_time(
         reportingPeriodEndDate=reporting_period_datetime_ffiec,
     )
 
-    # normalize the output
-    normalized_ret = [{"rssd": x["ID_RSSD"], "datetime": x["DateTime"]} for x in ret]
+    # normalize the output - provide both field names for compatibility
+    # NOTE: Property names were inconsistent in earlier code, so we provide both
+    # 'rssd' and 'id_rssd' to reduce need to refactor existing user code
+    normalized_ret = [
+        {
+            "rssd": str(x["ID_RSSD"]),  # Institution RSSD ID
+            "id_rssd": str(x["ID_RSSD"]),  # Institution RSSD ID (same data)
+            "datetime": x["DateTime"],
+        }
+        for x in ret
+    ]
 
     # all submission times are in eastern time, so if we are converting to a python datetime,
     # the datetime object needs to be timezone aware, so that the user may convert the time to their local timezone
@@ -1065,6 +1088,7 @@ def collect_filers_submission_date_time(
         normalized_ret = [
             {
                 "rssd": x["rssd"],
+                "id_rssd": x["id_rssd"],  # Keep both field names
                 "datetime": datetime.strptime(
                     x["datetime"], "%m/%d/%Y %H:%M:%S %p"
                 ).replace(tzinfo=origin_tz),
@@ -1112,7 +1136,21 @@ def collect_filers_on_reporting_period(
         creds: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
         reporting_period (str or datetime): The reporting period to use for the request.
     Returns:
-        list or pd.DataFrame: List of dicts or pandas DataFrame containing the rssd id of the filer, and the following fields: "id_rssd", "fdic_cert_number", "occ_chart_number", "ots_dock_number", "primary_aba_rout_number", "name", "state", "city", "address", "filing_type", "has_filed_for_reporting_period"
+        list or pd.DataFrame: List of dicts or pandas DataFrame containing the following fields:
+        - "rssd"/"id_rssd": Institution RSSD ID (both field names provided for compatibility)
+        - "fdic_cert_number": FDIC certificate number
+        - "occ_chart_number": OCC charter number
+        - "ots_dock_number": OTS docket number
+        - "primary_aba_rout_number": Primary ABA routing number
+        - "name": Institution name
+        - "state": State
+        - "city": City
+        - "address": Street address
+        - "filing_type": Filing type
+        - "has_filed_for_reporting_period": Whether institution has filed for the period
+
+        NOTE: Property names were inconsistent in earlier code, so both 'rssd' and 'id_rssd'
+        are provided with identical data to reduce need to refactor existing user code.
     """
 
     # conduct standard validation on function input arguments
