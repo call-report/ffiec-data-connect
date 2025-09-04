@@ -2,8 +2,8 @@ Version History
 ===============
 
 Version 2.0.0rc5 - Release Candidate 5
--------------------------------------
-Date: 2025-09-XX
+=======================================
+Date: 2025-09-04
 
 **🎯 Latest Release Candidate**
 
@@ -12,12 +12,12 @@ Enhanced documentation, comprehensive test coverage, and final API refinements b
 **🔄 Recent Updates**
 
 * **Comprehensive Test Suite**: Added 30+ new tests for OAuth2, force_null_types, and protocol adapters
-* **Enhanced Documentation**: 
+* **Enhanced Documentation**:
   - Microsoft Entra ID migration instructions and troubleshooting
   - REST API reference with complete OpenAPI specification
   - Comprehensive troubleshooting guide for common issues
   - Updated Python 3.10+ requirement throughout documentation
-* **API Refinements**: 
+* **API Refinements**:
   - Added ``force_null_types`` parameter to override default null handling
   - Improved JWT token validation with proper length and format checking
   - Enhanced error messages and validation feedback
@@ -26,13 +26,13 @@ Enhanced documentation, comprehensive test coverage, and final API refinements b
   - Added reverse-engineered OpenAPI schema integration
   - Fixed GitHub URLs to use call-report organization
 
-Version 1.0.0 - Production Ready
---------------------------------
-Date: 2025-10-XX (Upcoming)
+Version 2.0.0 - (Upcoming)
+-------------------------------------------
+Date: TBD
 
-**🎉 Major Release - Enterprise Grade**
+**🎉 Stable Release Based on 2.0.0rc5**
 
-This is a transformative release that elevates FFIEC Data Connect to enterprise-grade with comprehensive security, performance, and reliability improvements.
+The upcoming stable release will be based on the comprehensive features developed in 2.0.0rc5, providing enterprise-grade reliability and performance.
 
 **🚀 New Features**
 
@@ -44,7 +44,7 @@ This is a transformative release that elevates FFIEC Data Connect to enterprise-
 * **Memory Management**: Proper cleanup, context managers, SOAP client caching
 * **Thread Safety**: Race condition resolution and concurrent access support
 * **Null Type Control**: New ``force_null_types`` parameter for pandas/numpy null handling
-* **New Collection Methods**: 
+* **New Collection Methods**:
   - ``collect_filers_on_reporting_period()``
   - ``collect_filers_since_date()``
   - ``collect_filers_submission_date_time()``

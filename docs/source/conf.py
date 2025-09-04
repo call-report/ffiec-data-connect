@@ -34,6 +34,7 @@ release = '2.0.0rc5'
 extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
     'sphinxcontrib.openapi',
 ]
 

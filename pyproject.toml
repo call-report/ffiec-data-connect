@@ -82,6 +82,8 @@ docs = [
     "sphinx-autodoc-typehints>=1.19.0",
     "myst-parser>=0.18.0",
     "sphinxcontrib-openapi>=0.7.0",
+    "doc8>=1.1.0",  # RST linting
+    "rstcheck[sphinx]>=6.0.0",  # RST syntax checking
 ]
 notebook = [
     "jupyter>=1.0.0",

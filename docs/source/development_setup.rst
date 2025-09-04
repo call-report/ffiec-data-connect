@@ -24,7 +24,7 @@ First, clone the repository from GitHub:
    # Clone the repository
    git clone https://github.com/call-report/ffiec-data-connect.git
    cd ffiec-data-connect
-   
+
    # Or if you have a fork:
    git clone https://github.com/YOUR_USERNAME/ffiec-data-connect.git
    cd ffiec-data-connect
@@ -41,11 +41,11 @@ Using venv (Built-in)
 
    # Create virtual environment
    python -m venv venv
-   
+
    # Activate it
    # On macOS/Linux:
    source venv/bin/activate
-   
+
    # On Windows:
    venv\Scripts\activate
 
@@ -56,7 +56,7 @@ Using conda
 
    # Create conda environment
    conda create -n ffiec-dev python=3.10
-   
+
    # Activate it
    conda activate ffiec-dev
 
@@ -72,7 +72,7 @@ Install the package in "editable" or "development" mode. This allows you to make
 
    # Install in editable mode with development dependencies
    pip install -e ".[dev]"
-   
+
    # If the above doesn't work, try:
    pip install -e .
    pip install -r requirements-dev.txt
@@ -86,10 +86,10 @@ If you only need the core dependencies without development tools:
 
    # Install core dependencies
    pip install -r requirements.txt
-   
+
    # Or manually install required packages:
    pip install pandas numpy requests zeep defusedxml
-   
+
    # Optional: Install polars for polars output support
    pip install polars
 
@@ -98,11 +98,13 @@ Verify Installation
 
 Test that the development installation is working:
 
-.. code-block:: python
+.. code-block:: bash
 
    # Start Python interpreter
    python
-   
+
+.. code-block:: python
+
    >>> import ffiec_data_connect
    >>> print(ffiec_data_connect.__version__)
    >>> from ffiec_data_connect import credentials, methods
@@ -120,7 +122,7 @@ When the library is installed in editable mode, you can use it as if it were ins
 
    # Your script.py
    from ffiec_data_connect import methods, credentials, ffiec_connection
-   
+
    # Use the library normally
    creds = credentials.WebserviceCredentials(username="...", password="...")
    # ... rest of your code
@@ -135,10 +137,10 @@ If you prefer not to install in editable mode, you can add the source directory 
    # Add at the top of your script
    import sys
    import os
-   
+
    # Add the src directory to Python path
    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'path/to/ffiec-data-connect/src'))
-   
+
    # Now import normally
    import ffiec_data_connect
 
@@ -152,7 +154,7 @@ For Jupyter notebook development:
    # In the first cell
    import sys
    sys.path.append('/path/to/ffiec-data-connect/src')
-   
+
    # Now you can import and use the library
    from ffiec_data_connect import methods, credentials
 
@@ -168,10 +170,10 @@ Basic Test Run
 
    # Run all tests
    python -m pytest tests/
-   
+
    # Run specific test file
    python -m pytest tests/unit/test_methods.py
-   
+
    # Run with verbose output
    python -m pytest tests/ -v
 
@@ -182,7 +184,7 @@ Test Coverage
 
    # Run tests with coverage report
    python -m pytest tests/ --cov=src/ffiec_data_connect --cov-report=html
-   
+
    # View coverage report
    open htmlcov/index.html  # macOS
    # or
@@ -195,10 +197,10 @@ Specific Test Patterns
 
    # Run only unit tests
    python -m pytest tests/unit/
-   
+
    # Run only integration tests
    python -m pytest tests/integration/
-   
+
    # Run tests matching a pattern
    python -m pytest tests/ -k "test_collect_data"
 
@@ -214,10 +216,10 @@ The project uses ruff for linting and formatting:
 
    # Run linting
    ruff check src/
-   
+
    # Auto-fix linting issues
    ruff check src/ --fix
-   
+
    # Format code
    ruff format src/
 
@@ -240,12 +242,12 @@ To build and test documentation locally:
 
    # Install documentation dependencies
    pip install sphinx sphinx-rtd-theme
-   
+
    # Build HTML documentation
    cd docs
    make clean
    make html
-   
+
    # View documentation
    open build/html/index.html  # macOS
    # or
@@ -271,7 +273,7 @@ Development Workflow
 
       # Run relevant tests
       python -m pytest tests/unit/test_methods.py
-      
+
       # Check linting
       ruff check src/
 
@@ -281,7 +283,7 @@ Development Workflow
 
       # test_script.py
       from ffiec_data_connect import methods, credentials
-      
+
       # Test your changes
       # ...
 
@@ -312,7 +314,7 @@ For debugging, you can add breakpoints in the source code:
 
    # In any source file
    import pdb; pdb.set_trace()  # Add breakpoint
-   
+
    # Or use the built-in breakpoint (Python 3.7+)
    breakpoint()
 
@@ -326,7 +328,7 @@ Enable debug logging to see detailed execution:
 .. code-block:: python
 
    import logging
-   
+
    # Enable debug logging for the library
    logging.basicConfig(level=logging.DEBUG)
    logger = logging.getLogger('ffiec_data_connect')
@@ -371,7 +373,7 @@ For development, you may need to set environment variables:
    export FFIEC_USERNAME="your_username"
    export FFIEC_PASSWORD="your_password"
    export FFIEC_TOKEN="your_token"  # For REST API
-   
+
    # Or use a .env file with python-dotenv
    pip install python-dotenv
 
@@ -381,9 +383,9 @@ Then in your code:
 
    from dotenv import load_dotenv
    import os
-   
+
    load_dotenv()
-   
+
    username = os.getenv('FFIEC_USERNAME')
    password = os.getenv('FFIEC_PASSWORD')
 

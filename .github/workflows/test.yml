@@ -283,11 +283,75 @@ jobs:
     #     pytest -v tests/integration/ --tb=short --durations=10
     #     echo "::endgroup::"
 
+  docs-build:
+    name: Documentation Build Test
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.docs-only != 'true' || contains(github.event.head_commit.message, '[docs]')
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install documentation dependencies
+      run: |
+        echo "::group::Installing documentation dependencies"
+        python -m pip install --upgrade pip
+        pip install -e ".[docs]"
+        echo "::endgroup::"
+        
+    # - name: Lint RST files
+    #   run: |
+    #     echo "::group::Linting RST documentation files"
+    #     make docs-lint
+    #     echo "::endgroup::"
+        
+    - name: Test documentation build
+      run: |
+        echo "::group::Testing documentation build"
+        python -m pytest tests/unit/test_documentation_build.py -v --tb=short
+        echo "::endgroup::"
+        
+    - name: Build documentation
+      run: |
+        echo "::group::Building HTML documentation"
+        make docs
+        echo "Documentation built successfully"
+        
+        # Check that key files exist
+        if [ ! -f "docs/build/html/index.html" ]; then
+          echo "❌ index.html not found"
+          exit 1
+        fi
+        
+        if [ ! -f "docs/build/html/account_setup.html" ]; then
+          echo "❌ account_setup.html not found"
+          exit 1
+        fi
+        
+        echo "✅ Documentation build completed successfully"
+        echo "::endgroup::"
+        
+    - name: Upload documentation artifacts
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: documentation
+        path: docs/build/html/
+        retention-days: 7
+
   # Summary job to check overall status
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [changes, build-and-validate, test-core, test-extended]
+    needs: [changes, build-and-validate, test-core, test-extended, docs-build]
     if: always()
     
     steps:
@@ -324,10 +388,21 @@ jobs:
           echo "❌ **Extended Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
         fi
         
-        # Fail if any required job failed
+        echo "### Documentation Build" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.docs-build.result }}" == "success" ]]; then
+          echo "✅ **Documentation Build**: PASSED" >> $GITHUB_STEP_SUMMARY
+        elif [[ "${{ needs.docs-build.result }}" == "skipped" ]]; then
+          echo "⏭️ **Documentation Build**: SKIPPED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Documentation Build**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Fail if any required job failed (docs-build is optional for now)
         if [[ "${{ needs.build-and-validate.result }}" != "success" || "${{ needs.test-core.result }}" != "success" ]]; then
           echo "❌ **Overall Status**: FAILED" >> $GITHUB_STEP_SUMMARY
           exit 1
+        elif [[ "${{ needs.docs-build.result }}" == "failure" ]]; then
+          echo "⚠️ **Overall Status**: PASSED (Documentation build failed)" >> $GITHUB_STEP_SUMMARY
         else
           echo "✅ **Overall Status**: PASSED" >> $GITHUB_STEP_SUMMARY
         fi
