@@ -6,13 +6,11 @@ This module provides common test fixtures and configuration for the test suite.
 
 import os
 import warnings
-from typing import Generator
 from unittest.mock import Mock, patch
 
 import pytest
 
 # Import for fixture creation
-import ffiec_data_connect
 from ffiec_data_connect import FFIECConnection, WebserviceCredentials
 from ffiec_data_connect.config import Config
 

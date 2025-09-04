@@ -26,7 +26,7 @@ class TestDocumentationBuild:
         # Find the docs directory
         repo_root = Path(__file__).parent.parent.parent
         docs_source = repo_root / "docs" / "source"
-        
+
         if not docs_source.exists():
             pytest.skip("Documentation source directory not found")
 
@@ -34,7 +34,7 @@ class TestDocumentationBuild:
         with tempfile.TemporaryDirectory() as temp_dir:
             build_dir = Path(temp_dir) / "build"
             doctrees_dir = Path(temp_dir) / "doctrees"
-            
+
             # Run sphinx-build
             cmd = [
                 "python", "-m", "sphinx",
@@ -45,7 +45,7 @@ class TestDocumentationBuild:
                 str(docs_source),  # Source directory
                 str(build_dir)  # Build directory
             ]
-            
+
             try:
                 result = subprocess.run(
                     cmd,
@@ -58,16 +58,16 @@ class TestDocumentationBuild:
                 pytest.fail("Documentation build timed out after 5 minutes")
             except FileNotFoundError:
                 pytest.skip("sphinx-build command not found")
-            
+
             # Check build result
             if result.returncode != 0:
                 error_msg = f"Documentation build failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
                 pytest.fail(error_msg)
-            
+
             # Verify key files were created
             index_file = build_dir / "index.html"
             assert index_file.exists(), "index.html was not created"
-            
+
             # Check for expected sections
             expected_files = [
                 "account_setup.html",
@@ -76,12 +76,12 @@ class TestDocumentationBuild:
                 "data_type_handling.html",
                 "development_setup.html"
             ]
-            
+
             missing_files = []
             for filename in expected_files:
                 if not (build_dir / filename).exists():
                     missing_files.append(filename)
-            
+
             if missing_files:
                 pytest.fail(f"Expected documentation files not created: {missing_files}")
 
@@ -96,7 +96,7 @@ class TestDocumentationBuild:
         # Find the docs directory
         repo_root = Path(__file__).parent.parent.parent
         docs_source = repo_root / "docs" / "source"
-        
+
         if not docs_source.exists():
             pytest.skip("Documentation source directory not found")
 
@@ -104,7 +104,7 @@ class TestDocumentationBuild:
         with tempfile.TemporaryDirectory() as temp_dir:
             build_dir = Path(temp_dir) / "linkcheck"
             doctrees_dir = Path(temp_dir) / "doctrees"
-            
+
             # Run sphinx-build with linkcheck
             cmd = [
                 "python", "-m", "sphinx",
@@ -114,7 +114,7 @@ class TestDocumentationBuild:
                 str(docs_source),  # Source directory
                 str(build_dir)  # Build directory
             ]
-            
+
             try:
                 result = subprocess.run(
                     cmd,
@@ -127,7 +127,7 @@ class TestDocumentationBuild:
                 pytest.skip("Link checking timed out after 5 minutes")
             except FileNotFoundError:
                 pytest.skip("sphinx-build command not found")
-            
+
             # Link checking can have warnings without failing the build
             # We'll check for critical issues but allow minor link problems
             if result.returncode != 0:
@@ -141,12 +141,12 @@ class TestDocumentationBuild:
         """Test that all RST files have valid syntax."""
         repo_root = Path(__file__).parent.parent.parent
         docs_source = repo_root / "docs" / "source"
-        
+
         if not docs_source.exists():
             pytest.skip("Documentation source directory not found")
 
         rst_files = list(docs_source.glob("*.rst"))
-        
+
         if not rst_files:
             pytest.skip("No RST files found to validate")
 
@@ -162,10 +162,10 @@ class TestDocumentationBuild:
             try:
                 with open(rst_file, 'r', encoding='utf-8') as f:
                     content = f.read()
-                
+
                 # Parse RST content
                 publish_doctree(content)
-                
+
             except SystemMessage as e:
                 if e.level >= 3:  # Error level (3) or higher
                     errors.append(f"{rst_file.name}: {e}")
@@ -173,13 +173,13 @@ class TestDocumentationBuild:
                 errors.append(f"{rst_file.name}: {e}")
 
         if errors:
-            pytest.fail(f"RST syntax errors found:\n" + "\n".join(errors))
+            pytest.fail("RST syntax errors found:\n" + "\n".join(errors))
 
     def test_documentation_dependencies(self):
         """Test that all documentation dependencies are correctly specified."""
         repo_root = Path(__file__).parent.parent.parent
         pyproject_toml = repo_root / "pyproject.toml"
-        
+
         if not pyproject_toml.exists():
             pytest.skip("pyproject.toml not found")
 
@@ -207,18 +207,18 @@ class TestDocumentationBuild:
         """Test that Sphinx configuration is valid."""
         repo_root = Path(__file__).parent.parent.parent
         conf_py = repo_root / "docs" / "source" / "conf.py"
-        
+
         if not conf_py.exists():
             pytest.skip("docs/source/conf.py not found")
 
         # Try to import and validate conf.py
         import sys
         import importlib.util
-        
+
         spec = importlib.util.spec_from_file_location("conf", str(conf_py))
         if spec is None or spec.loader is None:
             pytest.fail("Could not load conf.py")
-            
+
         try:
             conf_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(conf_module)
@@ -228,7 +228,7 @@ class TestDocumentationBuild:
         # Check for essential configuration
         essential_configs = ['extensions', 'html_theme', 'project']
         missing_configs = []
-        
+
         for config in essential_configs:
             if not hasattr(conf_module, config):
                 missing_configs.append(config)
@@ -240,11 +240,11 @@ class TestDocumentationBuild:
         if hasattr(conf_module, 'extensions'):
             required_extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
             missing_extensions = []
-            
+
             for ext in required_extensions:
                 if ext not in conf_module.extensions:
                     missing_extensions.append(ext)
-                    
+
             if missing_extensions:
                 pytest.fail(f"Missing required Sphinx extensions: {missing_extensions}")
 
@@ -252,7 +252,7 @@ class TestDocumentationBuild:
         """Test RST files with doc8 linter."""
         repo_root = Path(__file__).parent.parent.parent
         docs_source = repo_root / "docs" / "source"
-        
+
         if not docs_source.exists():
             pytest.skip("Documentation source directory not found")
 
@@ -268,7 +268,7 @@ class TestDocumentationBuild:
             "--max-line-length", "100",
             "--ignore-path", str(docs_source / "_build")  # Ignore build directory
         ]
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -281,7 +281,7 @@ class TestDocumentationBuild:
             pytest.skip("doc8 linting timed out")
         except FileNotFoundError:
             pytest.skip("doc8 command not found")
-        
+
         if result.returncode != 0:
             # For now, just skip instead of failing - RST files need cleanup
             pytest.skip(f"doc8 found RST formatting issues (skipping): {result.returncode} errors found")
@@ -290,7 +290,7 @@ class TestDocumentationBuild:
         """Test RST files with rstcheck syntax checker."""
         repo_root = Path(__file__).parent.parent.parent
         docs_source = repo_root / "docs" / "source"
-        
+
         if not docs_source.exists():
             pytest.skip("Documentation source directory not found")
 
@@ -306,7 +306,7 @@ class TestDocumentationBuild:
             "--ignore-directives", "automodule,autoclass,autofunction",  # Ignore Sphinx directives
             "--ignore-roles", "doc,ref,class,func,meth,attr"  # Ignore Sphinx roles
         ]
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -319,17 +319,19 @@ class TestDocumentationBuild:
             pytest.skip("rstcheck syntax checking timed out")
         except FileNotFoundError:
             pytest.skip("rstcheck command not found")
-        
+
         if result.returncode != 0:
             # Filter out known Sphinx-specific issues that rstcheck doesn't understand
             stderr_lines = result.stderr.split('\n')
-            real_errors = [line for line in stderr_lines 
-                          if line and not any(ignore in line.lower() for ignore in [
-                              'unknown directive type',
-                              'unknown interpreted text role', 
-                              'toctree'
-                          ])]
-            
+            real_errors = [
+                line for line in stderr_lines 
+                if line and not any(ignore in line.lower() for ignore in [
+                    'unknown directive type',
+                    'unknown interpreted text role', 
+                    'toctree'
+                ])
+            ]
+
             if real_errors:
                 # For now, just skip instead of failing - RST files need cleanup  
                 pytest.skip(f"rstcheck found RST syntax issues (skipping): {len(real_errors)} errors found")
