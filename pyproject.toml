@@ -85,6 +85,7 @@ docs = [
     "doc8>=1.1.0",  # RST linting
     "rstcheck[sphinx]>=6.0.0",  # RST syntax checking
     "pytest>=7.0.0",  # Required for documentation build tests
+    "pytest-asyncio>=0.21.0",  # Required by conftest.py pytest_plugins
 ]
 notebook = [
     "jupyter>=1.0.0",
