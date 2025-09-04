@@ -215,7 +215,7 @@ class TestDataNormalizer:
 
             # Should log warning
             warnings = [record for record in log_context.records
-                         if record.levelname == "WARNING"]
+                        if record.levelname == "WARNING"]
             assert len(warnings) > 0
             assert "UnknownEndpoint" in warnings[0].message
 
@@ -280,7 +280,7 @@ class TestDataNormalizer:
 
             # Should log validation warnings
             warnings = [record for record in log_context.records
-                         if record.levelname == "WARNING"]
+                        if record.levelname == "WARNING"]
             assert len(warnings) > 0
 
     def test_normalization_statistics(self):
