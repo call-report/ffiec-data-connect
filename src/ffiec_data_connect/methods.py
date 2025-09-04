@@ -662,7 +662,9 @@ def collect_data(
                     polars_row = {
                         "mdrm": row["mdrm"],
                         "rssd": row["rssd"],
-                        "id_rssd": row.get("id_rssd", row["rssd"]),  # Dual field support with fallback
+                        "id_rssd": row.get(
+                            "id_rssd", row["rssd"]
+                        ),  # Dual field support with fallback
                         "quarter": row["quarter"],
                         "data_type": row["data_type"],
                         "int_data": (
@@ -725,9 +727,9 @@ def collect_data(
     # Session should not be None after validation for SOAP
     assert session is not None, "Session should not be None after validation for SOAP"
     # This SOAP path is only for WebserviceCredentials after OAuth2 routing
-    assert isinstance(creds, credentials.WebserviceCredentials), (
-        "SOAP path requires WebserviceCredentials"
-    )
+    assert isinstance(
+        creds, credentials.WebserviceCredentials
+    ), "SOAP path requires WebserviceCredentials"
     client = _client_factory(session, creds)
 
     reporting_period_ffiec = _return_ffiec_reporting_date(reporting_period)
@@ -863,7 +865,9 @@ def collect_data(
             polars_row = {
                 "mdrm": row["mdrm"],
                 "rssd": row["rssd"],
-                "id_rssd": row.get("id_rssd", row["rssd"]),  # Dual field support with fallback
+                "id_rssd": row.get(
+                    "id_rssd", row["rssd"]
+                ),  # Dual field support with fallback
                 "quarter": row["quarter"],
                 "data_type": row["data_type"],
                 "int_data": None if pd.isna(row["int_data"]) else int(row["int_data"]),
