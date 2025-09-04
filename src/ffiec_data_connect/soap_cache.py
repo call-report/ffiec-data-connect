@@ -44,7 +44,10 @@ class SOAPClientConfig:
             wsdl_url = constants.WebserviceConstants.base_url
 
         # Hash password for cache key (don't store plaintext)
-        password_hash = hashlib.sha256(credentials.password.encode()).hexdigest()
+        # Note: This is for cache key generation, not password storage
+        password_hash = hashlib.sha256(
+            credentials.password.encode(), usedforsecurity=False
+        ).hexdigest()
 
         # Extract proxy configuration if available
         proxy_config = None
