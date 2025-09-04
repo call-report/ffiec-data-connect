@@ -1,5 +1,5 @@
 FFIEC Webservice Data Connector
-==================
+================================
 
 .. toctree::
    :maxdepth: 4

@@ -2,7 +2,6 @@ CHANGELOG.md
 LICENSE
 MANIFEST.in
 README.md
-ffiec_data_connect_demo.ipynb
 pyproject.toml
 docs/Makefile
 docs/data-type-handling.md
@@ -13,11 +12,15 @@ docs/build/html/_static/minus.png
 docs/build/html/_static/plus.png
 docs/source/account_setup.rst
 docs/source/conf.py
+docs/source/data_type_handling.rst
+docs/source/development_setup.rst
 docs/source/examples.rst
 docs/source/ffiec_data_connect.rst
 docs/source/index.rst
 docs/source/licensedisclaimer.rst
 docs/source/modules.rst
+docs/source/rest_api_reference.rst
+docs/source/troubleshooting.rst
 docs/source/versionhistory.rst
 docs/source/images/create_account.png
 src/ffiec_data_connect/__init__.py
@@ -25,10 +28,13 @@ src/ffiec_data_connect/async_compatible.py
 src/ffiec_data_connect/config.py
 src/ffiec_data_connect/constants.py
 src/ffiec_data_connect/credentials.py
+src/ffiec_data_connect/data_normalizer.py
 src/ffiec_data_connect/datahelpers.py
 src/ffiec_data_connect/exceptions.py
 src/ffiec_data_connect/ffiec_connection.py
 src/ffiec_data_connect/methods.py
+src/ffiec_data_connect/methods_enhanced.py
+src/ffiec_data_connect/protocol_adapter.py
 src/ffiec_data_connect/py.typed
 src/ffiec_data_connect/soap_cache.py
 src/ffiec_data_connect/xbrl_processor.py
@@ -37,3 +43,5 @@ src/ffiec_data_connect.egg-info/SOURCES.txt
 src/ffiec_data_connect.egg-info/dependency_links.txt
 src/ffiec_data_connect.egg-info/requires.txt
 src/ffiec_data_connect.egg-info/top_level.txt
+src/ffiec_data_connect/models/__init__.py
+src/ffiec_data_connect/models/api_models.py

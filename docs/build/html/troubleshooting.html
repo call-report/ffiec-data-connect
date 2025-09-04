@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Version History" href="versionhistory.html" />
-    <link rel="prev" title="Example Code" href="examples.html" /> 
+    <link rel="prev" title="Examples &amp; Interactive Tutorials" href="examples.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,7 +49,14 @@
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Troubleshooting</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#authentication-issues">Authentication Issues</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#jwt-token-problems">JWT Token Problems</a></li>
@@ -95,6 +102,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
 </ul>
 
@@ -304,7 +312,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span><span class="p">,</span> <span class="n">collect_data</span>
 
 <span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">token_expires</span><span class="o">=...</span><span class="p">)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>  <span class="c1"># session=None for REST</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+                    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">)</span>  <span class="c1"># session=None for REST</span>
 
 <span class="c1"># ❌ SOAP API (Deprecated)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">WebserviceCredentials</span><span class="p">,</span> <span class="n">FFIECConnection</span>
@@ -457,7 +466,7 @@
 
 <span class="k">async</span> <span class="k">with</span> <span class="n">AsyncCompatibleClient</span><span class="p">(</span><span class="n">creds</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
     <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">client</span><span class="o">.</span><span class="n">collect_data_async</span><span class="p">(</span><span class="n">rssd_id</span><span class="o">=</span><span class="n">rssd</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">collect_data_async</span><span class="p">(</span><span class="n">rssd_id</span><span class="o">=</span><span class="n">rssd</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">rssd</span> <span class="ow">in</span> <span class="n">rssd_list</span>
     <span class="p">]</span>
     <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
@@ -514,7 +523,8 @@
 
 <span class="n">soap_creds</span> <span class="o">=</span> <span class="n">WebserviceCredentials</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;password&quot;</span><span class="p">)</span>
 <span class="n">soap_session</span> <span class="o">=</span> <span class="n">FFIECConnection</span><span class="p">()</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="n">soap_session</span><span class="p">,</span> <span class="n">soap_creds</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;12/31/2023&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span><span class="n">soap_session</span><span class="p">,</span> <span class="n">soap_creds</span><span class="p">,</span> <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;12/31/2023&quot;</span><span class="p">,</span>
+                    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">)</span>
 
 <span class="c1"># After (REST)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
@@ -613,7 +623,7 @@
 <li><p><strong>GitHub Repository</strong>: <a class="reference external" href="https://github.com/call-report/ffiec-data-connect">https://github.com/call-report/ffiec-data-connect</a></p></li>
 <li><p><strong>REST API Reference</strong>: <a class="reference internal" href="rest_api_reference.html"><span class="doc">REST API Reference</span></a></p></li>
 <li><p><strong>Account Setup</strong>: <a class="reference internal" href="account_setup.html"><span class="doc">FFIEC Account Setup Instructions</span></a></p></li>
-<li><p><strong>Examples</strong>: <a class="reference internal" href="examples.html"><span class="doc">Example Code</span></a></p></li>
+<li><p><strong>Examples</strong>: <a class="reference internal" href="examples.html"><span class="doc">Examples &amp; Interactive Tutorials</span></a></p></li>
 </ul>
 </section>
 </section>
@@ -622,7 +632,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="examples.html" class="btn btn-neutral float-left" title="Example Code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-left" title="Examples &amp; Interactive Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="versionhistory.html" class="btn btn-neutral float-right" title="Version History" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

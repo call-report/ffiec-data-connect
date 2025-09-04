@@ -178,6 +178,13 @@ class TestDocumentationBuild:
         except ImportError:
             pytest.skip("docutils not available for RST validation")
 
+        # Initialize variables to ensure they're defined
+        publish_doctree = locals().get("publish_doctree")
+        SystemMessage = locals().get("SystemMessage")
+
+        if publish_doctree is None or SystemMessage is None:
+            pytest.skip("docutils functions not properly imported")
+
         errors = []
         for rst_file in rst_files:
             try:

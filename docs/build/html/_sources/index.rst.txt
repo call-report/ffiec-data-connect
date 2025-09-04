@@ -28,6 +28,26 @@ Data returned from the APIs may be returned as:
 * Pandas DataFrames or Series
 * Polars DataFrames (with direct XBRL conversion for maximum precision)
 
+Getting Started with Interactive Tutorials
+===========================================
+
+📓 **Jupyter Notebook Demos**
+
+The best way to learn the library is through our comprehensive Jupyter notebook tutorials:
+
+* **``ffiec_data_connect_rest_demo.ipynb``** - Complete REST API walkthrough with executable examples
+* **``ffiec_data_connect_soap_demo.ipynb``** - Legacy SOAP API implementation and migration guidance
+
+These notebooks include:
+
+* Step-by-step setup instructions with real credentials
+* Executable code examples using actual banking data  
+* Troubleshooting guides for common issues
+* Performance optimization techniques
+* Migration strategies from SOAP to REST
+
+The notebooks are included with the package installation and provide hands-on experience with both APIs.
+
 .. toctree::
    :maxdepth: 3
    :caption: Contents:

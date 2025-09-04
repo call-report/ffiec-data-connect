@@ -14,23 +14,23 @@ JWT Token Problems
 
 .. error::
    **Symptom**: Getting authentication errors despite having valid credentials
-   
+
    **Common Causes**:
-   
+
    1. **Using website password instead of JWT token**
-      
+
       ❌ **Wrong**: Using your FFIEC account password
-      
+
       ✅ **Correct**: Using the JWT token generated from your PWS account
-      
+
    2. **Token expiration**
-      
+
       - JWT tokens expire after **90 days**
       - Tokens are considered expired if they expire within **24 hours** (warning threshold)
       - Check your token expiration date in the PWS portal
-      
+
    3. **Invalid token format**
-      
+
       - Valid JWT tokens **must start with** ``ey``
       - Valid JWT tokens **must end with** ``.``
       - Minimum length: 20 characters
@@ -42,14 +42,14 @@ JWT Token Problems
 
    from ffiec_data_connect import OAuth2Credentials
    from datetime import datetime, timedelta
-   
+
    # Check your token format and expiration
    creds = OAuth2Credentials(
        username="your_username",
        bearer_token="eyJhbGci...",  # JWT token, NOT password!
        token_expires=datetime.now() + timedelta(days=90)
    )
-   
+
    # Check if token is expired
    if creds.is_expired:
        print("Token is expired or expires within 24 hours - generate a new one!")
@@ -61,9 +61,9 @@ Header Name Issues
 
 .. error::
    **Symptom**: REST API returns authentication errors despite valid token
-   
+
    **Common Causes**:
-   
+
    1. **Wrong header name**: Using ``Authorization`` instead of ``Authentication``
    2. **Case sensitivity**: Using ``userid`` instead of ``UserID``
 
@@ -75,7 +75,7 @@ The FFIEC REST API uses non-standard header names:
 
    * - Header Name
      - Purpose
-   * - ``UserID`` 
+   * - ``UserID``
      - Your FFIEC username (note capital 'ID')
    * - ``Authentication``
      - Bearer token (NOT ``Authorization``)
@@ -98,9 +98,9 @@ Microsoft Callback Link Problems
 
 .. error::
    **Symptom**: After completing Microsoft verification, you see a blank page or error
-   
+
    **Solution**: Manually navigate to the login page:
-   
+
    https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx
 
 This is a known issue with the Microsoft Entra ID callback process.
@@ -112,9 +112,9 @@ Migration Failures
 
 .. error::
    **Symptom**: Cannot complete account migration from invitation email
-   
+
    **Solutions**:
-   
+
    1. **Try again**: Some migrations fail on first attempt
    2. **Clear browser cache** and try the invitation link again
    3. **Create new account**: If migration continues to fail, create a new account instead
@@ -170,13 +170,14 @@ SOAP vs REST Confusion
 
    # ✅ REST API (Recommended)
    from ffiec_data_connect import OAuth2Credentials, collect_data
-   
+
    creds = OAuth2Credentials(username="...", bearer_token="...", token_expires=...)
-   data = collect_data(session=None, creds=creds, ...)  # session=None for REST
+   data = collect_data(session=None, creds=creds, rssd_id="...",
+                       reporting_period="...", series="call")  # session=None for REST
 
    # ❌ SOAP API (Deprecated)
    from ffiec_data_connect import WebserviceCredentials, FFIECConnection
-   
+
    creds = WebserviceCredentials(username="...", password="...")
    session = FFIECConnection()
    data = collect_data(session=session, creds=creds, ...)
@@ -191,9 +192,9 @@ Integer Display with Decimals
 
 .. error::
    **Symptom**: Integer values display with decimal points (e.g., ``100.0`` instead of ``100``)
-   
+
    **Cause**: Default null handling uses ``np.nan`` which converts integers to floats
-   
+
    **Solution**: Use ``force_null_types="pandas"`` parameter:
 
 .. code-block:: python
@@ -215,7 +216,7 @@ Empty Datasets
 
 .. error::
    **Common Causes**:
-   
+
    1. **Wrong reporting period**: Institution didn't file for that period
    2. **Wrong RSSD ID**: Institution ID doesn't exist or is inactive
    3. **Wrong series**: Requesting "ubpr" for institution that doesn't have UBPR data
@@ -231,11 +232,11 @@ Empty Datasets
    )
    your_rssd = "12345"
    institution_exists = any(filer['id_rssd'] == your_rssd for filer in filers)
-   
+
    # 2. Check available reporting periods
    periods = collect_reporting_periods(session=None, creds=creds, series="call")
    print(f"Available periods: {periods[:5]}")  # Show first 5
-   
+
    # 3. Try different series
    for series in ["call", "ubpr"]:
        try:
@@ -278,22 +279,22 @@ Library Error Messages
 
 .. error::
    **"Bearer token appears invalid (too short)"**
-   
+
    Token must be at least 20 characters. Ensure you copied the complete JWT token.
 
 .. error::
    **"JWT token must start with 'ey' and end with '.'"**
-   
+
    Invalid token format. Generate a new token from PWS portal.
 
 .. error::
    **"Token is expired or expires within 24 hours"**
-   
+
    Generate a new 90-day token from your PWS account.
 
 .. error::
    **"force_null_types must be 'numpy' or 'pandas'"**
-   
+
    Invalid parameter value. Use ``force_null_types="pandas"`` for better integer display.
 
 Performance Issues
@@ -315,10 +316,10 @@ Slow Response Times
 
    # For high-performance scenarios
    from ffiec_data_connect import AsyncCompatibleClient
-   
+
    async with AsyncCompatibleClient(creds) as client:
        tasks = [
-           client.collect_data_async(rssd_id=rssd, ...)
+           client.collect_data_async(rssd_id=rssd, reporting_period="...", series="call")
            for rssd in rssd_list
        ]
        results = await asyncio.gather(*tasks)
@@ -363,14 +364,15 @@ SOAP to REST Migration
 
    # Before (SOAP)
    from ffiec_data_connect import WebserviceCredentials, FFIECConnection
-   
+
    soap_creds = WebserviceCredentials("user", "password")
    soap_session = FFIECConnection()
-   data = collect_data(soap_session, soap_creds, reporting_period="12/31/2023", ...)
-   
+   data = collect_data(soap_session, soap_creds, reporting_period="12/31/2023",
+                       rssd_id="...", series="call")
+
    # After (REST)
    from ffiec_data_connect import OAuth2Credentials
-   
+
    rest_creds = OAuth2Credentials("user", "jwt_token", expires_date)
    data = collect_data(None, rest_creds, reporting_period="12/31/2023", ...)
 
@@ -379,7 +381,7 @@ Legacy Token Expiration
 
 .. warning::
    **Important**: All legacy SOAP security tokens will expire on **February 28, 2026**.
-   
+
    You must migrate to REST API before this date.
 
 Getting Help
@@ -396,7 +398,7 @@ Support Channels
 Contact the FFIEC Help Desk (cdr.help@cdr.ffiec.gov) **ONLY** for:
 
 - CDR account setup and migration issues
-- PWS portal access problems  
+- PWS portal access problems
 - JWT token generation problems
 - Questions about official data availability and reporting schedules
 - Microsoft Entra ID authentication issues
@@ -406,13 +408,13 @@ Contact the FFIEC Help Desk (cdr.help@cdr.ffiec.gov) **ONLY** for:
 For technical support with the ffiec-data-connect library:
 
 1. **GitHub Issues** (Recommended): https://github.com/call-report/ffiec-data-connect/issues
-   
+
    - Search existing issues before creating a new one
    - Include complete error messages and code examples
    - Best for bugs, feature requests, and general questions
-   
+
 2. **Direct Email**: michael@civicforge.solutions
-   
+
    - For urgent issues or private inquiries
    - Basic support provided free for all users
 
@@ -421,7 +423,7 @@ For technical support with the ffiec-data-connect library:
 For commercial entities requiring:
 
 - **Priority technical support** with guaranteed response times
-- **Custom code modifications** and feature development  
+- **Custom code modifications** and feature development
 - **Integration consulting** and architectural guidance
 - **Training and onboarding** for development teams
 - **Private deployment** and customization services
@@ -446,7 +448,7 @@ When reporting issues, include:
    print(f"Library version: {fdc.__version__}")
    print(f"Python version: {sys.version}")
    print(f"Credential type: {type(creds).__name__}")
-   
+
    # For REST credentials
    if hasattr(creds, 'is_expired'):
        print(f"Token expired: {creds.is_expired}")

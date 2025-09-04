@@ -105,9 +105,17 @@
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
 </ul>
 
@@ -222,13 +230,14 @@ pip<span class="w"> </span>install<span class="w"> </span>polars
 <section id="verify-installation">
 <h2>Verify Installation<a class="headerlink" href="#verify-installation" title="Link to this heading"></a></h2>
 <p>Test that the development installation is working:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start Python interpreter</span>
-<span class="n">python</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n">ffiec_data_connect</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">methods</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Development setup successful!&quot;</span><span class="p">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start Python interpreter</span>
+python
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">ffiec_data_connect</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ffiec_data_connect</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">methods</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Development setup successful!&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -530,7 +539,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <ul class="simple">
 <li><p><a class="reference internal" href="index.html"><span class="doc">Welcome to FFIEC Webservice Python Connector’s documentation!</span></a> - Main documentation</p></li>
 <li><p><a class="reference internal" href="data_type_handling.html"><span class="doc">Data Type Handling</span></a> - Understanding type handling</p></li>
-<li><p><a class="reference internal" href="examples.html"><span class="doc">Example Code</span></a> - Usage examples</p></li>
+<li><p><a class="reference internal" href="examples.html"><span class="doc">Examples &amp; Interactive Tutorials</span></a> - Usage examples</p></li>
 <li><p><a class="reference external" href="https://github.com/call-report/ffiec-data-connect">GitHub Repository</a></p></li>
 </ul>
 </section>

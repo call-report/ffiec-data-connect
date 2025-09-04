@@ -9,11 +9,12 @@ the FFIEC web service for testing purposes.
 import json
 import threading
 import time
-import xml.etree.ElementTree as ET
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import defusedxml.ElementTree as ET
 
 
 class FFIECMockSOAPHandler(BaseHTTPRequestHandler):

@@ -100,7 +100,7 @@ This dual approach follows the principle of "never break existing code." Users w
    # Example of the problem this solves:
    # Before (with np.nan):
    df['int_data']  # Shows: [1000.0, 2000.0, NaN, 3000.0]
-   
+
    # After (with pd.NA for REST):
    df['int_data']  # Shows: [1000, 2000, <NA>, 3000]
 
@@ -152,7 +152,7 @@ SOAP API (Original Behavior)
 
    # SOAP path - original behavior preserved
    processed_ret = xbrl_processor._process_xml(
-       data, 
+       data,
        date_format,
        use_rest_nulls=False  # Default
    )
@@ -195,7 +195,7 @@ REST API (Enhanced Behavior)
    # REST path - enhanced handling
    processed_ret = xbrl_processor._process_xml(
        data,
-       date_format, 
+       date_format,
        use_rest_nulls=True  # Explicit for REST
    )
 
@@ -538,7 +538,7 @@ Usage Examples
 
    # SOAP credentials normally use np.nan
    soap_creds = WebserviceCredentials(username="user", password="pass")
-   
+
    # Test with pandas null handling without switching to REST
    df = collect_data(
        session=connection.session,
@@ -556,7 +556,7 @@ Usage Examples
 
    # REST credentials normally use pd.NA
    rest_creds = OAuth2Credentials(username="user", token="token")
-   
+
    # Force numpy nulls for compatibility with legacy analysis code
    df = collect_data(
        session=None,

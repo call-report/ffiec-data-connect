@@ -1,5 +1,40 @@
-Example Code
-==================
+Examples & Interactive Tutorials
+==================================
+
+Interactive Jupyter Notebook Demos
+-----------------------------------
+
+📓 **Comprehensive Tutorial Notebooks**
+
+The library includes two detailed Jupyter notebook tutorials with executable examples and real data:
+
+🚀 **REST API Demo** (``ffiec_data_connect_rest_demo.ipynb``)
+    Complete walkthrough of the modern REST API including:
+    
+    * OAuth2 credential setup and JWT token management
+    * Authentication troubleshooting and token validation  
+    * All 7 REST API endpoints with real banking data examples
+    * Performance optimization and rate limiting strategies
+    * Advanced features: batch operations, error handling
+    * Migration from SOAP to REST API
+
+🔧 **SOAP API Demo** (``ffiec_data_connect_soap_demo.ipynb``)
+    Legacy SOAP API implementation covering:
+    
+    * WebserviceCredentials setup and session management
+    * Connection handling and error recovery
+    * Historical data collection examples
+    * Comparison with REST API functionality
+    * Step-by-step migration guidance
+
+💡 **Getting Started with Notebooks**
+    1. Install the library: ``pip install ffiec-data-connect``
+    2. Open the notebooks in your preferred environment (Jupyter Lab, VS Code, Colab)
+    3. Follow the step-by-step instructions with executable code cells
+    4. Experiment with your own credentials and data queries
+
+Code Examples
+=============
 
 Loading credentials and starting a connection to the FFIEC Webservice
 ---------------------------------------------------------------------

@@ -48,9 +48,17 @@
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
 </ul>
 
@@ -99,6 +107,24 @@
 <li><p>Pandas DataFrames or Series</p></li>
 <li><p>Polars DataFrames (with direct XBRL conversion for maximum precision)</p></li>
 </ul>
+</section>
+<section id="getting-started-with-interactive-tutorials">
+<h1>Getting Started with Interactive Tutorials<a class="headerlink" href="#getting-started-with-interactive-tutorials" title="Link to this heading"></a></h1>
+<p>📓 <strong>Jupyter Notebook Demos</strong></p>
+<p>The best way to learn the library is through our comprehensive Jupyter notebook tutorials:</p>
+<ul class="simple">
+<li><p><strong>``ffiec_data_connect_rest_demo.ipynb``</strong> - Complete REST API walkthrough with executable examples</p></li>
+<li><p><strong>``ffiec_data_connect_soap_demo.ipynb``</strong> - Legacy SOAP API implementation and migration guidance</p></li>
+</ul>
+<p>These notebooks include:</p>
+<ul class="simple">
+<li><p>Step-by-step setup instructions with real credentials</p></li>
+<li><p>Executable code examples using actual banking data</p></li>
+<li><p>Troubleshooting guides for common issues</p></li>
+<li><p>Performance optimization techniques</p></li>
+<li><p>Migration strategies from SOAP to REST</p></li>
+</ul>
+<p>The notebooks are included with the package installation and provide hands-on experience with both APIs.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
@@ -263,16 +289,20 @@
 <li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#interactive-jupyter-notebook-demos">Interactive Jupyter Notebook Demos</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#authentication-issues">Authentication Issues</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#jwt-token-problems">JWT Token Problems</a></li>
@@ -317,9 +347,9 @@
 <li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#additional-resources">Additional Resources</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
-<li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-1-0-0-production-ready">Version 1.0.0 - Production Ready</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-2-0-0-upcoming">Version 2.0.0 - (Upcoming)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-0-3-0">Version 0.3.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-0-2-0">Version 0.2.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-0-1-0">Version 0.1.0</a></li>
