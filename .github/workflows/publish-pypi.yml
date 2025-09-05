@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: 
-      name: pypi
-      url: https://pypi.org/p/ffiec-data-connect
+      name: ${{ github.event.inputs.target == 'Test PyPI' && 'test-pypi' || 'pypi' }}
+      url: ${{ github.event.inputs.target == 'Test PyPI' && 'https://test.pypi.org/p/ffiec-data-connect' || 'https://pypi.org/p/ffiec-data-connect' }}
     permissions:
       id-token: write  # Required for trusted publishing
     
