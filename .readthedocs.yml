@@ -12,7 +12,7 @@ build:
     post_checkout:
       - git fetch --unshallow || true  # For proper git history in PR builds
     post_build:
-      - echo "Build completed for version $(python -c 'import ffiec_data_connect; print(ffiec_data_connect.__version__)')"
+      - echo "Build completed for version $(python -c \"import ffiec_data_connect; print(ffiec_data_connect.__version__)\")"
 
 # Python configuration
 python:
