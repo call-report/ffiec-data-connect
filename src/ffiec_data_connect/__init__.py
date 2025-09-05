@@ -6,7 +6,7 @@ with support for both REST and SOAP APIs.
 """
 
 # Version
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 
 # New async-compatible client
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
