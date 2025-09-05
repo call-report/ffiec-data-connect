@@ -1,8 +1,17 @@
 name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (must match pyproject.toml)'
+        required: true
+        type: string
+      test_pypi:
+        description: 'Publish to Test PyPI first'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   publish:
@@ -37,11 +46,33 @@ jobs:
       run: |
         python -m twine check dist/*
         
+    - name: Validate version matches input
+      run: |
+        # Extract version from pyproject.toml
+        TOML_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        INPUT_VERSION="${{ github.event.inputs.version }}"
+        
+        if [ "$TOML_VERSION" != "$INPUT_VERSION" ]; then
+          echo "❌ Version mismatch!"
+          echo "pyproject.toml version: $TOML_VERSION"
+          echo "Input version: $INPUT_VERSION"
+          exit 1
+        fi
+        
+        echo "✅ Version match confirmed: $TOML_VERSION"
+        
     - name: Validate wheel dependencies
       run: |
         python dev/scripts/validate_wheel_dependencies.py dist/*.whl
         
+    - name: Publish to Test PyPI (if requested)
+      if: ${{ github.event.inputs.test_pypi == 'true' }}
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        
     - name: Publish to PyPI
+      if: ${{ github.event.inputs.test_pypi != 'true' }}
       uses: pypa/gh-action-pypi-publish@release/v1
       
   verify-install:
@@ -75,8 +106,13 @@ jobs:
         python -m pip install --upgrade pip
         # Wait a few minutes for package to be available
         sleep 180
-        # Install the specific version we just published, including pre-releases
-        pip install --pre ffiec-data-connect==${{ steps.get_version.outputs.version }}
+        
+        # Install from Test PyPI or regular PyPI based on input
+        if [ "${{ github.event.inputs.test_pypi }}" == "true" ]; then
+          pip install --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ffiec-data-connect==${{ steps.get_version.outputs.version }}
+        else
+          pip install --pre ffiec-data-connect==${{ steps.get_version.outputs.version }}
+        fi
         
     - name: Test basic import and verify version
       run: |

@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0rc5] - 2025-09-04
+## [2.0.0] - 2025-09-05
 
-### 🎉 Major Release Candidate - Public Release Ready
+### 🎉 Major Release - REST API Support & Dual Protocol Architecture
 
-This release candidate marks the transition to a public, production-ready library with comprehensive REST API support, OAuth2 authentication, and enterprise-grade features. This version represents a complete overhaul with dual protocol support and extensive documentation.
+This major release introduces comprehensive REST API support alongside the existing SOAP implementation, OAuth2 authentication, and enterprise-grade features. This version represents a complete overhaul with dual protocol support, providing a seamless migration path from the legacy SOAP API to the modern REST API.
 
 ### 🌟 Major New Features
 
@@ -241,7 +241,7 @@ This release represents a significant milestone in making FFIEC financial data a
 
 ## Previous Releases
 
-## [1.0.0] - 2025-01-XX (Superseded by 2.0.0rc5)
+## [1.0.0] - 2024-12-XX (Superseded by 2.0.0)
 
 ### Added  
 - Initial async support and thread safety improvements
@@ -276,7 +276,7 @@ This release represents a significant milestone in making FFIEC financial data a
 
 ---
 
-[2.0.0rc5]: https://github.com/call-report/ffiec-data-connect/releases/tag/v2.0.0rc5
+[2.0.0]: https://github.com/call-report/ffiec-data-connect/releases/tag/v2.0.0
 [1.0.0]: https://github.com/call-report/ffiec-data-connect/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/call-report/ffiec-data-connect/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/call-report/ffiec-data-connect/releases/tag/v0.2.0
