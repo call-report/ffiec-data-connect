@@ -7,11 +7,14 @@ on:
         description: 'Version to publish (must match pyproject.toml)'
         required: true
         type: string
-      test_pypi:
-        description: 'Publish to Test PyPI first'
-        required: false
-        type: boolean
-        default: false
+      target:
+        description: 'PyPI target'
+        required: true
+        type: choice
+        options:
+        - 'Production PyPI'
+        - 'Test PyPI'
+        default: 'Test PyPI'
 
 jobs:
   publish:
@@ -65,14 +68,14 @@ jobs:
       run: |
         python dev/scripts/validate_wheel_dependencies.py dist/*.whl
         
-    - name: Publish to Test PyPI (if requested)
-      if: ${{ github.event.inputs.test_pypi == 'true' }}
+    - name: Publish to Test PyPI
+      if: ${{ github.event.inputs.target == 'Test PyPI' }}
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy/
         
-    - name: Publish to PyPI
-      if: ${{ github.event.inputs.test_pypi != 'true' }}
+    - name: Publish to Production PyPI
+      if: ${{ github.event.inputs.target == 'Production PyPI' }}
       uses: pypa/gh-action-pypi-publish@release/v1
       
   verify-install:
@@ -107,8 +110,8 @@ jobs:
         # Wait a few minutes for package to be available
         sleep 180
         
-        # Install from Test PyPI or regular PyPI based on input
-        if [ "${{ github.event.inputs.test_pypi }}" == "true" ]; then
+        # Install from Test PyPI or Production PyPI based on target
+        if [ "${{ github.event.inputs.target }}" == "Test PyPI" ]; then
           pip install --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ffiec-data-connect==${{ steps.get_version.outputs.version }}
         else
           pip install --pre ffiec-data-connect==${{ steps.get_version.outputs.version }}
