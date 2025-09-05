@@ -1,0 +1,1019 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Type Handling &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0ee5205a"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples &amp; Interactive Tutorials" href="examples.html" />
+    <link rel="prev" title="REST API Reference" href="rest_api_reference.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data Type Handling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#protocol-layer-soap-vs-rest">Protocol Layer (SOAP vs REST)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#type-detection-in-xbrl-processing">Type Detection in XBRL Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#special-processing-rules">Special Processing Rules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#soap-vs-rest-null-handling">SOAP vs REST Null Handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#why-different-null-handling-strategies">Why Different Null Handling Strategies?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#technical-implementation">Technical Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#soap-api-original-behavior">SOAP API (Original Behavior)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rest-api-enhanced-behavior">REST API (Enhanced Behavior)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#output-format-type-mapping">Output Format Type Mapping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#list-output-output-type-list">List Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;list&quot;</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pandas-output-output-type-pandas">Pandas Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;pandas&quot;</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#polars-output-output-type-polars">Polars Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;polars&quot;</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#integer-display-examples">Integer Display Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#problem-scenario-before-fix">Problem Scenario (Before Fix)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#current-behavior-soap-path">Current Behavior - SOAP Path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#current-behavior-rest-path">Current Behavior - REST Path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#type-conversion-decision-tree">Type Conversion Decision Tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#date-format-handling">Date Format Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-patterns-and-best-practices">Common Patterns and Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-integer-data">Working with Integer Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#type-checking">Type Checking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#null-handling">Null Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#type-preservation-during-operations">Type Preservation During Operations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#migration-guide">Migration Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#from-existing-soap-integration">From Existing SOAP Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adopting-rest-api">Adopting REST API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#overriding-null-value-handling">Overriding Null Value Handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-force-null-types-parameter">The <code class="docutils literal notranslate"><span class="pre">force_null_types</span></code> Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-options">Parameter Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage-examples">Usage Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#implementation-notes">Implementation Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#best-practices">Best Practices</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#natype-error">NAType Error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#integers-display-with-0">Integers Display with .0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#type-loss-in-operations">Type Loss in Operations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api-reference">API Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#type-related-parameters">Type-Related Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#internal-type-handling">Internal Type Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#version-history">Version History</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FFIEC Data Connect</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Data Type Handling</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/data_type_handling.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-type-handling">
+<h1>Data Type Handling<a class="headerlink" href="#data-type-handling" title="Link to this heading"></a></h1>
+<p>FFIEC Data Connect provides comprehensive data type handling across multiple protocols (SOAP/REST) and output formats, ensuring data integrity and precision from the original XBRL source through to your final data structure.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The library manages data types across three key dimensions:</p>
+<section id="protocol-layer-soap-vs-rest">
+<h3>Protocol Layer (SOAP vs REST)<a class="headerlink" href="#protocol-layer-soap-vs-rest" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Protocol Comparison</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Aspect</p></th>
+<th class="head"><p>SOAP API</p></th>
+<th class="head"><p>REST API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Credentials</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">WebserviceCredentials</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">OAuth2Credentials</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Null Values</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.nan</span></code> (NumPy)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> (Pandas)</p></td>
+</tr>
+<tr class="row-even"><td><p>Compatibility</p></td>
+<td><p>100% backward compatible</p></td>
+<td><p>Enhanced integer handling</p></td>
+</tr>
+<tr class="row-odd"><td><p>Use Case</p></td>
+<td><p>Existing integrations</p></td>
+<td><p>New implementations</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="type-detection-in-xbrl-processing">
+<h2>Type Detection in XBRL Processing<a class="headerlink" href="#type-detection-in-xbrl-processing" title="Link to this heading"></a></h2>
+<p>The library automatically detects data types from XBRL unit references:</p>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">XBRL Type Mapping</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>XBRL Unit</p></th>
+<th class="head"><p>Value Example</p></th>
+<th class="head"><p>Python Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">USD</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;1500000&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.int64</span></code></p></td>
+<td><p>Monetary values (÷1000)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PURE</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;1.25&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.float64</span></code></p></td>
+<td><p>Ratios and percentages</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NON-MONETARY</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;0.85&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.float64</span></code></p></td>
+<td><p>Non-monetary numerics</p></td>
+</tr>
+<tr class="row-odd"><td><p>Boolean</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;true&quot;/&quot;false&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.bool_</span></code></p></td>
+<td><p>Boolean indicators</p></td>
+</tr>
+<tr class="row-even"><td><p>Other</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;text&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p>Text values</p></td>
+</tr>
+</tbody>
+</table>
+<section id="special-processing-rules">
+<h3>Special Processing Rules<a class="headerlink" href="#special-processing-rules" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>USD Values</strong>: Automatically divided by 1000 using integer division (<code class="docutils literal notranslate"><span class="pre">//</span></code>)</p></li>
+<li><p><strong>Type Preservation</strong>: Original types stored in <code class="docutils literal notranslate"><span class="pre">data_type</span></code> field</p></li>
+<li><p><strong>Null Handling</strong>: Protocol-specific null values applied</p></li>
+</ol>
+</section>
+</section>
+<section id="soap-vs-rest-null-handling">
+<h2>SOAP vs REST Null Handling<a class="headerlink" href="#soap-vs-rest-null-handling" title="Link to this heading"></a></h2>
+<section id="why-different-null-handling-strategies">
+<h3>Why Different Null Handling Strategies?<a class="headerlink" href="#why-different-null-handling-strategies" title="Link to this heading"></a></h3>
+<p>The library uses different null strategies for SOAP and REST to solve a critical problem while maintaining backward compatibility:</p>
+<p><strong>The Problem:</strong></p>
+<p>When pandas DataFrames contained <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> values in integer columns, pandas would automatically convert those columns to <code class="docutils literal notranslate"><span class="pre">float64</span></code> to accommodate the NaN values. This resulted in integer values displaying with decimal points (e.g., <code class="docutils literal notranslate"><span class="pre">1000.0</span></code> instead of <code class="docutils literal notranslate"><span class="pre">1000</span></code>), which was both aesthetically problematic and semantically incorrect for financial data that should be represented as whole numbers.</p>
+<p><strong>The Solution:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>SOAP Path (Original)</strong>: Continues using <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> to ensure 100% backward compatibility for existing integrations. Existing code that expects <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> behavior continues to work unchanged.</p></li>
+<li><p><strong>REST Path (Enhanced)</strong>: Uses <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code>, which is pandas’ newer null value that works with nullable integer types (<code class="docutils literal notranslate"><span class="pre">Int64</span></code>). This allows integer columns to remain as integers even when containing null values.</p></li>
+</ol>
+<p><strong>Design Philosophy:</strong></p>
+<p>This dual approach follows the principle of “never break existing code.” Users who have built systems around the SOAP API can upgrade the library without any changes to their code, while new REST API users automatically benefit from improved type handling.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example of the problem this solves:</span>
+<span class="c1"># Before (with np.nan):</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span>  <span class="c1"># Shows: [1000.0, 2000.0, NaN, 3000.0]</span>
+
+<span class="c1"># After (with pd.NA for REST):</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span>  <span class="c1"># Shows: [1000, 2000, &lt;NA&gt;, 3000]</span>
+</pre></div>
+</div>
+</section>
+<section id="technical-implementation">
+<h3>Technical Implementation<a class="headerlink" href="#technical-implementation" title="Link to this heading"></a></h3>
+<p>The differentiation between SOAP and REST null handling is implemented at the XBRL processor level through the <code class="docutils literal notranslate"><span class="pre">use_rest_nulls</span></code> parameter:</p>
+<ul class="simple">
+<li><p><strong>SOAP calls</strong>: Automatically use <code class="docutils literal notranslate"><span class="pre">use_rest_nulls=False</span></code> (default), applying <code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></li>
+<li><p><strong>REST calls</strong>: Explicitly set <code class="docutils literal notranslate"><span class="pre">use_rest_nulls=True</span></code>, applying <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code></p></li>
+<li><p><strong>User transparency</strong>: This is handled automatically based on credential type - users never need to specify this parameter</p></li>
+</ul>
+<p>This approach ensures that:</p>
+<ol class="arabic simple">
+<li><p><strong>Zero configuration needed</strong>: The library automatically selects the appropriate null handling based on your credentials</p></li>
+<li><p><strong>No breaking changes</strong>: Existing SOAP users see no changes in behavior</p></li>
+<li><p><strong>Optimal for each protocol</strong>: Each API path gets the most appropriate null handling for its use case</p></li>
+<li><p><strong>Future-proof</strong>: As pandas evolves, REST users automatically benefit from improvements to nullable types</p></li>
+</ol>
+</section>
+<section id="soap-api-original-behavior">
+<h3>SOAP API (Original Behavior)<a class="headerlink" href="#soap-api-original-behavior" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">SOAP Null Value Handling</span><a class="headerlink" href="#id3" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 30.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Data Type</p></th>
+<th class="head"><p>Null Value</p></th>
+<th class="head"><p>Pandas Conversion</p></th>
+<th class="head"><p>Final dtype</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Integer</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></td>
+<td><p>Direct to <code class="docutils literal notranslate"><span class="pre">Int64</span></code></p></td>
+<td><p>Nullable integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>Float</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></td>
+<td><p>Direct to <code class="docutils literal notranslate"><span class="pre">float64</span></code></p></td>
+<td><p>Standard float</p></td>
+</tr>
+<tr class="row-even"><td><p>Boolean</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></td>
+<td><p>Direct to <code class="docutils literal notranslate"><span class="pre">boolean</span></code></p></td>
+<td><p>Nullable boolean</p></td>
+</tr>
+<tr class="row-odd"><td><p>String</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>Direct to <code class="docutils literal notranslate"><span class="pre">string</span></code></p></td>
+<td><p>Pandas string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SOAP path - original behavior preserved</span>
+<span class="n">processed_ret</span> <span class="o">=</span> <span class="n">xbrl_processor</span><span class="o">.</span><span class="n">_process_xml</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">date_format</span><span class="p">,</span>
+    <span class="n">use_rest_nulls</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Default</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="rest-api-enhanced-behavior">
+<h3>REST API (Enhanced Behavior)<a class="headerlink" href="#rest-api-enhanced-behavior" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id4">
+<caption><span class="caption-text">REST Null Value Handling</span><a class="headerlink" href="#id4" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 15.0%" />
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Data Type</p></th>
+<th class="head"><p>Null Value</p></th>
+<th class="head"><p>Intermediate</p></th>
+<th class="head"><p>Pandas Conversion</p></th>
+<th class="head"><p>Final dtype</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Integer</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pd.NA</span></code></p></td>
+<td><p>→ <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>→ <code class="docutils literal notranslate"><span class="pre">Int64</span></code></p></td>
+<td><p>Nullable integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>Float</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pd.NA</span></code></p></td>
+<td><p>→ <code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></td>
+<td><p>→ <code class="docutils literal notranslate"><span class="pre">float64</span></code></p></td>
+<td><p>Standard float</p></td>
+</tr>
+<tr class="row-even"><td><p>Boolean</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pd.NA</span></code></p></td>
+<td><p>→ <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>→ <code class="docutils literal notranslate"><span class="pre">boolean</span></code></p></td>
+<td><p>Nullable boolean</p></td>
+</tr>
+<tr class="row-odd"><td><p>String</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>(unchanged)</p></td>
+<td><p>→ <code class="docutils literal notranslate"><span class="pre">string</span></code></p></td>
+<td><p>Pandas string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># REST path - enhanced handling</span>
+<span class="n">processed_ret</span> <span class="o">=</span> <span class="n">xbrl_processor</span><span class="o">.</span><span class="n">_process_xml</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">date_format</span><span class="p">,</span>
+    <span class="n">use_rest_nulls</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Explicit for REST</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="output-format-type-mapping">
+<h2>Output Format Type Mapping<a class="headerlink" href="#output-format-type-mapping" title="Link to this heading"></a></h2>
+<section id="list-output-output-type-list">
+<h3>List Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;list&quot;</span></code>)<a class="headerlink" href="#list-output-output-type-list" title="Link to this heading"></a></h3>
+<p>Returns raw dictionaries with the following structure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;mdrm&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>              <span class="c1"># MDRM identifier</span>
+    <span class="s1">&#39;rssd&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>              <span class="c1"># RSSD ID</span>
+    <span class="s1">&#39;quarter&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="o">/</span><span class="n">date</span><span class="p">,</span>      <span class="c1"># Based on date_output_format</span>
+    <span class="s1">&#39;data_type&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>         <span class="c1"># &#39;int&#39;, &#39;float&#39;, &#39;bool&#39;, or &#39;str&#39;</span>
+    <span class="s1">&#39;int_data&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="o">/</span><span class="n">null</span><span class="p">,</span>     <span class="c1"># Value if data_type=&#39;int&#39;</span>
+    <span class="s1">&#39;float_data&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="o">/</span><span class="n">null</span><span class="p">,</span> <span class="c1"># Value if data_type=&#39;float&#39;</span>
+    <span class="s1">&#39;bool_data&#39;</span><span class="p">:</span> <span class="nb">bool</span><span class="o">/</span><span class="n">null</span><span class="p">,</span>   <span class="c1"># Value if data_type=&#39;bool&#39;</span>
+    <span class="s1">&#39;str_data&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="o">/</span><span class="kc">None</span>      <span class="c1"># Value if data_type=&#39;str&#39;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="pandas-output-output-type-pandas">
+<h3>Pandas Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;pandas&quot;</span></code>)<a class="headerlink" href="#pandas-output-output-type-pandas" title="Link to this heading"></a></h3>
+<p>Creates DataFrames with nullable types for proper null handling:</p>
+<table class="docutils align-default" id="id5">
+<caption><span class="caption-text">Pandas Column Types</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>dtype</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Null Support</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mdrm</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">object</span></code></p></td>
+<td><p>MDRM identifier</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rssd</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">object</span></code></p></td>
+<td><p>RSSD ID as string</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">quarter</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">object</span></code>/<code class="docutils literal notranslate"><span class="pre">datetime64</span></code></p></td>
+<td><p>Based on date_output_format</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data_type</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">object</span></code></p></td>
+<td><p>Type indicator</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">int_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Int64</span></code></p></td>
+<td><p>Nullable integer</p></td>
+<td><p>Yes (<code class="docutils literal notranslate"><span class="pre">pd.NA</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">float_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float64</span></code></p></td>
+<td><p>Standard float</p></td>
+<td><p>Yes (<code class="docutils literal notranslate"><span class="pre">NaN</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bool_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">boolean</span></code></p></td>
+<td><p>Nullable boolean</p></td>
+<td><p>Yes (<code class="docutils literal notranslate"><span class="pre">pd.NA</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">str_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">string</span></code></p></td>
+<td><p>Pandas string</p></td>
+<td><p>Yes (<code class="docutils literal notranslate"><span class="pre">pd.NA</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Benefits:</strong></p>
+<ul class="simple">
+<li><p>No <code class="docutils literal notranslate"><span class="pre">.0</span></code> suffix on integer values</p></li>
+<li><p>Proper null handling with pandas nullable types</p></li>
+<li><p>Type-safe operations</p></li>
+</ul>
+</section>
+<section id="polars-output-output-type-polars">
+<h3>Polars Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;polars&quot;</span></code>)<a class="headerlink" href="#polars-output-output-type-polars" title="Link to this heading"></a></h3>
+<p>Direct conversion with native nullable types:</p>
+<table class="docutils align-default" id="id6">
+<caption><span class="caption-text">Polars Schema</span><a class="headerlink" href="#id6" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 20.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Polars Type</p></th>
+<th class="head"><p>Null Support</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mdrm</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Utf8</span></code></p></td>
+<td><p>No</p></td>
+<td><p>String type</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rssd</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Utf8</span></code></p></td>
+<td><p>No</p></td>
+<td><p>String type</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">quarter</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Utf8</span></code>/<code class="docutils literal notranslate"><span class="pre">pl.Date</span></code></p></td>
+<td><p>No</p></td>
+<td><p>Based on date_output_format</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data_type</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Utf8</span></code></p></td>
+<td><p>No</p></td>
+<td><p>String type</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">int_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Int64</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p>Native nullable</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">float_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Float64</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p>Native nullable</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bool_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Boolean</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p>Native nullable</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">str_data</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Utf8</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p>Native nullable</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="integer-display-examples">
+<h2>Integer Display Examples<a class="headerlink" href="#integer-display-examples" title="Link to this heading"></a></h2>
+<section id="problem-scenario-before-fix">
+<h3>Problem Scenario (Before Fix)<a class="headerlink" href="#problem-scenario-before-fix" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Original issue: integers showing as floats</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span>  <span class="c1"># Shows: 1000.0, 2000.0, 3000.0</span>
+</pre></div>
+</div>
+</section>
+<section id="current-behavior-soap-path">
+<h3>Current Behavior - SOAP Path<a class="headerlink" href="#current-behavior-soap-path" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Input: XBRL with USD value &quot;1500000&quot;</span>
+<span class="c1"># Processing: 1500000 // 1000 = 1500 (integer division)</span>
+<span class="c1"># Storage: np.int64(1500) with np.nan for nulls</span>
+<span class="c1"># DataFrame: Int64 dtype</span>
+<span class="c1"># Display: 1500 (no .0 suffix)</span>
+</pre></div>
+</div>
+</section>
+<section id="current-behavior-rest-path">
+<h3>Current Behavior - REST Path<a class="headerlink" href="#current-behavior-rest-path" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Input: JSON with integer 1500000</span>
+<span class="c1"># Processing: 1500000 // 1000 = 1500</span>
+<span class="c1"># Storage: np.int64(1500) with pd.NA for nulls</span>
+<span class="c1"># Conversion: pd.NA → None → Int64</span>
+<span class="c1"># Display: 1500 (no .0 suffix)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="type-conversion-decision-tree">
+<h2>Type Conversion Decision Tree<a class="headerlink" href="#type-conversion-decision-tree" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Input Data
+    ├── SOAP API (WebserviceCredentials)
+    │   ├── XBRL Processing
+    │   │   ├── Detect Type (USD/PURE/etc.)
+    │   │   └── Apply np.nan for nulls
+    │   └── Output Format
+    │       ├── list → Raw dicts with np.nan
+    │       ├── pandas → DataFrame with Int64/float64/boolean
+    │       └── polars → DataFrame with native nullable types
+    │
+    └── REST API (OAuth2Credentials)
+        ├── XBRL Processing
+        │   ├── Detect Type
+        │   └── Apply pd.NA for nulls
+        └── Output Format
+            ├── list → Raw dicts with pd.NA
+            ├── pandas → Convert pd.NA → None/np.nan → nullable dtypes
+            └── polars → Convert pd.NA → None → native nulls
+</pre></div>
+</div>
+</section>
+<section id="date-format-handling">
+<h2>Date Format Handling<a class="headerlink" href="#date-format-handling" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">date_output_format</span></code> parameter affects the <code class="docutils literal notranslate"><span class="pre">quarter</span></code> column:</p>
+<table class="docutils align-default" id="id7">
+<caption><span class="caption-text">Date Format Options</span><a class="headerlink" href="#id7" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 20.0%" />
+<col style="width: 15.0%" />
+<col style="width: 15.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Format</p></th>
+<th class="head"><p>Example Output</p></th>
+<th class="head"><p>Python Type</p></th>
+<th class="head"><p>Pandas dtype</p></th>
+<th class="head"><p>Polars Type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;string_original&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;12/31/2023&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">object</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Utf8</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;string_yyyymmdd&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;20231231&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">object</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Utf8</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;python_format&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">datetime(2023,12,31)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">datetime</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">datetime64[ns]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pl.Date</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="common-patterns-and-best-practices">
+<h2>Common Patterns and Best Practices<a class="headerlink" href="#common-patterns-and-best-practices" title="Link to this heading"></a></h2>
+<section id="working-with-integer-data">
+<h3>Working with Integer Data<a class="headerlink" href="#working-with-integer-data" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Recommended: Use nullable integer operations</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>      <span class="c1"># Handles NA/null correctly</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Replace nulls with 0</span>
+
+<span class="c1"># Avoid: Converting to standard float</span>
+<span class="nb">float</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">])</span>  <span class="c1"># May raise error with NA values</span>
+</pre></div>
+</div>
+</section>
+<section id="type-checking">
+<h3>Type Checking<a class="headerlink" href="#type-checking" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check for integer rows</span>
+<span class="n">int_rows</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;data_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;int&#39;</span><span class="p">]</span>
+
+<span class="c1"># Access specific typed columns</span>
+<span class="n">integers</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="n">floats</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;float_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="null-handling">
+<h3>Null Handling<a class="headerlink" href="#null-handling" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pandas: Use pd.isna() for universal null checking</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">])</span>  <span class="c1"># Works with both NaN and NA</span>
+
+<span class="c1"># Polars: Use native is_null()</span>
+<span class="n">df_polars</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">is_null</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="type-preservation-during-operations">
+<h3>Type Preservation During Operations<a class="headerlink" href="#type-preservation-during-operations" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Maintains Int64 type</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span>   <span class="c1"># Result is still Int64</span>
+
+<span class="c1"># Converts to float64</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1000</span>   <span class="c1"># Result becomes float64</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span> <span class="o">//</span> <span class="mi">1000</span>  <span class="c1"># Use // to maintain integer</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="migration-guide">
+<h2>Migration Guide<a class="headerlink" href="#migration-guide" title="Link to this heading"></a></h2>
+<section id="from-existing-soap-integration">
+<h3>From Existing SOAP Integration<a class="headerlink" href="#from-existing-soap-integration" title="Link to this heading"></a></h3>
+<p>No changes required. The library maintains 100% backward compatibility:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Existing code continues to work unchanged</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">connection</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">soap_credentials</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;480228&quot;</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span>
+<span class="p">)</span>
+<span class="c1"># Returns DataFrame with same types as before</span>
+</pre></div>
+</div>
+</section>
+<section id="adopting-rest-api">
+<h3>Adopting REST API<a class="headerlink" href="#adopting-rest-api" title="Link to this heading"></a></h3>
+<p>To leverage enhanced REST features:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use OAuth2Credentials for REST</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;token&quot;</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Not needed for REST</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;480228&quot;</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span>
+<span class="p">)</span>
+<span class="c1"># Returns DataFrame with enhanced null handling</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="overriding-null-value-handling">
+<h2>Overriding Null Value Handling<a class="headerlink" href="#overriding-null-value-handling" title="Link to this heading"></a></h2>
+<section id="the-force-null-types-parameter">
+<h3>The <code class="docutils literal notranslate"><span class="pre">force_null_types</span></code> Parameter<a class="headerlink" href="#the-force-null-types-parameter" title="Link to this heading"></a></h3>
+<p>While the library automatically selects the appropriate null handling based on your API choice (SOAP vs REST), you can override this behavior using the <code class="docutils literal notranslate"><span class="pre">force_null_types</span></code> parameter available in <code class="docutils literal notranslate"><span class="pre">collect_data()</span></code> and <code class="docutils literal notranslate"><span class="pre">collect_ubpr_facsimile_data()</span></code> functions.</p>
+<p><strong>When to Use This Parameter:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Testing and Migration</strong>: Test how your code would behave with different null handling before switching APIs</p></li>
+<li><p><strong>Compatibility Issues</strong>: Work around specific compatibility requirements in your data pipeline</p></li>
+<li><p><strong>Performance Comparison</strong>: Compare the behavior of both null handling approaches</p></li>
+<li><p><strong>Gradual Migration</strong>: SOAP users can preview REST-style null handling without changing credentials</p></li>
+</ol>
+</section>
+<section id="parameter-options">
+<h3>Parameter Options<a class="headerlink" href="#parameter-options" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id8">
+<caption><span class="caption-text">force_null_types Options</span><a class="headerlink" href="#id8" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 40.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Value</p></th>
+<th class="head"><p>Behavior</p></th>
+<th class="head"><p>Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code> (default)</p></td>
+<td><p>Automatic based on API type</p></td>
+<td><p>Normal operation - recommended</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;numpy&quot;</span></code></p></td>
+<td><p>Force <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> for all null values</p></td>
+<td><p>Legacy compatibility, SOAP-like behavior</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;pandas&quot;</span></code></p></td>
+<td><p>Force <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> for null values</p></td>
+<td><p>Better integer display, REST-like behavior</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="usage-examples">
+<h3>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading"></a></h3>
+<p><strong>Example 1: SOAP User Testing Pandas Null Handling</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SOAP credentials normally use np.nan</span>
+<span class="n">soap_creds</span> <span class="o">=</span> <span class="n">WebserviceCredentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">)</span>
+
+<span class="c1"># Test with pandas null handling without switching to REST</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="n">connection</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">soap_creds</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;480228&quot;</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
+    <span class="n">force_null_types</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span>  <span class="c1"># Override to use pd.NA</span>
+<span class="p">)</span>
+<span class="c1"># Now integers display without .0 suffix</span>
+</pre></div>
+</div>
+<p><strong>Example 2: REST User Requiring NumPy Compatibility</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># REST credentials normally use pd.NA</span>
+<span class="n">rest_creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s2">&quot;token&quot;</span><span class="p">)</span>
+
+<span class="c1"># Force numpy nulls for compatibility with legacy analysis code</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;480228&quot;</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
+    <span class="n">force_null_types</span><span class="o">=</span><span class="s2">&quot;numpy&quot;</span>  <span class="c1"># Override to use np.nan</span>
+<span class="p">)</span>
+<span class="c1"># Now compatible with code expecting np.nan</span>
+</pre></div>
+</div>
+<p><strong>Example 3: Comparing Both Approaches</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compare integer handling with different null types</span>
+<span class="k">for</span> <span class="n">null_type</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;numpy&quot;</span><span class="p">,</span> <span class="s2">&quot;pandas&quot;</span><span class="p">]:</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">collect_data</span><span class="p">(</span>
+        <span class="n">session</span><span class="o">=</span><span class="n">connection</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
+        <span class="n">creds</span><span class="o">=</span><span class="n">credentials</span><span class="p">,</span>
+        <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2023-12-31&quot;</span><span class="p">,</span>
+        <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;480228&quot;</span><span class="p">,</span>
+        <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
+        <span class="n">force_null_types</span><span class="o">=</span><span class="n">null_type</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Null type: </span><span class="si">{</span><span class="n">null_type</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;automatic&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Integer sample: </span><span class="si">{</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Has .0 suffix: </span><span class="si">{</span><span class="s1">&#39;.0&#39;</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nb">str</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;int_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="implementation-notes">
+<h3>Implementation Notes<a class="headerlink" href="#implementation-notes" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Performance</strong>: No significant performance difference between null types</p></li>
+<li><p><strong>Memory Usage</strong>: <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> uses slightly more memory but provides better type safety</p></li>
+<li><p><strong>Compatibility</strong>: <code class="docutils literal notranslate"><span class="pre">np.nan</span></code> is more widely compatible with older pandas versions</p></li>
+<li><p><strong>Future-Proof</strong>: <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> is the recommended approach for new pandas code</p></li>
+</ul>
+</section>
+<section id="best-practices">
+<h3>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Use defaults when possible</strong>: Let the library choose based on your API</p></li>
+<li><p><strong>Document overrides</strong>: If you override, comment why in your code</p></li>
+<li><p><strong>Test thoroughly</strong>: When overriding, test all data operations</p></li>
+<li><p><strong>Consider migration</strong>: If consistently overriding, consider switching APIs</p></li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Overriding null types may cause unexpected behavior if your code assumes specific null handling. Test thoroughly when using <code class="docutils literal notranslate"><span class="pre">force_null_types</span></code>.</p>
+</div>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<section id="natype-error">
+<h3>NAType Error<a class="headerlink" href="#natype-error" title="Link to this heading"></a></h3>
+<p><strong>Symptom:</strong> <code class="docutils literal notranslate"><span class="pre">float()</span> <span class="pre">argument</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">string</span> <span class="pre">or</span> <span class="pre">a</span> <span class="pre">real</span> <span class="pre">number,</span> <span class="pre">not</span> <span class="pre">'NAType'</span></code></p>
+<p><strong>Cause:</strong> Attempting float conversion on pandas NA value</p>
+<p><strong>Solution:</strong> Use <code class="docutils literal notranslate"><span class="pre">pd.isna()</span></code> for null checking or <code class="docutils literal notranslate"><span class="pre">.fillna()</span></code> before conversion</p>
+</section>
+<section id="integers-display-with-0">
+<h3>Integers Display with .0<a class="headerlink" href="#integers-display-with-0" title="Link to this heading"></a></h3>
+<p><strong>Symptom:</strong> Integer values show as <code class="docutils literal notranslate"><span class="pre">1000.0</span></code> instead of <code class="docutils literal notranslate"><span class="pre">1000</span></code></p>
+<p><strong>Cause:</strong> Mixed with float or using regular division</p>
+<p><strong>Solution:</strong> Ensure using Int64 dtype and integer division (<code class="docutils literal notranslate"><span class="pre">//</span></code>)</p>
+</section>
+<section id="type-loss-in-operations">
+<h3>Type Loss in Operations<a class="headerlink" href="#type-loss-in-operations" title="Link to this heading"></a></h3>
+<p><strong>Symptom:</strong> Int64 column becomes float64 after operation</p>
+<p><strong>Cause:</strong> Operation that produces non-integer results</p>
+<p><strong>Solution:</strong> Use integer-preserving operations or explicitly cast back</p>
+</section>
+</section>
+<section id="performance-considerations">
+<h2>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading"></a></h2>
+<table class="docutils align-default" id="id9">
+<caption><span class="caption-text">Performance Comparison</span><a class="headerlink" href="#id9" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Operation</p></th>
+<th class="head"><p>SOAP</p></th>
+<th class="head"><p>REST</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Null checking</p></td>
+<td><p>Fast (<code class="docutils literal notranslate"><span class="pre">np.isnan</span></code>)</p></td>
+<td><p>Fast (<code class="docutils literal notranslate"><span class="pre">pd.isna</span></code>)</p></td>
+<td><p>Both optimized</p></td>
+</tr>
+<tr class="row-odd"><td><p>DataFrame creation</p></td>
+<td><p>Standard</p></td>
+<td><p>Slightly slower</p></td>
+<td><p>REST has extra conversion</p></td>
+</tr>
+<tr class="row-even"><td><p>Memory usage</p></td>
+<td><p>Standard</p></td>
+<td><p>~Same</p></td>
+<td><p>Nullable types similar</p></td>
+</tr>
+<tr class="row-odd"><td><p>Integer operations</p></td>
+<td><p>Fast</p></td>
+<td><p>Fast</p></td>
+<td><p>Int64 optimized</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="api-reference">
+<h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h2>
+<section id="type-related-parameters">
+<h3>Type-Related Parameters<a class="headerlink" href="#type-related-parameters" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id10">
+<caption><span class="caption-text">Parameters</span><a class="headerlink" href="#id10" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 30.0%" />
+<col style="width: 20.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Options</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output_type</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;list&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;pandas&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;polars&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;list&quot;</span></code></p></td>
+<td><p>Output format</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">date_output_format</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;string_original&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;string_yyyymmdd&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;python_format&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;string_original&quot;</span></code></p></td>
+<td><p>Date format in output</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="internal-type-handling">
+<h3>Internal Type Handling<a class="headerlink" href="#internal-type-handling" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id11">
+<caption><span class="caption-text">Internal Functions</span><a class="headerlink" href="#id11" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Function</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>SOAP Behavior</p></th>
+<th class="head"><p>REST Behavior</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_process_xml()</span></code></p></td>
+<td><p>Parse XBRL</p></td>
+<td><p>Uses <code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></td>
+<td><p>Uses <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> with <code class="docutils literal notranslate"><span class="pre">use_rest_nulls=True</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_process_xbrl_item()</span></code></p></td>
+<td><p>Process single item</p></td>
+<td><p>Returns typed value</p></td>
+<td><p>Returns typed value</p></td>
+</tr>
+<tr class="row-even"><td><p>DataFrame conversion</p></td>
+<td><p>Create pandas DF</p></td>
+<td><p>Direct with <code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></td>
+<td><p>Converts <code class="docutils literal notranslate"><span class="pre">pd.NA</span></code> → appropriate nulls</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="version-history">
+<h2>Version History<a class="headerlink" href="#version-history" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>v2.0.0</strong>: Added REST API support with enhanced null handling</p></li>
+<li><p><strong>v1.x.x</strong>: Original SOAP-only implementation with <code class="docutils literal notranslate"><span class="pre">np.nan</span></code></p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pandas.pydata.org/docs/user_guide/integer_na.html">Pandas Nullable Integer Documentation</a></p></li>
+<li><p><a class="reference external" href="https://pola-rs.github.io/polars/py-polars/html/reference/datatypes.html">Polars Data Types</a></p></li>
+<li><p><a class="reference external" href="https://numpy.org/doc/stable/user/basics.types.html">NumPy Data Types</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="rest_api_reference.html" class="btn btn-neutral float-left" title="REST API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples &amp; Interactive Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

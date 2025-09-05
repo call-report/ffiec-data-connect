@@ -27,8 +27,8 @@ class SOAPClientConfig:
 
     wsdl_url: str
     username: str
-    # Don't store password directly - use hash for cache key
-    password_hash: str
+    # Derived cache key identifier (not the actual credentials)
+    credential_key: str
     proxy_config: Optional[str] = None
     timeout: int = 30
 
@@ -43,8 +43,19 @@ class SOAPClientConfig:
         if wsdl_url is None:
             wsdl_url = constants.WebserviceConstants.base_url
 
-        # Hash password for cache key (don't store plaintext)
-        password_hash = hashlib.sha256(credentials.password.encode()).hexdigest()
+        # Generate a unique identifier for cache key using PBKDF2
+        # This is a proper key derivation function designed for this purpose
+        # We use the username as salt to ensure different users get different keys
+        salt = f"ffiec-{credentials.username}".encode()
+        # Derive a key from credentials for cache identification
+        # Using 1000 iterations which is fast enough for caching but secure
+        credential_key = hashlib.pbkdf2_hmac(
+            "sha256",
+            credentials.password.encode(),  # This is the data to derive from
+            salt,  # Salt includes username for uniqueness
+            1000,  # Number of iterations
+            dklen=16,  # Output 16 bytes (32 hex chars)
+        ).hex()
 
         # Extract proxy configuration if available
         proxy_config = None
@@ -56,7 +67,7 @@ class SOAPClientConfig:
         return cls(
             wsdl_url=wsdl_url,
             username=credentials.username,
-            password_hash=password_hash,
+            credential_key=credential_key,  # Using PBKDF2-derived key
             proxy_config=proxy_config,
         )
 
@@ -126,16 +137,16 @@ class SOAPClientCache:
     ) -> Client:
         """Create a new SOAP client."""
         # Create WSSE token
-        wsse = UsernameToken(credentials.username, credentials.password)
+        wsse = UsernameToken(credentials.username, credentials.password)  # type: ignore[no-untyped-call]
 
         # Create transport with session
         transport = None
         if hasattr(session, "session"):
             # FFIECConnection object
-            transport = Transport(session=session.session)
+            transport = Transport(session=session.session)  # type: ignore[no-untyped-call]
         else:
             # Direct requests.Session
-            transport = Transport(session=session)
+            transport = Transport(session=session)  # type: ignore[no-untyped-call]
 
         # Create settings for better performance
         settings = Settings(
@@ -145,7 +156,7 @@ class SOAPClientCache:
         )
 
         # Create client
-        return Client(
+        return Client(  # type: ignore[no-untyped-call]
             wsdl=config.wsdl_url, wsse=wsse, transport=transport, settings=settings
         )
 

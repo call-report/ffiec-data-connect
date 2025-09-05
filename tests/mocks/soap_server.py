@@ -9,12 +9,12 @@ the FFIEC web service for testing purposes.
 import json
 import threading
 import time
-import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import parse_qs, urlparse
+
+import defusedxml.ElementTree as ET
 
 
 class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
@@ -122,10 +122,6 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
         root = ET.fromstring(soap_request)
 
         # Look for FFIEC namespace elements
-        namespaces = {
-            "soap": "http://schemas.xmlsoap.org/soap/envelope/",
-            "ffiec": "http://cdr.ffiec.gov/public/services",
-        }
 
         # Find the first element in the Body
         for elem in root.iter():
@@ -171,7 +167,7 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
 
     def _generate_test_user_access_response(self, params: Dict[str, str]) -> str:
         """Generate TestUserAccess response (returns boolean)."""
-        return f"""<?xml version="1.0" encoding="utf-8"?>
+        return """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -185,7 +181,7 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
     def _generate_retrieve_panel_response(self, params: Dict[str, str]) -> str:
         """Generate RetrievePanelOfReporters response matching FFIEC schema."""
         data_series = params.get("data_series", "Call")
-        reporting_period = params.get("reporting_period_end_date", "2023-12-31")
+        params.get("reporting_period_end_date", "2023-12-31")
 
         # Mock realistic panel data based on series
         reporters_xml = ""
@@ -239,12 +235,12 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
         for reporter in sample_reporters:
             reporters_xml += f"""
                 <ReportingInstitution>
-                    <ID_RSSD>{reporter['ID_RSSD']}</ID_RSSD>
-                    <InstitutionName>{reporter['Name']}</InstitutionName>
-                    <MainOfficeCity>{reporter['City']}</MainOfficeCity>
-                    <MainOfficeState>{reporter['State']}</MainOfficeState>
-                    <FDICCertNumber>{reporter['FDIC_Cert']}</FDICCertNumber>
-                    <FilingStatus>{reporter['Filing_Status']}</FilingStatus>
+                    <ID_RSSD>{reporter["ID_RSSD"]}</ID_RSSD>
+                    <InstitutionName>{reporter["Name"]}</InstitutionName>
+                    <MainOfficeCity>{reporter["City"]}</MainOfficeCity>
+                    <MainOfficeState>{reporter["State"]}</MainOfficeState>
+                    <FDICCertNumber>{reporter["FDIC_Cert"]}</FDICCertNumber>
+                    <FilingStatus>{reporter["Filing_Status"]}</FilingStatus>
                 </ReportingInstitution>"""
 
         return f"""<?xml version="1.0" encoding="utf-8"?>
@@ -343,10 +339,10 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
 
     def _generate_retrieve_facsimile_response(self, params: Dict[str, str]) -> str:
         """Generate RetrieveFacsimile response with base64-encoded XBRL data."""
-        fi_id = params.get("fi_id", "480228")
-        data_series = params.get("data_series", "Call")
-        reporting_period = params.get("reporting_period_end_date", "2023-12-31")
-        facsimile_format = params.get("facsimile_format", "XBRL")
+        params.get("fi_id", "480228")
+        params.get("data_series", "Call")
+        params.get("reporting_period_end_date", "2023-12-31")
+        params.get("facsimile_format", "XBRL")
 
         # Mock base64-encoded XBRL content (simplified for testing)
         # In reality, this would be a full XBRL document encoded in base64
@@ -365,8 +361,8 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
 
     def _generate_ubpr_facsimile_response(self, params: Dict[str, str]) -> str:
         """Generate RetrieveUBPRXBRLFacsimile response with base64-encoded XBRL data."""
-        fi_id = params.get("fi_id", "480228")
-        reporting_period = params.get("reporting_period_end_date", "2023-12-31")
+        params.get("fi_id", "480228")
+        params.get("reporting_period_end_date", "2023-12-31")
 
         # Mock base64-encoded UBPR XBRL content
         mock_ubpr_xbrl = """PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHhicmwgeG1sbnM9Imh0dHA6Ly93d3cueGJybC5vcmcvMjAwMy9pbnN0YW5jZSI+CiAgPGNvbnRleHQgaWQ9ImN0eF8yMDIzXzEyXzMxIj4KICAgIDxlbnRpdHk+CiAgICAgIDxpZGVudGlmaWVyIHNjaGVtZT0iaHR0cDovL2ZmaWVjLmdvdi9yc3NkIj40ODAyMjg8L2lkZW50aWZpZXI+CiAgICA8L2VudGl0eT4KICA8L2NvbnRleHQ+CiAgPHVicHI6UmV0dXJuT25Bc3NldHMgY29udGV4dFJlZj0iY3R4XzIwMjNfMTJfMzEiPjEuMjU8L3VicHI6UmV0dXJuT25Bc3NldHM+CiAgPHVicHI6TmV0SW50ZXJlc3RNYXJnaW4gY29udGV4dFJlZj0iY3R4XzIwMjNfMTJfMzEiPjMuNDI8L3VicHI6TmV0SW50ZXJlc3RNYXJnaW4+CjwveGJybD4="""
@@ -387,7 +383,7 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
     ) -> str:
         """Generate RetrieveFilersSubmissionDateTime response."""
         # Mock submission datetime data
-        return f"""<?xml version="1.0" encoding="utf-8"?>
+        return """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
     <soap:Body>
         <RetrieveFilersSubmissionDateTimeResponse xmlns="http://cdr.ffiec.gov/public/services">
@@ -402,9 +398,9 @@ class FFIECMockSOAPHandler(BaseHTTPRequestHandler):
 
     def _generate_filers_since_date_response(self, params: Dict[str, str]) -> str:
         """Generate RetrieveFilersSinceDate response."""
-        since_date = params.get("since_date", "2024-01-01")
+        params.get("since_date", "2024-01-01")
 
-        return f"""<?xml version="1.0" encoding="utf-8"?>
+        return """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
     <soap:Body>
         <RetrieveFilersSinceDateResponse xmlns="http://cdr.ffiec.gov/public/services">

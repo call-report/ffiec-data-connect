@@ -40,8 +40,8 @@ class TestSOAPClientCache:
             config = SOAPClientConfig.from_credentials_and_session(creds, session)
 
             assert config.username == "testuser"
-            assert config.password_hash is not None
-            assert len(config.password_hash) == 64  # SHA256 hash length
+            assert config.credential_key is not None
+            assert len(config.credential_key) == 32  # PBKDF2-derived key (32 hex chars)
             assert config.wsdl_url is not None
 
     def test_cache_key_generation(self):

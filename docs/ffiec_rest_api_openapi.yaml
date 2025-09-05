@@ -1,0 +1,582 @@
+openapi: 3.0.0
+info:
+  title: FFIEC CDR Public Web Service REST API
+  description: |
+    REST API for accessing FFIEC Call Report and UBPR data.
+    This API requires OAuth2 Bearer token authentication with tokens valid for 90 days.
+    
+    ## IMPORTANT DISCLAIMERS
+    
+    **This OpenAPI specification is UNOFFICIAL and was reverse-engineered** from official FFIEC documentation 
+    and extensive testing with the live API. It is provided as a reference for developers but should not be 
+    considered authoritative. The official documentation is CDR-PDD-SIS-611 v1.10.
+    
+    ## API DESIGN CONSIDERATIONS
+    
+    The FFIEC REST API deviates from typical RESTful conventions in several important ways:
+    
+    ### Non-Standard Parameter Passing
+    - **ALL parameters are passed as HTTP headers**, not as query parameters or in the request path
+    - This includes data that would typically be path parameters (like RSSD IDs) or query parameters (like date ranges)
+    - Headers must be exact, including case sensitivity (e.g., `UserID` not `userid` or `UserId`)
+    
+    ### Non-Standard HTTP Status Codes
+    - Status codes do not follow conventional HTTP semantics
+    - **5xx codes are often returned for client errors** that should typically be 4xx codes
+    - Invalid request data may return 500 (Internal Server Error) instead of 400 (Bad Request)
+    - Authentication failures may not consistently return 401
+    
+    ### Case Sensitivity Issues
+    - **Header names are case-sensitive** and inconsistent across the API
+    - `UserID` uses capital 'ID', while other headers may use different casing conventions
+    - `Authentication` header (not the standard `Authorization`)
+    - Response field names also have inconsistent casing patterns
+    
+    ## USING THE ffiec-data-connect LIBRARY
+    
+    **The ffiec-data-connect Python library abstracts away these complexities**, providing a consistent, 
+    Pythonic interface that handles:
+    - Proper header construction and casing
+    - Error code translation and handling
+    - Automatic retry logic for transient failures
+    - Data type normalization and validation
+    
+    This OpenAPI schema was developed during the creation of ffiec-data-connect and is provided as a 
+    reference for developers who need to understand the underlying API behavior or implement their own clients.
+    
+    ## TECHNICAL DETAILS
+    
+    Base URL: https://ffieccdr.azure-api.us/public
+    
+    Authentication Headers Required:
+    - UserID: Your FFIEC PWS username (note capital 'ID')
+    - Authentication: Bearer {token} (NOT Authorization)
+    
+    RESPONSE DATA VALIDATION:
+    This schema has been validated against actual API responses using live credentials.
+    Response structures and data types documented here match real REST API behavior.
+    
+    KEY FINDINGS FROM LIVE TESTING:
+    - RSSD IDs returned as strings (normalized by DataNormalizer): ["3358270", "2132941"]
+    - Institution data includes capitalized fields: ID_RSSD, Name, City, State
+    - DateTime format: "M/D/YYYY H:MM:SS AM/PM" (e.g., "2/20/2024 3:23:30 PM")
+    - XBRL files: Call data ~270KB, UBPR data ~544KB
+    - Date format consistent: MM/DD/YYYY across all endpoints
+    
+    Based on official FFIEC document: CDR-PDD-SIS-611 v1.10
+  version: 1.10.0
+  contact:
+    name: FFIEC CDR Support
+    url: https://cdr.ffiec.gov/public/PWS/Home.aspx
+
+servers:
+  - url: https://ffieccdr.azure-api.us/public
+    description: Production REST API server
+
+paths:
+  /RetrieveReportingPeriods:
+    get:
+      summary: Retrieve available reporting periods for Call data series
+      description: This method retrieves a list of all reporting period end dates available for the Call data series.
+      operationId: retrieveReportingPeriods
+      parameters:
+        - name: UserID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: FFIEC PWS username
+          example: "PWSUser101"
+        - name: Authentication
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User's security token with "Bearer " preceding it
+          example: "Bearer eyJhbGciOiJub25lIiwi..."
+        - name: dataSeries
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["Call"]
+          description: Data series name (must be "Call")
+          example: "Call"
+      responses:
+        '200':
+          description: List of reporting periods in chronological order (newest first)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportingPeriodsResponse'
+        '401':
+          description: Authentication failed
+        '403':
+          description: Forbidden - invalid token or headers
+        '429':
+          description: Rate limit exceeded (2500 requests/hour)
+  
+  /RetrievePanelOfReporters:
+    get:
+      summary: Retrieve Panel of Reporters for a reporting period
+      description: This method retrieves information for the financial institutions in the Panel of Reporters (POR) expected to file for a given Call reporting period.
+      operationId: retrievePanelOfReporters
+      parameters:
+        - name: UserID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: FFIEC PWS username
+        - name: Authentication
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Bearer token with "Bearer " prefix
+        - name: dataSeries
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["Call"]
+          description: Data series name (must be "Call")
+        - name: reportingPeriodEndDate
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+          description: Date string of the reporting period end date (MM/DD/YYYY)
+          example: "03/31/2025"
+      responses:
+        '200':
+          description: List of filers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionsResponse'
+        '403':
+          description: Forbidden
+        '500':
+          description: Server error
+  
+  /RetrieveFilersSinceDate:
+    get:
+      summary: Retrieve filers since a specific date
+      description: This method retrieves a list of ID RSSDs for financial institutions that have filed for the given reporting period after the provided lastUpdateDateTime and whose new filings are available for public distribution.
+      operationId: retrieveFilersSinceDate
+      parameters:
+        - name: UserID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: FFIEC PWS username
+        - name: Authentication
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Bearer token with "Bearer " prefix
+        - name: dataSeries
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["Call"]
+          description: Data series name (must be "Call")
+        - name: reportingPeriodEndDate
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+          description: Date string of the reporting period end date (MM/DD/YYYY)
+          example: "03/31/2025"
+        - name: lastUpdateDateTime
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Date (and optional time) string for when the reports were last filed
+          example: "04/15/2025"
+      responses:
+        '200':
+          description: List of filers since date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RSSDIDsResponse'
+        '403':
+          description: Forbidden
+        '500':
+          description: Server error
+  
+  /RetrieveFilersSubmissionDateTime:
+    get:
+      summary: Retrieve filers with submission timestamps
+      description: This method retrieves the ID RSSDs and submission date and time of the reporters who have filed after the provided lastUpdateDateTime and whose new filings are available for public distribution.
+      operationId: retrieveFilersSubmissionDateTime
+      parameters:
+        - name: UserID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: FFIEC PWS username
+        - name: Authentication
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Bearer token with "Bearer " prefix
+        - name: dataSeries
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["Call"]
+          description: Data series name (must be "Call")
+        - name: reportingPeriodEndDate
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+          description: Date string of the reporting period end date (MM/DD/YYY)
+          example: "03/31/2025"
+        - name: lastUpdateDateTime
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Date (and optional time) string for when the reports were last filed. (MM/DD/YYYY)
+          example: "04/15/2025"
+      responses:
+        '200':
+          description: List of filers with submission times
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionsResponse'
+        '403':
+          description: Forbidden
+        '500':
+          description: Server error
+  
+  /RetrieveFacsimile:
+    get:
+      summary: Retrieve individual bank facsimile data
+      description: |
+        This method retrieves a byte array stream of the requested facsimile file. 
+        The client must de-serialize the stream into a file in its local file system. 
+        SDF text files can be viewed and modified using spreadsheet or database software 
+        (e.g., Excel, Access) or with a text editor (e.g., NotePad). 
+        XBRL files require an XBRL editor.
+      operationId: retrieveFacsimile
+      parameters:
+        - name: UserID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: FFIEC PWS username
+        - name: Authentication
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Bearer token with "Bearer " prefix
+        - name: dataSeries
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["Call"]
+          description: Data series name (must be "Call")
+        - name: reportingPeriodEndDate
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+          description: Date string of the reporting period end date (MM/DD/YYYY)
+          example: "03/31/2025"
+        - name: fiIdType
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["ID_RSSD", "FDICCertNumber", "OCCChartNumber", "OTSDockNumber"]
+          description: The type of identifier being provided
+          example: "ID_RSSD"
+        - name: fiId
+          in: header
+          required: true
+          schema:
+            type: string
+          description: The financial institution's identifier
+          example: "480228"
+        - name: facsimileFormat
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["PDF", "XBRL", "SDF"]
+          description: The report format to retrieve
+          example: "XBRL"
+      responses:
+        '200':
+          description: Facsimile file data
+          content:
+            application/pdf:
+              schema:
+                $ref: '#/components/schemas/PDFData'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/XBRLData'
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/SDFData'
+        '403':
+          description: Forbidden
+        '404':
+          description: No data found for specified parameters
+        '500':
+          description: Server error
+  
+  /RetrieveUBPRReportingPeriods:
+    get:
+      summary: Retrieve UBPR reporting periods
+      description: This method retrieves a list of all reporting period end dates available for the UBPR data series.
+      operationId: retrieveUBPRReportingPeriods
+      parameters:
+        - name: UserID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: FFIEC PWS username
+        - name: Authentication
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Bearer token with "Bearer " prefix
+      responses:
+        '200':
+          description: List of UBPR reporting periods
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UBPRReportingPeriodsResponse'
+        '403':
+          description: Forbidden
+        '500':
+          description: Server error
+  
+  /RetrieveUBPRXBRLFacsimile:
+    get:
+      summary: Retrieve UBPR XBRL facsimile
+      description: |
+        Call to retrieve a byte array stream of the requested XBRL instance document. 
+        The client must de-serialize the stream into a file in its local file system. 
+        XBRL files require an XBRL editor.
+      operationId: retrieveUBPRXBRLFacsimile
+      parameters:
+        - name: UserID
+          in: header
+          required: true
+          schema:
+            type: string
+          description: FFIEC PWS username
+        - name: Authentication
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Bearer token with "Bearer " prefix
+        - name: reportingPeriodEndDate
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+          description: Date string of the reporting period end date (MM/DD/YYYY)
+          example: "03/31/2025"
+        - name: fiIdType
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["ID_RSSD", "FDICCertNumber", "OCCChartNumber", "OTSDockNumber"]
+          description: The type of identifier being provided
+          example: "ID_RSSD"
+        - name: fiId
+          in: header
+          required: true
+          schema:
+            type: string
+          description: The financial institution's identifier
+          example: "480228"
+      responses:
+        '200':
+          description: UBPR XBRL data
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/XBRLData'
+        '403':
+          description: Forbidden
+        '404':
+          description: No data found
+        '500':
+          description: Server error
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        Message:
+          type: string
+          description: Error message
+        Code:
+          type: integer
+    
+    # Response schemas based on actual REST API testing
+    ReportingPeriod:
+      type: string
+      pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+      description: Reporting period in MM/DD/YYYY format
+      example: "12/31/2023"
+    
+    Institution:
+      type: object
+      description: Financial institution data from RetrievePanelOfReporters
+      required:
+        - ID_RSSD
+        - Name
+      properties:
+        ID_RSSD:
+          type: integer
+          description: RSSD identifier (normalized to string by DataNormalizer)
+          example: 480228
+        FDICCertNumber:
+          type: integer
+          description: FDIC certificate number (normalized to string by DataNormalizer)
+          example: 26539
+        OCCChartNumber:
+          type: integer
+          description: OCC charter number (0 if not applicable)
+          example: 0
+        OTSDockNumber:
+          type: integer
+          description: OTS docket number (0 if not applicable)
+          example: 0
+        PrimaryABARoutNumber:
+          type: integer
+          description: ABA routing number (0 if not applicable)
+          example: 65103243
+        Name:
+          type: string
+          description: Institution name (may be padded with spaces)
+          example: "CITIZENS' BANK, INC.                                                                                                    "
+        State:
+          type: string
+          description: State code or "0" for international
+          example: "AL"
+        City:
+          type: string
+          description: City name (may be padded with spaces)
+          example: "ROBERTSDALE              "
+        Address:
+          type: string
+          description: Street address (may be padded with spaces)
+          example: "21980 PALMER STREET                     "
+        ZIP:
+          type: integer
+          description: ZIP code (normalized to string by DataNormalizer to preserve leading zeros)
+          example: 36567
+        FilingType:
+          type: string
+          description: Filing type code
+          example: "051"
+        HasFiledForReportingPeriod:
+          type: boolean
+          description: Whether institution filed for the reporting period
+          example: true
+    
+    SubmissionInfo:
+      type: object
+      description: Submission date/time information from RetrieveFilersSubmissionDateTime
+      required:
+        - ID_RSSD
+        - DateTime
+      properties:
+        ID_RSSD:
+          type: string
+          description: RSSD identifier (normalized to string by DataNormalizer)
+          example: "3358270"
+        DateTime:
+          type: string
+          description: Submission timestamp in M/D/YYYY H:MM:SS AM/PM format
+          pattern: ^\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)$
+          example: "2/20/2024 3:23:30 PM"
+    
+    # Response arrays based on actual API testing
+    ReportingPeriodsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/ReportingPeriod'
+      description: Array of reporting periods in chronological order (newest first)
+      example: ["6/30/2025", "3/31/2025", "12/31/2024"]
+    
+    UBPRReportingPeriodsResponse:
+      type: array
+      items:
+        type: string
+        pattern: ^\d{1,2}/\d{1,2}/\d{4}$
+      description: Array of UBPR reporting periods - same format as Call periods
+      example: ["12/31/2002", "3/31/2003", "6/30/2003"]
+    
+    InstitutionsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/Institution'
+      description: Array of institutions that filed for the reporting period
+    
+    RSSDIDsResponse:
+      type: array
+      items:
+        type: string
+      description: Array of RSSD IDs from RetrieveFilersSinceDate (normalized to strings by DataNormalizer)
+      example: ["3358270", "2132941", "1447639"]
+    
+    SubmissionsResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/SubmissionInfo'
+      description: Array of submission information records
+    
+    # Binary responses
+    XBRLData:
+      type: string
+      format: binary
+      description: XBRL data file (XML format)
+    
+    PDFData:
+      type: string
+      format: binary
+      description: PDF data file
+    
+    SDFData:
+      type: string
+      format: binary
+      description: SDF (Standard Data Format) text file - tab-delimited format
+    
+    # Based on actual testing with user credentials:
+    # - Call XBRL files: ~270KB XML format
+    # - UBPR XBRL files: ~544KB XML format  
+    # - PDF and SDF formats available but not tested in collection phase

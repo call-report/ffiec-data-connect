@@ -1,0 +1,193 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTTP Routing Table &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0ee5205a"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+ 
+
+    <script>
+      DOCUMENTATION_OPTIONS.COLLAPSE_INDEX = true;
+    </script>
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FFIEC Data Connect
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FFIEC Data Connect</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">HTTP Routing Table</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+
+   <h1>HTTP Routing Table</h1>
+
+   <div class="modindex-jumpbox">
+   <a href="#cap-/RetrieveFacsimile"><strong>/RetrieveFacsimile</strong></a> | 
+   <a href="#cap-/RetrieveFilersSinceDate"><strong>/RetrieveFilersSinceDate</strong></a> | 
+   <a href="#cap-/RetrieveFilersSubmissionDateTime"><strong>/RetrieveFilersSubmissionDateTime</strong></a> | 
+   <a href="#cap-/RetrievePanelOfReporters"><strong>/RetrievePanelOfReporters</strong></a> | 
+   <a href="#cap-/RetrieveReportingPeriods"><strong>/RetrieveReportingPeriods</strong></a> | 
+   <a href="#cap-/RetrieveUBPRReportingPeriods"><strong>/RetrieveUBPRReportingPeriods</strong></a> | 
+   <a href="#cap-/RetrieveUBPRXBRLFacsimile"><strong>/RetrieveUBPRXBRLFacsimile</strong></a>
+   </div>
+
+   <table class="indextable modindextable">
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/RetrieveFacsimile"><td></td><td>
+       <strong>/RetrieveFacsimile</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="rest_api_reference.html#get--RetrieveFacsimile"><code class="xref">GET /RetrieveFacsimile</code></a></td><td>
+       <em>Retrieve individual bank facsimile data</em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/RetrieveFilersSinceDate"><td></td><td>
+       <strong>/RetrieveFilersSinceDate</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="rest_api_reference.html#get--RetrieveFilersSinceDate"><code class="xref">GET /RetrieveFilersSinceDate</code></a></td><td>
+       <em>Retrieve filers since a specific date</em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/RetrieveFilersSubmissionDateTime"><td></td><td>
+       <strong>/RetrieveFilersSubmissionDateTime</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="rest_api_reference.html#get--RetrieveFilersSubmissionDateTime"><code class="xref">GET /RetrieveFilersSubmissionDateTime</code></a></td><td>
+       <em>Retrieve filers with submission timestamps</em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/RetrievePanelOfReporters"><td></td><td>
+       <strong>/RetrievePanelOfReporters</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="rest_api_reference.html#get--RetrievePanelOfReporters"><code class="xref">GET /RetrievePanelOfReporters</code></a></td><td>
+       <em>Retrieve Panel of Reporters for a reporting period</em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/RetrieveReportingPeriods"><td></td><td>
+       <strong>/RetrieveReportingPeriods</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="rest_api_reference.html#get--RetrieveReportingPeriods"><code class="xref">GET /RetrieveReportingPeriods</code></a></td><td>
+       <em>Retrieve available reporting periods for Call data series</em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/RetrieveUBPRReportingPeriods"><td></td><td>
+       <strong>/RetrieveUBPRReportingPeriods</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="rest_api_reference.html#get--RetrieveUBPRReportingPeriods"><code class="xref">GET /RetrieveUBPRReportingPeriods</code></a></td><td>
+       <em>Retrieve UBPR reporting periods</em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/RetrieveUBPRXBRLFacsimile"><td></td><td>
+       <strong>/RetrieveUBPRXBRLFacsimile</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="rest_api_reference.html#get--RetrieveUBPRXBRLFacsimile"><code class="xref">GET /RetrieveUBPRXBRLFacsimile</code></a></td><td>
+       <em>Retrieve UBPR XBRL facsimile</em></td></tr>
+   </table>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Civic Forge Solutions LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from ffiec_data_connect import credentials, ffiec_connection, methods
+from ffiec_data_connect.credentials import OAuth2Credentials
 
 
 class RateLimiter:
@@ -59,15 +60,18 @@ class AsyncCompatibleClient:
 
     def __init__(
         self,
-        credentials: credentials.WebserviceCredentials,
+        credentials: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
         max_concurrent: int = 5,
         rate_limit: Optional[float] = 10,  # requests per second
         executor: Optional[ThreadPoolExecutor] = None,
     ) -> None:
         """Initialize the async-compatible client.
 
+        **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
+        For better performance, use OAuth2Credentials for REST API access.
+
         Args:
-            credentials: FFIEC webservice credentials
+            credentials: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
             max_concurrent: Maximum concurrent requests
             rate_limit: Maximum requests per second (None to disable)
             executor: Optional thread pool executor to use
@@ -76,7 +80,19 @@ class AsyncCompatibleClient:
         self.max_concurrent = max_concurrent
         self.rate_limiter = RateLimiter(rate_limit) if rate_limit else None
         self.executor = executor or ThreadPoolExecutor(max_workers=max_concurrent)
-        self._connection_cache: Dict[int, ffiec_connection.FFIECConnection] = {}
+
+        # Enhanced for dual protocol support
+        from .credentials import OAuth2Credentials
+
+        self._is_rest_client = isinstance(credentials, OAuth2Credentials)
+
+        if self._is_rest_client:
+            # REST clients don't need connection caching
+            self._connection_cache: Dict[int, ffiec_connection.FFIECConnection] = {}
+        else:
+            # SOAP clients use connection caching
+            self._connection_cache = {}
+
         self._lock = threading.Lock()
         self._owned_executor = executor is None  # Track if we created the executor
 
@@ -89,7 +105,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Union[List[Dict], Any]:
+    ) -> Union[List[Dict[str, Any]], Any]:
         """Standard synchronous method - backward compatible.
 
         Args:
@@ -105,23 +121,37 @@ class AsyncCompatibleClient:
         if self.rate_limiter:
             self.rate_limiter.wait_if_needed()
 
-        conn = self._get_connection()
-        return methods.collect_data(
-            conn,
-            self.credentials,
-            reporting_period,
-            rssd_id,
-            series,
-            output_type,
-            date_output_format,
-        )
+        # Enhanced for dual protocol support
+        if self._is_rest_client:
+            # REST API doesn't need a connection object
+            return methods.collect_data(
+                None,
+                self.credentials,
+                reporting_period,
+                rssd_id,
+                series,
+                output_type,
+                date_output_format,
+            )
+        else:
+            # SOAP API uses cached connection
+            conn = self._get_connection()
+            return methods.collect_data(
+                conn,
+                self.credentials,
+                reporting_period,
+                rssd_id,
+                series,
+                output_type,
+                date_output_format,
+            )
 
     def collect_reporting_periods(
         self,
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Union[List, Any]:
+    ) -> Union[List[str], Any]:
         """Get available reporting periods - backward compatible.
 
         Args:
@@ -135,10 +165,18 @@ class AsyncCompatibleClient:
         if self.rate_limiter:
             self.rate_limiter.wait_if_needed()
 
-        conn = self._get_connection()
-        return methods.collect_reporting_periods(
-            conn, self.credentials, series, output_type, date_output_format
-        )
+        # Enhanced for dual protocol support
+        if self._is_rest_client:
+            # REST API doesn't need a connection object
+            return methods.collect_reporting_periods(
+                None, self.credentials, series, output_type, date_output_format
+            )
+        else:
+            # SOAP API uses cached connection
+            conn = self._get_connection()
+            return methods.collect_reporting_periods(
+                conn, self.credentials, series, output_type, date_output_format
+            )
 
     def collect_data_parallel(
         self,
@@ -148,7 +186,7 @@ class AsyncCompatibleClient:
         output_type: str = "list",
         date_output_format: str = "string_original",
         progress_callback: Optional[Callable[[str, Any], None]] = None,
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect data for multiple banks in parallel (sync interface).
 
         Args:
@@ -201,7 +239,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect multiple periods for one bank in parallel (sync interface).
 
         Args:
@@ -252,7 +290,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Union[List[Dict], Any]:
+    ) -> Union[List[Dict[str, Any]], Any]:
         """Async version - runs sync code in thread pool.
 
         Args:
@@ -287,7 +325,7 @@ class AsyncCompatibleClient:
         output_type: str = "list",
         date_output_format: str = "string_original",
         progress_callback: Optional[Callable[[str, Any], None]] = None,
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect data for multiple banks with rate limiting and progress tracking.
 
         Args:
@@ -320,7 +358,7 @@ class AsyncCompatibleClient:
 
                     if progress_callback:
                         if asyncio.iscoroutinefunction(progress_callback):
-                            await progress_callback(rssd_id, result)
+                            await progress_callback(rssd_id, result)  # type: ignore[attr-defined]
                         else:
                             progress_callback(rssd_id, result)
 
@@ -329,7 +367,7 @@ class AsyncCompatibleClient:
                     error_result = {"error": str(e), "rssd_id": rssd_id}
                     if progress_callback:
                         if asyncio.iscoroutinefunction(progress_callback):
-                            await progress_callback(rssd_id, error_result)
+                            await progress_callback(rssd_id, error_result)  # type: ignore[attr-defined]
                         else:
                             progress_callback(rssd_id, error_result)
                     return rssd_id, error_result
@@ -349,7 +387,7 @@ class AsyncCompatibleClient:
         series: str = "call",
         output_type: str = "list",
         date_output_format: str = "string_original",
-    ) -> Dict[str, Union[List[Dict], Dict]]:
+    ) -> Dict[str, Union[List[Dict[str, Any]], Dict[str, Any]]]:
         """Collect multiple periods for one bank in parallel (async).
 
         Args:
@@ -413,7 +451,7 @@ class AsyncCompatibleClient:
         """Sync context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Sync context manager exit - cleanup."""
         self.close()
 
@@ -421,6 +459,6 @@ class AsyncCompatibleClient:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Async context manager exit - cleanup."""
         self.close()

@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to FFIEC Webservice Python Connector’s documentation! &mdash; FFIEC Data Connect 1.0.0rc1 documentation</title>
+  <title>Welcome to FFIEC Webservice Python Connector’s documentation! &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=77c1c56c"></script>
+      <script src="_static/documentation_options.js?v=0ee5205a"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -44,9 +44,21 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
 </ul>
 
@@ -81,16 +93,107 @@
 <li><p><strong>This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.</strong></p></li>
 <li><p><strong>Please review the license and disclaimer before using this package.</strong></p></li>
 </ul>
-<p>The FFIEC Webservice Python Connector (<cite>ffiec_data_connect</cite>) was created to facilitate the use of the SOAP-based FFIEC Webservice.</p>
+<p>The FFIEC Webservice Python Connector (<cite>ffiec_data_connect</cite>) was created to facilitate the use of both the SOAP-based FFIEC Webservice and the modern REST API.</p>
 <p>Although limited documentation is provided for the Webservice by the FFIEC, practical use of the Webservice via Python requires a considerable amount of boilerplate code - and knowledge of esoteric terms and concepts inherent to bank regulatory data.</p>
-<p>With these challenges in mind, this package provides a Python wrapper for the FFIEC Webservice, simplifying the process of interacting with the Webservice, and allow the rapid development of Python applications that require use of the data hosted on the Webservice.</p>
-<p>Data returned from the Webservice may be returned as a native Python data structure (<cite>list</cite>) or Pandas DataFrames or Series.</p>
+<p>With these challenges in mind, this package provides a Python wrapper for both FFIEC APIs:</p>
+<ul class="simple">
+<li><p><strong>SOAP API</strong>: The legacy webservice using WebserviceCredentials (username/password)</p></li>
+<li><p><strong>REST API</strong>: The modern API using OAuth2Credentials (bearer tokens)</p></li>
+</ul>
+<p>Both APIs provide access to the same data, with the REST API offering improved performance and reliability. The package automatically handles protocol differences, providing a unified interface for data collection.</p>
+<p>Data returned from the APIs may be returned as:</p>
+<ul class="simple">
+<li><p>Native Python data structures (<cite>list</cite>)</p></li>
+<li><p>Pandas DataFrames or Series</p></li>
+<li><p>Polars DataFrames (with direct XBRL conversion for maximum precision)</p></li>
+</ul>
+</section>
+<section id="getting-started-with-interactive-tutorials">
+<h1>Getting Started with Interactive Tutorials<a class="headerlink" href="#getting-started-with-interactive-tutorials" title="Link to this heading"></a></h1>
+<p>📓 <strong>Jupyter Notebook Demos</strong></p>
+<p>The best way to learn the library is through our comprehensive Jupyter notebook tutorials:</p>
+<ul class="simple">
+<li><p><strong>``ffiec_data_connect_rest_demo.ipynb``</strong> - Complete REST API walkthrough with executable examples</p></li>
+<li><p><strong>``ffiec_data_connect_soap_demo.ipynb``</strong> - Legacy SOAP API implementation and migration guidance</p></li>
+</ul>
+<p>These notebooks include:</p>
+<ul class="simple">
+<li><p>Step-by-step setup instructions with real credentials</p></li>
+<li><p>Executable code examples using actual banking data</p></li>
+<li><p>Troubleshooting guides for common issues</p></li>
+<li><p>Performance optimization techniques</p></li>
+<li><p>Migration strategies from SOAP to REST</p></li>
+</ul>
+<p>The notebooks are included with the package installation and provide hands-on experience with both APIs.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="account_setup.html#prerequisites-for-ffiec-data-connect-package">Prerequisites for ffiec_data_connect package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="account_setup.html#how-to-create-an-account">How to create an account</a></li>
+<li class="toctree-l2"><a class="reference internal" href="account_setup.html#account-creation-and-setup">Account Creation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="account_setup.html#new-users">New Users</a></li>
+<li class="toctree-l3"><a class="reference internal" href="account_setup.html#existing-users-migration-process">Existing Users - Migration Process</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="account_setup.html#using-credentials-in-code">Using Credentials in Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="account_setup.html#important-notes">Important Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#system-requirements">System Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#clone-the-repository">Clone the Repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#set-up-virtual-environment">Set Up Virtual Environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#using-venv-built-in">Using venv (Built-in)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#using-conda">Using conda</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#install-dependencies">Install Dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#development-mode-installation">Development Mode Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#core-dependencies-only">Core Dependencies Only</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#running-code-in-development-mode">Running Code in Development Mode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#using-the-library-from-source">Using the Library from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#direct-path-import-alternative">Direct Path Import (Alternative)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#using-jupyter-notebooks">Using Jupyter Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#basic-test-run">Basic Test Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#test-coverage">Test Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#specific-test-patterns">Specific Test Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#code-quality-tools">Code Quality Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#linting-and-formatting">Linting and Formatting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#type-checking">Type Checking</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#building-documentation">Building Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#making-changes">Making Changes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#development-workflow">Development Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#common-development-tasks">Common Development Tasks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#adding-a-new-feature">Adding a New Feature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#debugging">Debugging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#logging">Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#project-structure">Project Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#environment-variables">Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#troubleshooting-development-setup">Troubleshooting Development Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#import-errors">Import Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#dependency-conflicts">Dependency Conflicts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development_setup.html#permission-errors">Permission Errors</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#contributing">Contributing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development_setup.html#see-also">See Also</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a><ul>
@@ -108,17 +211,145 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example Code</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#base-url">Base URL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#rate-limiting">Rate Limiting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#api-specification">API Specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#common-response-codes">Common Response Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#date-formats">Date Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#example-usage-with-python">Example Usage with Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#direct-api-usage-with-curl">Direct API Usage with curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#migration-from-soap-to-rest">Migration from SOAP to REST</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api_reference.html#additional-resources">Additional Resources</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-1-0-0-production-ready">Version 1.0.0 - Production Ready</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#protocol-layer-soap-vs-rest">Protocol Layer (SOAP vs REST)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#type-detection-in-xbrl-processing">Type Detection in XBRL Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#special-processing-rules">Special Processing Rules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#soap-vs-rest-null-handling">SOAP vs REST Null Handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#why-different-null-handling-strategies">Why Different Null Handling Strategies?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#technical-implementation">Technical Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#soap-api-original-behavior">SOAP API (Original Behavior)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#rest-api-enhanced-behavior">REST API (Enhanced Behavior)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#output-format-type-mapping">Output Format Type Mapping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#list-output-output-type-list">List Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;list&quot;</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#pandas-output-output-type-pandas">Pandas Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;pandas&quot;</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#polars-output-output-type-polars">Polars Output (<code class="docutils literal notranslate"><span class="pre">output_type=&quot;polars&quot;</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#integer-display-examples">Integer Display Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#problem-scenario-before-fix">Problem Scenario (Before Fix)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#current-behavior-soap-path">Current Behavior - SOAP Path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#current-behavior-rest-path">Current Behavior - REST Path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#type-conversion-decision-tree">Type Conversion Decision Tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#date-format-handling">Date Format Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#common-patterns-and-best-practices">Common Patterns and Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#working-with-integer-data">Working with Integer Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#type-checking">Type Checking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#null-handling">Null Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#type-preservation-during-operations">Type Preservation During Operations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#migration-guide">Migration Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#from-existing-soap-integration">From Existing SOAP Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#adopting-rest-api">Adopting REST API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#overriding-null-value-handling">Overriding Null Value Handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#the-force-null-types-parameter">The <code class="docutils literal notranslate"><span class="pre">force_null_types</span></code> Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#parameter-options">Parameter Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#implementation-notes">Implementation Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#best-practices">Best Practices</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#natype-error">NAType Error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#integers-display-with-0">Integers Display with .0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#type-loss-in-operations">Type Loss in Operations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#api-reference">API Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#type-related-parameters">Type-Related Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_type_handling.html#internal-type-handling">Internal Type Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#version-history">Version History</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_type_handling.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples &amp; Interactive Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#interactive-jupyter-notebook-demos">Interactive Jupyter Notebook Demos</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#code-examples">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#authentication-issues">Authentication Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#jwt-token-problems">JWT Token Problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#header-name-issues">Header Name Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#account-setup-issues">Account Setup Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#microsoft-callback-link-problems">Microsoft Callback Link Problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#migration-failures">Migration Failures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#token-generation-issues">Token Generation Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#api-usage-issues">API Usage Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#soap-vs-rest-confusion">SOAP vs REST Confusion</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#data-issues">Data Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#integer-display-with-decimals">Integer Display with Decimals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#empty-datasets">Empty Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#common-error-messages">Common Error Messages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#http-status-codes">HTTP Status Codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#library-error-messages">Library Error Messages</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#performance-issues">Performance Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#slow-response-times">Slow Response Times</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#memory-issues">Memory Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#migration-and-legacy-issues">Migration and Legacy Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#soap-to-rest-migration">SOAP to REST Migration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#legacy-token-expiration">Legacy Token Expiration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#getting-help">Getting Help</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#support-channels">Support Channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="troubleshooting.html#debug-information-to-provide">Debug Information to Provide</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#additional-resources">Additional Resources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-2-0-0-upcoming">Version 2.0.0 - (Upcoming)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-0-3-0">Version 0.3.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-0-2-0">Version 0.2.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="versionhistory.html#version-0-1-0">Version 0.1.0</a></li>

@@ -1,0 +1,17 @@
+[doc8]
+# doc8 configuration file for RST linting
+
+# Maximum line length
+max-line-length = 100
+
+# Ignore specific files or directories
+ignore-path = docs/build,docs/source/_build
+
+# Allow long lines in specific contexts
+ignore = D001  # Allow long lines for URLs and code blocks
+
+# File extensions to check
+extensions = .rst
+
+# Verbose output
+verbose = 1

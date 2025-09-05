@@ -2,11 +2,11 @@
 FFIEC Data Connect - Python wrapper for FFIEC webservice API.
 
 This package provides secure, thread-safe access to FFIEC financial data
-with support for both synchronous and asynchronous operations.
+with support for both REST and SOAP APIs.
 """
 
 # Version
-__version__ = "2.0.0rc4"
+__version__ = "2.0.0rc5"
 
 # New async-compatible client
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
@@ -20,7 +20,14 @@ from ffiec_data_connect.config import (
 )
 
 # Core imports - maintain backward compatibility
-from ffiec_data_connect.credentials import CredentialType, WebserviceCredentials
+from ffiec_data_connect.credentials import (
+    CredentialType,
+    OAuth2Credentials,
+    WebserviceCredentials,
+)
+
+# REST API support - Data normalization for backward compatibility
+from ffiec_data_connect.data_normalizer import DataNormalizer
 from ffiec_data_connect.exceptions import (
     ConnectionError,
     CredentialError,
@@ -38,6 +45,16 @@ from ffiec_data_connect.methods import (
     collect_filers_since_date,
     collect_filers_submission_date_time,
     collect_reporting_periods,
+    collect_ubpr_facsimile_data,
+    collect_ubpr_reporting_periods,
+)
+
+# REST API support - Protocol adapters for automatic SOAP/REST selection
+from ffiec_data_connect.protocol_adapter import (
+    ProtocolAdapter,
+    RESTAdapter,
+    SOAPAdapter,
+    create_protocol_adapter,
 )
 
 # SOAP client caching utilities
@@ -47,6 +64,7 @@ from ffiec_data_connect.soap_cache import clear_soap_cache, get_cache_stats
 __all__ = [
     # Core classes
     "WebserviceCredentials",
+    "OAuth2Credentials",  # REST API support
     "FFIECConnection",
     "AsyncCompatibleClient",
     # Methods (backward compatible)
@@ -55,6 +73,9 @@ __all__ = [
     "collect_filers_since_date",
     "collect_filers_submission_date_time",
     "collect_filers_on_reporting_period",
+    # UBPR methods (REST API only)
+    "collect_ubpr_reporting_periods",
+    "collect_ubpr_facsimile_data",
     # Enums
     "CredentialType",
     "ProxyProtocol",
@@ -77,6 +98,12 @@ __all__ = [
     # SOAP Caching
     "clear_soap_cache",
     "get_cache_stats",
+    # REST API support
+    "DataNormalizer",
+    "ProtocolAdapter",
+    "RESTAdapter",
+    "SOAPAdapter",
+    "create_protocol_adapter",
     # Version
     "__version__",
 ]

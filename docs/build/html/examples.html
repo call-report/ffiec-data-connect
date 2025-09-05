@@ -6,21 +6,21 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Example Code &mdash; FFIEC Data Connect 1.0.0rc1 documentation</title>
+  <title>Examples &amp; Interactive Tutorials &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=77c1c56c"></script>
+      <script src="_static/documentation_options.js?v=0ee5205a"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Version History" href="versionhistory.html" />
-    <link rel="prev" title="ffiec_data_connect package" href="ffiec_data_connect.html" /> 
+    <link rel="next" title="Troubleshooting" href="troubleshooting.html" />
+    <link rel="prev" title="Data Type Handling" href="data_type_handling.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,17 +45,27 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="account_setup.html">FFIEC Account Setup Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development_setup.html">Development Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">FFIEC Webservice Data Connector</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Example Code</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api_reference.html">REST API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_type_handling.html">Data Type Handling</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples &amp; Interactive Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#interactive-jupyter-notebook-demos">Interactive Jupyter Notebook Demos</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="#code-examples">Code Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">Loading credentials and starting a connection to the FFIEC Webservice</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#collecting-the-reporting-periods">Collecting the reporting periods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#collect-the-list-of-filers-for-a-particular-reporting-period">Collect the list of filers for a particular reporting period</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">Collect the list of rssd(s) that have filed in a reporting period since a particular date.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#rest-api-examples">REST API Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
 </ul>
 
@@ -73,7 +83,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Example Code</li>
+      <li class="breadcrumb-item active">Examples &amp; Interactive Tutorials</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -83,8 +93,44 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="example-code">
-<h1>Example Code<a class="headerlink" href="#example-code" title="Link to this heading"></a></h1>
+  <section id="examples-interactive-tutorials">
+<h1>Examples &amp; Interactive Tutorials<a class="headerlink" href="#examples-interactive-tutorials" title="Link to this heading"></a></h1>
+<section id="interactive-jupyter-notebook-demos">
+<h2>Interactive Jupyter Notebook Demos<a class="headerlink" href="#interactive-jupyter-notebook-demos" title="Link to this heading"></a></h2>
+<p>📓 <strong>Comprehensive Tutorial Notebooks</strong></p>
+<p>The library includes two detailed Jupyter notebook tutorials with executable examples and real data:</p>
+<dl class="simple">
+<dt>🚀 <strong>REST API Demo</strong> (<code class="docutils literal notranslate"><span class="pre">ffiec_data_connect_rest_demo.ipynb</span></code>)</dt><dd><p>Complete walkthrough of the modern REST API including:</p>
+<ul class="simple">
+<li><p>OAuth2 credential setup and JWT token management</p></li>
+<li><p>Authentication troubleshooting and token validation</p></li>
+<li><p>All 7 REST API endpoints with real banking data examples</p></li>
+<li><p>Performance optimization and rate limiting strategies</p></li>
+<li><p>Advanced features: batch operations, error handling</p></li>
+<li><p>Migration from SOAP to REST API</p></li>
+</ul>
+</dd>
+<dt>🔧 <strong>SOAP API Demo</strong> (<code class="docutils literal notranslate"><span class="pre">ffiec_data_connect_soap_demo.ipynb</span></code>)</dt><dd><p>Legacy SOAP API implementation covering:</p>
+<ul class="simple">
+<li><p>WebserviceCredentials setup and session management</p></li>
+<li><p>Connection handling and error recovery</p></li>
+<li><p>Historical data collection examples</p></li>
+<li><p>Comparison with REST API functionality</p></li>
+<li><p>Step-by-step migration guidance</p></li>
+</ul>
+</dd>
+<dt>💡 <strong>Getting Started with Notebooks</strong></dt><dd><ol class="arabic simple">
+<li><p>Install the library: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">ffiec-data-connect</span></code></p></li>
+<li><p>Open the notebooks in your preferred environment (Jupyter Lab, VS Code, Colab)</p></li>
+<li><p>Follow the step-by-step instructions with executable code cells</p></li>
+<li><p>Experiment with your own credentials and data queries</p></li>
+</ol>
+</dd>
+</dl>
+</section>
+</section>
+<section id="code-examples">
+<h1>Code Examples<a class="headerlink" href="#code-examples" title="Link to this heading"></a></h1>
 <section id="loading-credentials-and-starting-a-connection-to-the-ffiec-webservice">
 <h2>Loading credentials and starting a connection to the FFIEC Webservice<a class="headerlink" href="#loading-credentials-and-starting-a-connection-to-the-ffiec-webservice" title="Link to this heading"></a></h2>
 <p>When using the package, credentials to the Webservice may be loaded from environment variables, or through the instantiation of the <cite>WebserviceCredentials</cite> class.</p>
@@ -98,8 +144,9 @@
 </pre></div>
 </div>
 </section>
+</section>
 <section id="collecting-the-reporting-periods">
-<h2>Collecting the reporting periods<a class="headerlink" href="#collecting-the-reporting-periods" title="Link to this heading"></a></h2>
+<h1>Collecting the reporting periods<a class="headerlink" href="#collecting-the-reporting-periods" title="Link to this heading"></a></h1>
 <p>The following example shows how to collect the reporting periods from the FFIEC Webservice.</p>
 <p>These reporting periods may be utilized for subsequent queries to the FFIEC Webservice, and to determine when new reporting periods are available for query.</p>
 <p>Output is returned as a list of dates in the format of mm/dd/YYYY, which is the “native” format of the FFIEC Webservice.</p>
@@ -120,7 +167,7 @@
 </div>
 </section>
 <section id="collect-the-list-of-filers-for-a-particular-reporting-period">
-<h2>Collect the list of filers for a particular reporting period<a class="headerlink" href="#collect-the-list-of-filers-for-a-particular-reporting-period" title="Link to this heading"></a></h2>
+<h1>Collect the list of filers for a particular reporting period<a class="headerlink" href="#collect-the-list-of-filers-for-a-particular-reporting-period" title="Link to this heading"></a></h1>
 <blockquote>
 <div><p>The following example shows how to collect the list of filers for a particular reporting period.</p>
 <p>This list of filers may be utilized for subsequent queries to the FFIEC Webservice, and to determine which filers are available for query.</p>
@@ -228,7 +275,7 @@
 </div></blockquote>
 </section>
 <section id="collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date">
-<h2>Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.<a class="headerlink" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date" title="Link to this heading"></a></h2>
+<h1>Collect the rssd IDs and submission datetimes of all filers who have filed for a particular reporting period, since a particular date.<a class="headerlink" href="#collect-the-rssd-ids-and-submission-datetimes-of-all-filers-who-have-filed-for-a-particular-reporting-period-since-a-particular-date" title="Link to this heading"></a></h1>
 <blockquote>
 <div><p>The following example shows how to collect the rssd IDs of all filers who have filed for a particular reporting period, since a particular date.</p>
 <p>This method is useful for determining how many filers have completed their reporting for the reporting period.</p>
@@ -257,7 +304,7 @@
 </div></blockquote>
 </section>
 <section id="collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date">
-<h2>Collect the list of rssd(s) that have filed in a reporting period since a particular date.<a class="headerlink" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date" title="Link to this heading"></a></h2>
+<h1>Collect the list of rssd(s) that have filed in a reporting period since a particular date.<a class="headerlink" href="#collect-the-list-of-rssd-s-that-have-filed-in-a-reporting-period-since-a-particular-date" title="Link to this heading"></a></h1>
 <blockquote>
 <div><p>The following example shows how to collect the list of rssd(s) that have filed in a reporting period since a particular date.</p>
 <p>This list of rssd(s) may be utilized for subsequent queries to the FFIEC Webservice, and to determine which rssd(s) have filed for the reporting period.</p>
@@ -279,8 +326,69 @@
 </div>
 </div></blockquote>
 </section>
+<section id="rest-api-examples">
+<h1>REST API Examples<a class="headerlink" href="#rest-api-examples" title="Link to this heading"></a></h1>
+<p>The package also supports the modern REST API using OAuth2 credentials. Here are examples using the REST API:</p>
+<p><strong>Loading OAuth2 credentials and connecting</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">OAuth2Credentials</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="c1"># Create OAuth2 credentials for REST API</span>
+<span class="n">rest_creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_username&quot;</span><span class="p">,</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;your_bearer_token&quot;</span><span class="p">,</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># No connection object needed for REST - pass None as session</span>
+</pre></div>
+</div>
+<p><strong>Collecting reporting periods via REST</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ffiec_data_connect</span><span class="w"> </span><span class="kn">import</span> <span class="n">methods</span>
+
+<span class="n">reporting_periods</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_reporting_periods</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># None for REST API</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">,</span>
+    <span class="n">date_output_format</span><span class="o">=</span><span class="s2">&quot;string_original&quot;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">reporting_periods</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
+<span class="o">&gt;&gt;</span> <span class="p">[</span><span class="s1">&#39;2024-09-30&#39;</span><span class="p">,</span> <span class="s1">&#39;2024-06-30&#39;</span><span class="p">,</span> <span class="s1">&#39;2024-03-31&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-12-31&#39;</span><span class="p">,</span> <span class="s1">&#39;2023-09-30&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Collecting data via REST with force_null_types</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Collect data with pandas null handling (better for integer display)</span>
+<span class="n">time_series</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2024-06-30&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">,</span>
+    <span class="n">force_null_types</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span>  <span class="c1"># Use pd.NA for nulls</span>
+<span class="p">)</span>
+
+<span class="c1"># Or force numpy nulls for compatibility</span>
+<span class="n">time_series_compat</span> <span class="o">=</span> <span class="n">methods</span><span class="o">.</span><span class="n">collect_data</span><span class="p">(</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">creds</span><span class="o">=</span><span class="n">rest_creds</span><span class="p">,</span>
+    <span class="n">rssd_id</span><span class="o">=</span><span class="s2">&quot;37&quot;</span><span class="p">,</span>
+    <span class="n">reporting_period</span><span class="o">=</span><span class="s2">&quot;2024-06-30&quot;</span><span class="p">,</span>
+    <span class="n">series</span><span class="o">=</span><span class="s2">&quot;call&quot;</span><span class="p">,</span>
+    <span class="n">force_null_types</span><span class="o">=</span><span class="s2">&quot;numpy&quot;</span>  <span class="c1"># Use np.nan for nulls</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>REST API Advantages</strong>:</p>
+<ul class="simple">
+<li><p>Better performance and reliability</p></li>
+<li><p>Modern authentication with OAuth2</p></li>
+<li><p>Automatic retry logic built-in</p></li>
+<li><p>No session management required</p></li>
+</ul>
+</section>
 <section id="collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">
-<h2>Collect the time series data associated with a particular rssd and reporting period.<a class="headerlink" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period" title="Link to this heading"></a></h2>
+<h1>Collect the time series data associated with a particular rssd and reporting period.<a class="headerlink" href="#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period" title="Link to this heading"></a></h1>
 <blockquote>
 <div><p>With the metadata collected from the earlier examples, the following example shows how to collect the time series data associated with a particular rssd and reporting period.</p>
 <p>There are two time series that may be collected: “Call [Report]” and “UBPR” (Universal Bank Performance Report) data. Call Report data reflects the rolling data submissions of banks submitting their <cite>FFIEC 031</cite>, <cite>FFIEC 041</cite>, and <cite>FFIEC 051</cite> filings. UBPR data is released en masse for all banks mid-month, each month.</p>
@@ -380,14 +488,13 @@ with the data type indicating which field within the dict/Series contains the da
 </ul>
 </div></blockquote>
 </section>
-</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="ffiec_data_connect.html" class="btn btn-neutral float-left" title="ffiec_data_connect package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="versionhistory.html" class="btn btn-neutral float-right" title="Version History" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="data_type_handling.html" class="btn btn-neutral float-left" title="Data Type Handling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="troubleshooting.html" class="btn btn-neutral float-right" title="Troubleshooting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

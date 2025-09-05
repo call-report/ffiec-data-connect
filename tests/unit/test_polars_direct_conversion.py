@@ -153,16 +153,16 @@ class TestPolarsDirectConversion:
 
                     # Verify actual values are correct and properly typed
                     int_row = df_polars.filter(pl.col("data_type") == "int").row(0)
-                    assert int_row[4] == 1500000  # int_data column
+                    assert int_row[5] == 1500000  # int_data column (index 5 after adding id_rssd)
 
                     float_row = df_polars.filter(pl.col("data_type") == "float").row(0)
-                    assert abs(float_row[5] - 1.25) < 0.001  # float_data column
+                    assert abs(float_row[6] - 1.25) < 0.001  # float_data column (index 6)
 
                     bool_row = df_polars.filter(pl.col("data_type") == "bool").row(0)
-                    assert bool_row[6] is True  # bool_data column
+                    assert bool_row[7] is True  # bool_data column (index 7)
 
                     str_row = df_polars.filter(pl.col("data_type") == "str").row(0)
-                    assert str_row[7] == "test"  # str_data column
+                    assert str_row[8] == "test"  # str_data column (index 8)
 
     def test_empty_data_returns_correct_schema(self):
         """Test that empty data returns polars DataFrame with correct schema."""
@@ -251,10 +251,10 @@ class TestPolarsDirectConversion:
 
                     # Verify nulls are handled correctly
                     row = df_polars.row(0)
-                    assert row[4] == 1000  # int_data is not null
-                    assert row[5] is None  # float_data is null
-                    assert row[6] is None  # bool_data is null
-                    assert row[7] is None  # str_data is null
+                    assert row[5] == 1000  # int_data is not null (index 5 after adding id_rssd)
+                    assert row[6] is None  # float_data is null (index 6)
+                    assert row[7] is None  # bool_data is null (index 7)
+                    assert row[8] is None  # str_data is null (index 8)
 
 
 if __name__ == "__main__":

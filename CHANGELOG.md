@@ -5,13 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-01-XX
+## [2.0.0rc5] - 2025-09-04
 
-### 🎉 Major Release - Production Ready
+### 🎉 Major Release Candidate - Public Release Ready
 
-This is a major release that transforms FFIEC Data Connect into an enterprise-grade library with comprehensive security, performance, and reliability improvements. This version represents a complete overhaul with backward compatibility maintained.
+This release candidate marks the transition to a public, production-ready library with comprehensive REST API support, OAuth2 authentication, and enterprise-grade features. This version represents a complete overhaul with dual protocol support and extensive documentation.
 
-### 🚀 New Features
+### 🌟 Major New Features
+
+#### REST API Support
+- **Complete REST API Implementation**: Full support for all 7 FFIEC REST API endpoints
+- **OAuth2 Authentication**: JWT bearer token authentication with 90-day lifecycle
+- **Protocol Adapter Pattern**: Automatic protocol selection based on credential type
+- **Enhanced Rate Limits**: 2500 requests/hour for REST vs 1000 for SOAP
+- **Modern HTTP Client**: Uses httpx for improved performance and reliability
+
+#### Dual Protocol Architecture
+- **Automatic Protocol Detection**: Seamlessly switches between SOAP/REST based on credentials
+- **Unified API Interface**: Same methods work with both protocols
+- **Data Normalization**: Consistent data format regardless of protocol
+- **Migration Path**: Easy transition from legacy SOAP to modern REST
+
+### 🔐 Authentication & Security
+
+#### OAuth2Credentials Class
+- **JWT Token Support**: Secure JWT bearer token authentication for REST API
+- **Token Validation**: Automatic format validation (must start with `ey`, end with `.`)
+- **Expiration Tracking**: Built-in token expiration monitoring (90-day lifecycle)
+- **Security Masking**: Credentials are masked in string representations
+
+#### Enhanced SOAP Security  
+- **WebserviceCredentials**: Improved legacy authentication with security token
+- **Credential Immutability**: Credentials cannot be modified after initialization
+- **Session Security**: Secure SOAP client caching and session management
+
+#### Microsoft Entra ID Integration
+- **Migration Support**: Full support for FFIEC's transition to Microsoft authentication
+- **Account Setup Documentation**: Comprehensive guides for new and migrating users
+- **Troubleshooting**: Detailed solutions for common migration issues
+
+### 🚀 Enhanced Features
+
+#### Advanced Data Processing
+- **force_null_types Parameter**: Choose between numpy and pandas null handling
+- **Improved Integer Display**: Pandas nulls preserve integer types (100 vs 100.0)
+- **Protocol-Specific Defaults**: REST uses pandas nulls, SOAP uses numpy nulls
+- **Data Type Consistency**: Maintains type integrity across protocol boundaries
+- **Field Name Compatibility**: All functions provide both 'rssd' and 'id_rssd' fields for backward compatibility
+
+#### Comprehensive Error Handling
+- **Protocol-Specific Errors**: Different error types for REST vs SOAP issues
+- **JWT Token Errors**: Specific validation for token format and expiration
+- **Migration Errors**: Targeted error handling for account migration issues
+- **Rate Limiting**: Intelligent rate limit detection and retry logic
+
+#### Enhanced Documentation System
+- **Comprehensive Sphinx Documentation**: Professional documentation with RTD hosting
+- **OpenAPI Specification**: Reverse-engineered REST API specification
+- **Troubleshooting Guide**: Extensive solutions for common issues
+- **Account Setup Guide**: Step-by-step Microsoft Entra ID migration instructions
+- **Development Guide**: Full development environment setup documentation
+
+### 🏗️ Architecture Improvements
+
+#### Protocol Adapter Pattern
+- **RESTAdapter**: Handles all REST API interactions with OAuth2 credentials
+- **SOAPAdapter**: Manages legacy SOAP interactions with webservice credentials  
+- **Unified Interface**: Same method signatures work with both protocols
+- **Automatic Selection**: Protocol chosen based on credential type provided
+
+#### Enhanced Methods System
+- **methods.py**: Legacy SOAP methods with backward compatibility
+- **methods_enhanced.py**: Modern REST methods with full feature support
+- **Protocol Bridging**: Seamless data flow between SOAP and REST implementations
+- **Consistent Return Types**: Same data structures regardless of protocol
+
+### 📊 REST API Endpoints
+
+All 7 FFIEC REST API endpoints now supported:
+- **RetrieveReportingPeriods**: Get available reporting periods for data series
+- **RetrievePanelOfReporters**: Get institutions that filed for specific periods  
+- **RetrieveFilersSinceDate**: Get institutions that filed since a specific date
+- **RetrieveFilersSubmissionDateTime**: Get detailed submission timestamps
+- **RetrieveFacsimile**: Get individual institution data (XBRL/PDF/SDF formats)
+- **RetrieveUBPRReportingPeriods**: Get UBPR-specific reporting periods
+- **RetrieveUBPRXBRLFacsimile**: Get UBPR XBRL data for institutions
+
+### 🧠 Memory & Performance
 
 #### Async Support
 - **AsyncCompatibleClient**: Full async/await support with rate limiting and concurrency control
@@ -20,192 +100,154 @@ This is a major release that transforms FFIEC Data Connect into an enterprise-gr
 - **Rate Limiting**: Configurable request rate limiting to respect API limits
 - **Context Managers**: Automatic resource cleanup with `async with` support
 
-#### Data Processing Enhancements
-- **Direct Polars Conversion**: XBRL → Polars pipeline preserves maximum numerical precision
-- **NumPy Dtype Consistency**: Type preservation throughout data pipeline
-- **Multiple Output Formats**: Support for list, pandas DataFrame, and Polars DataFrame
-- **Type-Specific Columns**: Separate int_data, float_data, bool_data, str_data columns
+#### XML Processing Optimizations
+- **Memory-Efficient Parsing**: Reduced memory copies during XBRL processing
+- **Direct Byte Processing**: Parse XML directly from bytes when possible
+- **Error Snippet Optimization**: Only decode XML snippets for error reporting
+- **Secure XML Processing**: XXE attack prevention with defusedxml integration
 
-#### Advanced Error Handling  
-- **Custom Exception Types**: `ValidationError`, `CredentialError`, `NoDataError`, `ConnectionError`
-- **Legacy Compatibility Mode**: Backward compatible ValueError exceptions when enabled
-- **Descriptive Error Messages**: Rich error context with field-specific information
-- **Deprecation Warnings**: Clear migration path guidance
+#### Connection Management
+- **SOAP Client Caching**: Intelligent caching prevents expensive client recreation
+- **Session Reuse**: Automatic session cleanup and resource management
+- **Thread-Safe Operations**: Safe parallel access to FFIEC webservice
+- **Connection Pooling**: Efficient resource utilization for multiple requests
 
-### 🔒 Security Improvements
+### 📚 Comprehensive Documentation
 
-- **Input Validation**: Comprehensive validation for all method parameters
-- **Credential Security**: Secure password masking in string representations
-- **XXE Prevention**: XML parser hardening against XML External Entity attacks
-- **Immutable Credentials**: Credentials cannot be modified after initialization
-- **Session Security**: Secure SOAP client caching and session management
+#### Professional Documentation Suite
+- **Sphinx Documentation**: Full API documentation with cross-references
+- **ReadTheDocs Hosting**: Professional online documentation at ffiec-data-connect.readthedocs.io
+- **OpenAPI Specification**: Complete REST API specification with request/response schemas
+- **Interactive Examples**: Comprehensive Jupyter notebooks with real-world use cases
 
-### 🧠 Memory Management
+#### User Guides
+- **Account Setup Guide**: Microsoft Entra ID migration and token generation
+- **Development Setup Guide**: Complete development environment configuration
+- **Troubleshooting Guide**: Solutions for authentication, migration, and data issues
+- **Data Type Handling Guide**: Complete documentation of null handling and type preservation
 
-- **Memory Leak Prevention**: Proper cleanup with `__del__` and `close()` methods
-- **SOAP Client Caching**: Prevent expensive client recreation
-- **Session Management**: Automatic session cleanup and resource management
-- **XML Processing Optimization**: Reduced memory copies during XML processing
-- **Context Manager Support**: Automatic resource cleanup with `with` statements
+### 🧪 Testing & Quality
 
-### 🔧 Thread Safety
+#### Comprehensive Test Suite
+- **250+ Tests**: Unit, integration, and performance tests covering all functionality
+- **Protocol Testing**: Separate test suites for SOAP and REST implementations
+- **OAuth2 Testing**: Complete JWT token validation and expiration testing  
+- **Memory Leak Testing**: Automated detection of memory issues and cleanup validation
+- **Thread Safety Testing**: Concurrent access validation across all components
+- **Async Integration Testing**: Full async workflow validation with rate limiting
 
-- **Race Condition Resolution**: Thread-safe operations throughout
-- **Connection Caching**: Thread-local connection management
-- **Concurrent Access**: Safe parallel access to FFIEC webservice
-- **Lock Management**: Proper synchronization primitives
+#### Code Quality
+- **Type Hints**: Complete type annotation coverage with py.typed marker
+- **Code Formatting**: Black, isort, and flake8 integration for consistent style
+- **Documentation Standards**: Comprehensive docstrings following Google style
+- **Security Testing**: Credential masking and XXE prevention validation
 
-### 📊 API Enhancements
+### 🏭 Production Readiness
 
-#### New Collection Methods
-- `collect_filers_on_reporting_period()`: Get all banks that filed for a specific period
-- `collect_filers_since_date()`: Get banks that filed since a specific date  
-- `collect_filers_submission_date_time()`: Get detailed submission timestamps
+#### Public Release Preparation
+- **Repository Cleanup**: Removed all debug files and credentials from version history
+- **Security Audit**: Complete credential sanitization and security review
+- **CI/CD Pipeline**: GitHub Actions with comprehensive testing and quality checks
+- **Package Distribution**: Modern pyproject.toml with proper dependency management
 
-#### Enhanced Existing Methods
-- All methods now support async variants via AsyncCompatibleClient
-- Improved error handling and validation
-- Better type hints and documentation
-- Polars output support
-
-### 📚 Documentation
-
-- **Comprehensive Jupyter Notebook**: Interactive demonstration of all features
-- **Technical Analysis Documents**: Detailed security, memory, and performance analysis
-- **Data Type Handling Guide**: Complete documentation of type precision pipeline
-- **API Documentation**: Improved docstrings and Sphinx integration
-- **Migration Guides**: Clear upgrade path documentation
-
-### 🧪 Testing
-
-- **253 Comprehensive Tests**: Unit, integration, and performance tests
-- **Memory Leak Testing**: Automated detection of memory issues
-- **Thread Safety Testing**: Concurrent access validation
-- **Async Integration Testing**: Full async workflow validation
-- **Real SOAP Integration**: Testing with actual FFIEC webservice schemas
-- **Coverage Reporting**: Detailed test coverage analysis
-
-### 🛠️ Development Infrastructure
-
-- **GitHub Actions**: Automated CI/CD pipeline
-- **Code Coverage**: Comprehensive coverage reporting
-- **Type Checking**: MyPy integration for type safety
-- **Code Formatting**: Black and isort integration
-- **Performance Benchmarks**: Async vs sync performance comparisons
+#### Enterprise Features
+- **Commercial Support**: Available priority support and custom development
+- **Production Deployment**: Battle-tested with real-world financial institutions
+- **Monitoring Integration**: Built-in logging and performance monitoring capabilities
+- **Scalability**: Designed for high-volume data collection scenarios
 
 ### 🔄 Breaking Changes
 
-While this version maintains backward compatibility, some advanced usage patterns may need updates:
-
-#### Configuration Changes
-- Environment variable `FFIEC_USE_LEGACY_ERRORS` now defaults to `true` for compatibility
-- New configuration options for async clients and rate limiting
+#### Python Version Requirements
+- **Minimum Python 3.10**: Modern Python features required for optimal performance
+- **Recommended Python 3.11+**: Best compatibility and performance on macOS/Linux
 
 #### New Dependencies
-- Added optional `polars` dependency for direct data conversion
-- Enhanced `zeep` integration for SOAP client improvements
+- **httpx**: Modern HTTP client for REST API interactions
+- **defusedxml**: Secure XML processing with XXE attack prevention
+- **Optional polars**: High-performance data processing (install with `pip install ffiec-data-connect[polars]`)
 
-#### Enhanced Error Types
-- New exception types provide richer error information
-- Legacy `ValueError` exceptions still available via compatibility mode
+#### Configuration Changes
+- **force_null_types Parameter**: New parameter for controlling null value handling
+- **Protocol-Specific Defaults**: Different default null types for SOAP vs REST
+- **Enhanced Error Types**: Richer exception hierarchy (legacy mode still available)
 
-### 📈 Performance Improvements
+### 📈 Migration from 1.x
 
-- **Async Operations**: Up to 5x faster for bulk data collection
-- **Memory Efficiency**: Reduced memory usage through optimized XML processing
-- **Connection Reuse**: SOAP client caching eliminates connection overhead
-- **Parallel Processing**: Concurrent data collection for multiple banks
+#### Backward Compatibility
+- **Existing SOAP Code**: All existing SOAP-based code continues to work unchanged
+- **Same Method Signatures**: collect_data(), collect_reporting_periods() unchanged
+- **Legacy Error Mode**: ValueError exceptions maintained for compatibility
 
-### 🔧 Configuration
-
-#### New Environment Variables
-```bash
-# Error handling mode (default: true for compatibility)
-FFIEC_USE_LEGACY_ERRORS=false
-
-# Async client settings
-FFIEC_MAX_CONCURRENT=5
-FFIEC_RATE_LIMIT=10.0
-```
-
-#### New Configuration Options
-- AsyncCompatibleClient configuration
-- Rate limiting settings
-- Connection pooling options
-- Memory management settings
-
-### 📦 Distribution
-
-- **PyPI Ready**: Modern `pyproject.toml` configuration
-- **Type Hints**: Full typing support with `py.typed` marker
-- **ReadTheDocs Integration**: Comprehensive online documentation
-- **Multiple Install Options**: Core, polars, dev, docs, notebook extras
-
-### 🏗️ Internal Improvements
-
-- **Code Organization**: Modular architecture with clear separation of concerns
-- **Caching System**: Intelligent SOAP client caching
-- **Error Propagation**: Consistent error handling throughout the stack
-- **Resource Management**: Proper lifecycle management for all resources
-
-### 🔍 Debugging and Monitoring
-
-- **Enhanced Logging**: Detailed logging throughout the library
-- **Performance Metrics**: Built-in performance monitoring capabilities
-- **Error Context**: Rich error information for easier debugging
-- **Session Tracking**: Connection and session state visibility
-
-### 🧮 Data Precision
-
-- **Maximum Precision Pipeline**: Direct XBRL → Polars conversion preserves full numerical precision
-- **Type Safety**: NumPy dtypes maintained throughout conversion pipeline
-- **Multiple Formats**: Choose optimal format for your use case
-- **Precision Documentation**: Complete guide to data type handling
-
-### 📋 Migration Guide
-
-#### From 0.x.x to 1.0.0
-
-**Basic Usage** (No Changes Required):
+#### New Capabilities
 ```python
-# This code continues to work unchanged
-from ffiec_data_connect import collect_data, WebserviceCredentials
-# ... existing code works as before
+# New REST API usage
+from ffiec_data_connect import OAuth2Credentials
+from datetime import datetime, timedelta
+
+# OAuth2 credentials for REST API
+rest_creds = OAuth2Credentials(
+    username="your_username",
+    bearer_token="eyJhbGci...",  # JWT token from FFIEC portal
+    token_expires=datetime.now() + timedelta(days=90)
+)
+
+# Same methods work with both credential types
+data = collect_data(
+    session=None,  # None for REST, connection object for SOAP
+    creds=rest_creds,  # OAuth2 for REST, Webservice for SOAP
+    reporting_period="12/31/2023",
+    rssd_id="480228",
+    series="call",
+    force_null_types="pandas"  # New parameter for null handling
+)
+
+# Check token status
+if rest_creds.is_expired:
+    print("Token expires within 24 hours - time to renew!")
 ```
 
-**Enhanced Usage** (New Features):
-```python
-# New async capabilities
-from ffiec_data_connect import AsyncCompatibleClient
+### 🎯 FFIEC API Evolution Support
 
-async with AsyncCompatibleClient(credentials) as client:
-    data = await client.collect_data_async(period, rssd_id)
+#### Microsoft Entra ID Transition
+- **Complete Migration Support**: Handles FFIEC's transition to Microsoft authentication
+- **Dual Authentication**: Supports both legacy and new authentication methods
+- **Migration Troubleshooting**: Comprehensive solutions for common migration issues
+- **Future-Proof**: Ready for SOAP API deprecation in February 2026
 
-# New polars support
-data_polars = collect_data(session, creds, period, rssd_id, output_type="polars")
+#### REST API Compliance
+- **CDR-PDD-SIS-611 v1.10**: Full compliance with FFIEC REST API specification
+- **Non-Standard Headers**: Handles FFIEC's unique header requirements (`UserID`, `Authentication`)
+- **Error Handling**: Proper handling of FFIEC-specific error responses
+- **Rate Limiting**: Respects FFIEC rate limits (1000/hour SOAP, 2500/hour REST)
 
-# New error handling
-from ffiec_data_connect import ValidationError
-try:
-    data = collect_data(session, creds, period, invalid_rssd)
-except ValidationError as e:
-    print(f"Validation failed for field {e.field}: {e.value}")
-```
+### 🌍 Platform Support
 
-### 🎯 Future Roadmap
+#### Cross-Platform Compatibility
+- **macOS/Linux**: Full native support with optimal performance
+- **Windows**: Supported with SSL configuration guidance
+- **Cloud Platforms**: Tested on Google Colab, AWS, Azure, and GCP
+- **Container Ready**: Docker-friendly with minimal dependencies
 
-This 1.0.0 release establishes a solid foundation for future enhancements:
-
-- Enhanced caching strategies
-- Additional output formats
-- Performance optimizations
-- Extended FFIEC API coverage
-
+#### Deployment Options
+- **Local Development**: Complete development environment setup
+- **Production Deployment**: Enterprise-grade deployment patterns
+- **Cloud Integration**: Ready for serverless and containerized deployments
 ### 🙏 Acknowledgments
 
-Special thanks to the financial data community for feedback and testing that helped shape this major release.
+This release represents a significant milestone in making FFIEC financial data accessible to researchers, analysts, and financial institutions. Special thanks to the community for feedback and testing that helped shape this comprehensive release.
 
 ---
+
+## Previous Releases
+
+## [1.0.0] - 2025-01-XX (Superseded by 2.0.0rc5)
+
+### Added  
+- Initial async support and thread safety improvements
+- Basic Polars integration
+- Enhanced error handling
+- Memory leak prevention
 
 ## [0.3.0] - 2024-XX-XX
 
@@ -222,7 +264,7 @@ Special thanks to the financial data community for feedback and testing that hel
 ## [0.2.0] - Earlier versions
 
 ### Added
-- Basic FFIEC webservice integration
+- Basic FFIEC webservice integration (SOAP only)
 - Pandas DataFrame support
 - Core data collection methods
 
@@ -234,6 +276,7 @@ Special thanks to the financial data community for feedback and testing that hel
 
 ---
 
-[1.0.0]: https://github.com/civic-forge/ffiec-data-connect/compare/v0.3.0...v1.0.0
-[0.3.0]: https://github.com/civic-forge/ffiec-data-connect/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/civic-forge/ffiec-data-connect/releases/tag/v0.2.0
+[2.0.0rc5]: https://github.com/call-report/ffiec-data-connect/releases/tag/v2.0.0rc5
+[1.0.0]: https://github.com/call-report/ffiec-data-connect/compare/v0.3.0...v1.0.0
+[0.3.0]: https://github.com/call-report/ffiec-data-connect/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/call-report/ffiec-data-connect/releases/tag/v0.2.0

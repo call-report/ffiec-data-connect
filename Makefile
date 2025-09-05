@@ -1,4 +1,4 @@
-.PHONY: format lint type-check test test-fast coverage build clean check-all install-dev help
+.PHONY: format lint type-check test test-fast coverage build clean check-all install-dev docs docs-test docs-lint help
 
 # Quality checks (run in order)
 format:
@@ -9,7 +9,7 @@ lint:
 	python -m flake8 src/ tests/
 
 type-check:
-	python -m mypy --package ffiec_data_connect
+	python -m mypy src/ffiec_data_connect
 
 # Combined quality check target
 check-all: format lint type-check test
@@ -60,9 +60,27 @@ publish:
 	python -m twine check dist/*
 	python -m twine upload dist/*
 
+# Documentation targets
+docs:
+	cd docs && python -m sphinx -b html source build/html
+
+docs-test:
+	python -m pytest tests/unit/test_documentation_build.py -v
+
+docs-clean:
+	rm -rf docs/build/
+
+docs-linkcheck:
+	cd docs && python -m sphinx -b linkcheck source build/linkcheck
+
+docs-lint:
+	@echo "🔍 Linting RST files..."
+	doc8 docs/source/ --max-line-length 100
+	rstcheck --recursive docs/source/
+
 # Cleanup
 clean:
-	rm -rf build/ dist/ *.egg-info/ htmlcov/ .coverage coverage.xml coverage.json
+	rm -rf build/ dist/ *.egg-info/ htmlcov/ .coverage coverage.xml coverage.json docs/build/
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 
@@ -84,6 +102,13 @@ help:
 	@echo "  coverage-fast  - Run fast coverage with HTML report"
 	@echo "  coverage-full  - Run comprehensive coverage with all reports"
 	@echo "  coverage-html  - Generate HTML coverage report for core modules"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  docs           - Build HTML documentation"
+	@echo "  docs-test      - Test documentation build process"
+	@echo "  docs-lint      - Lint RST files with doc8 and rstcheck"
+	@echo "  docs-clean     - Remove documentation build files"
+	@echo "  docs-linkcheck - Check external links in documentation"
 	@echo ""
 	@echo "Build & Deploy:"
 	@echo "  build          - Build distribution packages"
