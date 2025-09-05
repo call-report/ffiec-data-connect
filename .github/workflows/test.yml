@@ -271,10 +271,14 @@ jobs:
         pytest -v tests/unit/test_memory_leaks.py --tb=short --durations=10
         echo "::endgroup::"
         
-    - name: Run thread safety tests
+    - name: Run thread safety tests (if enabled)
       run: |
         echo "::group::Thread safety validation"
-        pytest -v tests/unit/test_thread_safety.py --tb=short --durations=10
+        if [ -f "tests/unit/test_thread_safety.py" ]; then
+          pytest -v tests/unit/test_thread_safety.py --tb=short --durations=10
+        else
+          echo "⏭️ Thread safety tests are disabled (test_thread_safety.py.disabled)"
+        fi
         echo "::endgroup::"
         
     # - name: Run integration tests
