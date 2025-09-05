@@ -51,8 +51,8 @@ class OAuth2Credentials:
         bearer_token: OAuth2 bearer token (90-day lifecycle)
         token_expires: Optional token expiration datetime
 
-    Example:
-        ```python
+    Example::
+
         # Create OAuth2 credentials for REST API
         creds = OAuth2Credentials(
             username="your_ffiec_username",
@@ -62,7 +62,6 @@ class OAuth2Credentials:
 
         # Use with existing methods (automatic REST API selection)
         periods = collect_reporting_periods(session, creds)
-        ```
     """
 
     def __init__(

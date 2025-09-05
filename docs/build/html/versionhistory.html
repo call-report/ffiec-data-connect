@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Version History &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
+  <title>Version History &mdash; FFIEC Data Connect 2.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=0ee5205a"></script>
+      <script src="_static/documentation_options.js?v=51b770b3"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -59,8 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Version History</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#version-2-0-0-upcoming">Version 2.0.0 - (Upcoming)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#version-2-0-0-major-release">Version 2.0.0 - Major Release</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#version-0-3-0">Version 0.3.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#version-0-2-0">Version 0.2.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#version-0-1-0">Version 0.1.0</a></li>
@@ -96,11 +95,11 @@
   <section id="version-history">
 <h1>Version History<a class="headerlink" href="#version-history" title="Link to this heading"></a></h1>
 </section>
-<section id="version-2-0-0rc5-release-candidate-5">
-<h1>Version 2.0.0rc5 - Release Candidate 5<a class="headerlink" href="#version-2-0-0rc5-release-candidate-5" title="Link to this heading"></a></h1>
-<p>Date: 2025-09-04</p>
-<p><strong>🎯 Latest Release Candidate</strong></p>
-<p>Enhanced documentation, comprehensive test coverage, and final API refinements before stable release.</p>
+<section id="version-2-0-0-major-release">
+<h1>Version 2.0.0 - Major Release<a class="headerlink" href="#version-2-0-0-major-release" title="Link to this heading"></a></h1>
+<p>Date: 2025-09-05</p>
+<p><strong>🎯 Production Release with REST API Support</strong></p>
+<p>Major release introducing comprehensive REST API support, OAuth2 authentication, and dual protocol architecture.</p>
 <p><strong>🔄 Recent Updates</strong></p>
 <ul class="simple">
 <li><p><strong>Comprehensive Test Suite</strong>: Added 30+ new tests for OAuth2, force_null_types, and protocol adapters</p></li>
@@ -118,11 +117,8 @@
 - Added reverse-engineered OpenAPI schema integration
 - Fixed GitHub URLs to use call-report organization</p></li>
 </ul>
-<section id="version-2-0-0-upcoming">
-<h2>Version 2.0.0 - (Upcoming)<a class="headerlink" href="#version-2-0-0-upcoming" title="Link to this heading"></a></h2>
-<p>Date: TBD</p>
-<p><strong>🎉 Stable Release Based on 2.0.0rc5</strong></p>
-<p>The upcoming stable release will be based on the comprehensive features developed in 2.0.0rc5, providing enterprise-grade reliability and performance.</p>
+<p><strong>🎉 Major Features</strong></p>
+<p>This release provides a complete dual-protocol implementation supporting both the modern REST API and legacy SOAP API, with seamless migration capabilities.</p>
 <p><strong>🚀 New Features</strong></p>
 <ul class="simple">
 <li><p><strong>REST API Support</strong>: Full support for modern OAuth2-based REST API alongside legacy SOAP</p></li>
@@ -170,7 +166,6 @@
 </ul>
 <p><strong>🔧 Breaking Changes</strong></p>
 <p>While backward compatibility is maintained, some advanced usage patterns may need updates. See CHANGELOG.md for detailed migration guidance.</p>
-</section>
 <section id="version-0-3-0">
 <h2>Version 0.3.0<a class="headerlink" href="#version-0-3-0" title="Link to this heading"></a></h2>
 <p>Date: 2024-XX-XX</p>

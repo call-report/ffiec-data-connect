@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ffiec_data_connect package &mdash; FFIEC Data Connect 2.0.0rc5 documentation</title>
+  <title>ffiec_data_connect package &mdash; FFIEC Data Connect 2.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=0ee5205a"></script>
+      <script src="_static/documentation_options.js?v=51b770b3"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -140,7 +140,7 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html#collect-the-time-series-data-associated-with-a-particular-rssd-and-reporting-period">Collect the time series data associated with a particular rssd and reporting period.</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="versionhistory.html">Version History</a></li>
-<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0rc5-release-candidate-5">Version 2.0.0rc5 - Release Candidate 5</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versionhistory.html#version-2-0-0-major-release">Version 2.0.0 - Major Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="licensedisclaimer.html">Disclaimers and License</a></li>
 </ul>
 
@@ -245,19 +245,18 @@ Bearer tokens for authentication instead of username/password pairs.</p>
 </ul>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<p><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>python
-# Create OAuth2 credentials for REST API
-creds = OAuth2Credentials(</p>
-<blockquote>
-<div><p>username=”your_ffiec_username”,
-bearer_token=”your_90_day_bearer_token”,
-token_expires=datetime(2024, 3, 15)  # Optional</p>
-</div></blockquote>
-<p>)</p>
-<p># Use with existing methods (automatic REST API selection)
-periods = collect_reporting_periods(session, creds)
-<a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create OAuth2 credentials for REST API</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_ffiec_username&quot;</span><span class="p">,</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;your_90_day_bearer_token&quot;</span><span class="p">,</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>  <span class="c1"># Optional</span>
+<span class="p">)</span>
+
+<span class="c1"># Use with existing methods (automatic REST API selection)</span>
+<span class="n">periods</span> <span class="o">=</span> <span class="n">collect_reporting_periods</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">creds</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py property">
 <dt class="sig sig-object py" id="ffiec_data_connect.credentials.OAuth2Credentials.bearer_token">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bearer_token</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.credentials.OAuth2Credentials.bearer_token" title="Link to this definition"></a></dt>
@@ -735,7 +734,21 @@ For better performance, use OAuth2Credentials for REST API access.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of dicts or pandas DataFrame containing the rssd id of the filer, and the following fields: “id_rssd”, “fdic_cert_number”, “occ_chart_number”, “ots_dock_number”, “primary_aba_rout_number”, “name”, “state”, “city”, “address”, “filing_type”, “has_filed_for_reporting_period”</p>
+<dd class="field-even"><p><p>List of dicts or pandas DataFrame containing the following fields:
+- “rssd”/”id_rssd”: Institution RSSD ID (both field names provided for compatibility)
+- “fdic_cert_number”: FDIC certificate number
+- “occ_chart_number”: OCC charter number
+- “ots_dock_number”: OTS docket number
+- “primary_aba_rout_number”: Primary ABA routing number
+- “name”: Institution name
+- “state”: State
+- “city”: City
+- “address”: Street address
+- “filing_type”: Filing type
+- “has_filed_for_reporting_period”: Whether institution has filed for the period</p>
+<p>NOTE: Property names were inconsistent in earlier code, so both ‘rssd’ and ‘id_rssd’
+are provided with identical data to reduce need to refactor existing user code.</p>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list or pd.DataFrame</p>
@@ -799,7 +812,7 @@ For better performance, use OAuth2Credentials for REST API access.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">string_yyyymmdd</span></code> is the date in yyyymmdd format</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">python_format</span></code> is the date in python datetime format</p></li>
 </ul>
-<dl class="simple">
+<dl>
 <dt>Args:</dt><dd><p>session (ffiec_connection.FFIECConnection or requests.Session): The requests session object to use for the request.
 creds (WebserviceCredentials or requests.Session): The credentials to use for the request.
 since_date (str or datetime): The date to use for the request. May be in the format of ‘YYYY-MM-DD’, ‘YYYYMMDD’, ‘MM/DD/YYYY’, or a python datetime object.
@@ -807,7 +820,11 @@ reporting_period (str or datetime): The reporting period to use for the request 
 output_type (str, optional): “list” or “pandas”. Defaults to “list”.
 date_output_format (str, optional): string_original or python_datetime. Defaults to “string_original”.</p>
 </dd>
-<dt>Returns:</dt><dd><p>any: List of dicts or pandas DataFrame containing the rssd id of the filer, and the submission date and time, in Washington DC timezone.</p>
+<dt>Returns:</dt><dd><p>any: List of dicts or pandas DataFrame containing the following fields:
+- “rssd”/”id_rssd”: Institution RSSD ID (both field names provided for compatibility)
+- “datetime”: Submission date and time in Washington DC timezone</p>
+<p>NOTE: Property names were inconsistent in earlier code, so both ‘rssd’ and ‘id_rssd’
+are provided with identical data to reduce need to refactor existing user code.</p>
 </dd>
 </dl>
 </div></blockquote>
@@ -1370,19 +1387,18 @@ Bearer tokens for authentication instead of username/password pairs.</p>
 </ul>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<p><a href="#id9"><span class="problematic" id="id10">``</span></a><a href="#id11"><span class="problematic" id="id12">`</span></a>python
-# Create OAuth2 credentials for REST API
-creds = OAuth2Credentials(</p>
-<blockquote>
-<div><p>username=”your_ffiec_username”,
-bearer_token=”your_90_day_bearer_token”,
-token_expires=datetime(2024, 3, 15)  # Optional</p>
-</div></blockquote>
-<p>)</p>
-<p># Use with existing methods (automatic REST API selection)
-periods = collect_reporting_periods(session, creds)
-<a href="#id13"><span class="problematic" id="id14">``</span></a><a href="#id15"><span class="problematic" id="id16">`</span></a></p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create OAuth2 credentials for REST API</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">OAuth2Credentials</span><span class="p">(</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;your_ffiec_username&quot;</span><span class="p">,</span>
+    <span class="n">bearer_token</span><span class="o">=</span><span class="s2">&quot;your_90_day_bearer_token&quot;</span><span class="p">,</span>
+    <span class="n">token_expires</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>  <span class="c1"># Optional</span>
+<span class="p">)</span>
+
+<span class="c1"># Use with existing methods (automatic REST API selection)</span>
+<span class="n">periods</span> <span class="o">=</span> <span class="n">collect_reporting_periods</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">creds</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py property">
 <dt class="sig sig-object py" id="ffiec_data_connect.OAuth2Credentials.bearer_token">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bearer_token</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.OAuth2Credentials.bearer_token" title="Link to this definition"></a></dt>
@@ -1619,6 +1635,12 @@ backward compatibility with SOAP responses.</p>
 <span class="sig-name descname"><span class="pre">DEFAULT_RATE_LIMIT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.6944444444444444</span></em><a class="headerlink" href="#ffiec_data_connect.RESTAdapter.DEFAULT_RATE_LIMIT" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="ffiec_data_connect.RESTAdapter.is_rest">
+<span class="sig-name descname"><span class="pre">is_rest</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/ffiec_data_connect/protocol_adapter.html#RESTAdapter.is_rest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffiec_data_connect.RESTAdapter.is_rest" title="Link to this definition"></a></dt>
+<dd><p>Return True since this is a REST adapter.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="ffiec_data_connect.RESTAdapter.protocol_name">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">protocol_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.RESTAdapter.protocol_name" title="Link to this definition"></a></dt>
@@ -1768,6 +1790,12 @@ backward compatibility with SOAP responses.</p>
 <p>SOAP API adapter wrapping existing functionality.</p>
 <p>This adapter provides a consistent interface to the existing SOAP-based
 functionality, allowing for transparent protocol selection.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffiec_data_connect.SOAPAdapter.is_rest">
+<span class="sig-name descname"><span class="pre">is_rest</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/ffiec_data_connect/protocol_adapter.html#SOAPAdapter.is_rest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffiec_data_connect.SOAPAdapter.is_rest" title="Link to this definition"></a></dt>
+<dd><p>Return False since this is a SOAP adapter.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="ffiec_data_connect.SOAPAdapter.protocol_name">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">protocol_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#ffiec_data_connect.SOAPAdapter.protocol_name" title="Link to this definition"></a></dt>
@@ -1994,7 +2022,21 @@ For better performance, use OAuth2Credentials for REST API access.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of dicts or pandas DataFrame containing the rssd id of the filer, and the following fields: “id_rssd”, “fdic_cert_number”, “occ_chart_number”, “ots_dock_number”, “primary_aba_rout_number”, “name”, “state”, “city”, “address”, “filing_type”, “has_filed_for_reporting_period”</p>
+<dd class="field-even"><p><p>List of dicts or pandas DataFrame containing the following fields:
+- “rssd”/”id_rssd”: Institution RSSD ID (both field names provided for compatibility)
+- “fdic_cert_number”: FDIC certificate number
+- “occ_chart_number”: OCC charter number
+- “ots_dock_number”: OTS docket number
+- “primary_aba_rout_number”: Primary ABA routing number
+- “name”: Institution name
+- “state”: State
+- “city”: City
+- “address”: Street address
+- “filing_type”: Filing type
+- “has_filed_for_reporting_period”: Whether institution has filed for the period</p>
+<p>NOTE: Property names were inconsistent in earlier code, so both ‘rssd’ and ‘id_rssd’
+are provided with identical data to reduce need to refactor existing user code.</p>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list or pd.DataFrame</p>
@@ -2058,7 +2100,7 @@ For better performance, use OAuth2Credentials for REST API access.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">string_yyyymmdd</span></code> is the date in yyyymmdd format</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">python_format</span></code> is the date in python datetime format</p></li>
 </ul>
-<dl class="simple">
+<dl>
 <dt>Args:</dt><dd><p>session (ffiec_connection.FFIECConnection or requests.Session): The requests session object to use for the request.
 creds (WebserviceCredentials or requests.Session): The credentials to use for the request.
 since_date (str or datetime): The date to use for the request. May be in the format of ‘YYYY-MM-DD’, ‘YYYYMMDD’, ‘MM/DD/YYYY’, or a python datetime object.
@@ -2066,7 +2108,11 @@ reporting_period (str or datetime): The reporting period to use for the request 
 output_type (str, optional): “list” or “pandas”. Defaults to “list”.
 date_output_format (str, optional): string_original or python_datetime. Defaults to “string_original”.</p>
 </dd>
-<dt>Returns:</dt><dd><p>any: List of dicts or pandas DataFrame containing the rssd id of the filer, and the submission date and time, in Washington DC timezone.</p>
+<dt>Returns:</dt><dd><p>any: List of dicts or pandas DataFrame containing the following fields:
+- “rssd”/”id_rssd”: Institution RSSD ID (both field names provided for compatibility)
+- “datetime”: Submission date and time in Washington DC timezone</p>
+<p>NOTE: Property names were inconsistent in earlier code, so both ‘rssd’ and ‘id_rssd’
+are provided with identical data to reduce need to refactor existing user code.</p>
 </dd>
 </dl>
 </div></blockquote>

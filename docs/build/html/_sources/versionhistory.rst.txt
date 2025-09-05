@@ -1,13 +1,13 @@
 Version History
 ===============
 
-Version 2.0.0rc5 - Release Candidate 5
-=======================================
-Date: 2025-09-04
+Version 2.0.0 - Major Release
+==============================
+Date: 2025-09-05
 
-**🎯 Latest Release Candidate**
+**🎯 Production Release with REST API Support**
 
-Enhanced documentation, comprehensive test coverage, and final API refinements before stable release.
+Major release introducing comprehensive REST API support, OAuth2 authentication, and dual protocol architecture.
 
 **🔄 Recent Updates**
 
@@ -26,13 +26,9 @@ Enhanced documentation, comprehensive test coverage, and final API refinements b
   - Added reverse-engineered OpenAPI schema integration
   - Fixed GitHub URLs to use call-report organization
 
-Version 2.0.0 - (Upcoming)
--------------------------------------------
-Date: TBD
+**🎉 Major Features**
 
-**🎉 Stable Release Based on 2.0.0rc5**
-
-The upcoming stable release will be based on the comprehensive features developed in 2.0.0rc5, providing enterprise-grade reliability and performance.
+This release provides a complete dual-protocol implementation supporting both the modern REST API and legacy SOAP API, with seamless migration capabilities.
 
 **🚀 New Features**
 
