@@ -160,7 +160,7 @@ class AsyncCompatibleClient:
             date_output_format: Date format in output
 
         Returns:
-            Available reporting periods
+            Available reporting periods in ascending chronological order (oldest first)
         """
         if self.rate_limiter:
             self.rate_limiter.wait_if_needed()

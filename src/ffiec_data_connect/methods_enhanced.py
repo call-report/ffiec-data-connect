@@ -102,7 +102,7 @@ def collect_reporting_periods_enhanced(
         date_output_format: Date format for output
 
     Returns:
-        List of reporting periods or DataFrame
+        List of reporting periods or DataFrame in ascending chronological order (oldest first)
     """
     logger.debug(f"collect_reporting_periods_enhanced called with series={series}")
 

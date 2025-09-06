@@ -421,6 +421,7 @@ def collect_reporting_periods(
 
     Returns:
         `list` or `Pandas` series: Returns a list of reporting periods from the FFIEC Webservice
+        in ascending chronological order (oldest first)
 
     """
 
@@ -1224,7 +1225,7 @@ def collect_ubpr_reporting_periods(
         date_output_format: Date format for output
 
     Returns:
-        list or pd.DataFrame: List of UBPR reporting periods
+        list or pd.DataFrame: List of UBPR reporting periods in ascending chronological order (oldest first)
     """
 
     # Validate inputs
