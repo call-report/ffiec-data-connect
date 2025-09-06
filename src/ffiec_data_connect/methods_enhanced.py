@@ -149,8 +149,9 @@ def collect_reporting_periods_enhanced(
 
         # Sort reporting periods in ascending chronological order (oldest first)
         from .methods import _sort_reporting_periods_ascending
+
         sorted_periods = _sort_reporting_periods_ascending(raw_periods)
-        
+
         # Process dates - convert from MM/DD/YYYY to requested format if needed
         processed_periods = []
         for period_str in sorted_periods:

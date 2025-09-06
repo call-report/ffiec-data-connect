@@ -896,9 +896,18 @@ class SOAPAdapter(ProtocolAdapter):
         from . import methods
 
         # Use existing implementation
-        return methods.collect_reporting_periods(
-            self.session, self.credentials, series=series
+        result = methods.collect_reporting_periods(
+            self.session,
+            self.credentials,
+            series=series,
+            date_output_format="string_original",
         )
+        # Ensure we return List[str] as expected by the interface
+        # Since we use date_output_format="string_original", result should be List[str]
+        if isinstance(result, list):
+            return result  # type: ignore[return-value]
+        else:
+            return result.tolist()  # type: ignore[return-value]
 
     def retrieve_facsimile(
         self, rssd_id: Union[str, int], reporting_period: str, series: str
