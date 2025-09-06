@@ -905,9 +905,18 @@ class SOAPAdapter(ProtocolAdapter):
         # Ensure we return List[str] as expected by the interface
         # Since we use date_output_format="string_original", result should be List[str]
         if isinstance(result, list):
+            # Runtime assertion to ensure type safety - should always be strings
+            assert all(
+                isinstance(x, str) for x in result
+            ), f"Expected all string values, got types: {[type(x).__name__ for x in result]}"
             return result  # type: ignore[return-value]
         else:
-            return result.tolist()  # type: ignore[return-value]
+            # Convert pandas Series to list and ensure all are strings
+            result_list = result.tolist()
+            assert all(
+                isinstance(x, str) for x in result_list
+            ), f"Expected all string values, got types: {[type(x).__name__ for x in result_list]}"
+            return result_list  # type: ignore[return-value]
 
     def retrieve_facsimile(
         self, rssd_id: Union[str, int], reporting_period: str, series: str
