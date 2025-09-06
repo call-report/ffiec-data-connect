@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.4] - 2025-09-06
+
+### 🔄 Breaking Changes & Improvements
+
+- **Consistent Reporting Periods Sorting**: All reporting period functions now return data in ascending chronological order (oldest first)
+  - `collect_reporting_periods()` (both SOAP and REST)
+  - `collect_ubpr_reporting_periods()` (REST)
+  - `collect_reporting_periods_enhanced()` (REST)
+- **Date Format Support**: Automatic detection and sorting of both SOAP format (YYYY-MM-DD) and REST format (MM/DD/YYYY)
+- **Robust Error Handling**: Graceful fallback when date formats are invalid or mixed
+
+### 🧪 Testing & Quality
+
+- **Comprehensive Test Coverage**: 17 new tests covering date sorting functionality
+  - Unit tests for core sorting logic with various date formats
+  - Integration tests for all affected functions
+  - Edge case handling (empty lists, invalid formats, mixed formats)
+  - Chronological order verification tests
+- **Backward Compatibility**: All existing tests continue to pass
+
+### 📚 Documentation Updates
+
+- **Demo Notebooks**: Updated both REST and SOAP demo notebooks to clearly show sorted periods
+  - Clear labeling of "Oldest periods (first N)" and "Latest periods (last N)"
+  - Educational notes explaining the new consistent sorting behavior
+- **Function Documentation**: Updated docstrings to reflect sorting behavior
+
+### 🔧 Internal Improvements
+
+- **Utility Function**: Added `_sort_reporting_periods_ascending()` for consistent date sorting
+- **Format Preservation**: Original date formats are maintained after sorting
+- **Memory Efficient**: Minimal overhead for sorting operations
+
+### 📈 User Impact
+
+- **Predictable Behavior**: Both Call Reports and UBPR periods now follow the same ordering
+- **Time Series Friendly**: Ascending order makes it easier to work with time series data
+- **API Consistency**: Same behavior across SOAP and REST implementations
+
 ## [2.0.3] - 2025-09-05
 
 ### 🔧 Documentation Fix
