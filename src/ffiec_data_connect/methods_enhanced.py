@@ -102,7 +102,7 @@ def collect_reporting_periods_enhanced(
         date_output_format: Date format for output
 
     Returns:
-        List of reporting periods or DataFrame
+        List of reporting periods or DataFrame in ascending chronological order (oldest first)
     """
     logger.debug(f"collect_reporting_periods_enhanced called with series={series}")
 
@@ -147,9 +147,14 @@ def collect_reporting_periods_enhanced(
                 f"Schema validation warnings: {validation_report['warnings']}"
             )
 
+        # Sort reporting periods in ascending chronological order (oldest first)
+        from .utils import sort_reporting_periods_ascending
+
+        sorted_periods = sort_reporting_periods_ascending(raw_periods)
+
         # Process dates - convert from MM/DD/YYYY to requested format if needed
         processed_periods = []
-        for period_str in raw_periods:
+        for period_str in sorted_periods:
             # For now, keep as-is since most users expect MM/DD/YYYY
             # Future enhancement: convert based on date_output_format
             processed_periods.append(period_str)

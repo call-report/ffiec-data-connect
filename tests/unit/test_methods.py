@@ -588,8 +588,14 @@ class TestMemoryLeakPrevention:
     @patch("ffiec_data_connect.methods._client_factory")
     def test_reporting_periods_memory_usage(self, mock_client_factory):
         """Test that collect_reporting_periods doesn't leak memory."""
-        # Setup large mock data
-        large_periods_list = [f"2023-{i:02d}-31" for i in range(1, 13)] * 100
+        # Setup large mock data - use valid dates only
+        # Only months 1,3,5,7,8,10,12 have 31 days, others use appropriate last day
+        valid_months = [
+            "2023-01-31", "2023-02-28", "2023-03-31", "2023-04-30", 
+            "2023-05-31", "2023-06-30", "2023-07-31", "2023-08-31",
+            "2023-09-30", "2023-10-31", "2023-11-30", "2023-12-31"
+        ]
+        large_periods_list = valid_months * 100
 
         mock_client = Mock()
         mock_client.service.RetrieveReportingPeriods.return_value = large_periods_list

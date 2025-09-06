@@ -40,6 +40,7 @@ from ffiec_data_connect.exceptions import (
     ValidationError,
     raise_exception,
 )
+from ffiec_data_connect.utils import sort_reporting_periods_ascending
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -398,7 +399,7 @@ def collect_reporting_periods(
     series: str = "call",
     output_type: str = "list",
     date_output_format: str = "string_original",
-) -> Union[List[str], pd.Series]:
+) -> Union[List[str], List[datetime], pd.Series]:
     """Returns list of reporting periods available for access via the FFIEC webservice
 
     **ENHANCED**: Now supports both SOAP and REST APIs automatically based on credential type.
@@ -420,6 +421,7 @@ def collect_reporting_periods(
 
     Returns:
         `list` or `Pandas` series: Returns a list of reporting periods from the FFIEC Webservice
+        in ascending chronological order (oldest first)
 
     """
 
@@ -463,14 +465,18 @@ def collect_reporting_periods(
 
     # At this point ret is guaranteed to be non-None and non-empty
     assert ret is not None
-    ret_date_formatted = ret
+
+    # Sort reporting periods in ascending chronological order (oldest first)
+    ret_sorted = sort_reporting_periods_ascending(ret)
+    ret_date_formatted: Union[List[str], List[datetime]] = ret_sorted
 
     if date_output_format == "string_yyyymmdd":
         ret_date_formatted = [
-            datetime.strftime(datetime.strptime(x, "%Y-%m-%d"), "%Y%m%d") for x in ret
+            datetime.strftime(datetime.strptime(x, "%Y-%m-%d"), "%Y%m%d")
+            for x in ret_sorted
         ]
     elif date_output_format == "python_format":
-        ret_date_formatted = [datetime.strptime(x, "%Y-%m-%d") for x in ret]
+        ret_date_formatted = [datetime.strptime(x, "%Y-%m-%d") for x in ret_sorted]
     # the default is to return the original string
 
     if output_type == "list":
@@ -1219,7 +1225,7 @@ def collect_ubpr_reporting_periods(
         date_output_format: Date format for output
 
     Returns:
-        list or pd.DataFrame: List of UBPR reporting periods
+        list or pd.DataFrame: List of UBPR reporting periods in ascending chronological order (oldest first)
     """
 
     # Validate inputs
@@ -1237,11 +1243,14 @@ def collect_ubpr_reporting_periods(
             adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
             raw_periods = adapter.retrieve_ubpr_reporting_periods()
 
+            # Sort reporting periods in ascending chronological order (oldest first)
+            sorted_periods = sort_reporting_periods_ascending(raw_periods)
+
             # Handle output type conversion
             if output_type == "pandas":
-                return pd.DataFrame({"reporting_period": raw_periods})
+                return pd.DataFrame({"reporting_period": sorted_periods})
             else:
-                return raw_periods
+                return sorted_periods
 
         except Exception as e:
             logger.error(f"REST API call failed for UBPR reporting periods: {e}")
