@@ -8,7 +8,7 @@ from typing import List
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Date format regex patterns (imported from methods.py to avoid dependency)
+# Date format regex patterns (defined locally to avoid dependency on methods.py)
 yyyymmddDashRegex = r"^\d{4}-\d{2}-\d{2}$"
 mmddyyyyRegex = r"^\d{1,2}/\d{1,2}/\d{4}$"
 
