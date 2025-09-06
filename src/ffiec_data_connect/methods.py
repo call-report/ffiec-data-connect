@@ -40,6 +40,7 @@ from ffiec_data_connect.exceptions import (
     ValidationError,
     raise_exception,
 )
+from ffiec_data_connect.utils import sort_reporting_periods_ascending
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -51,68 +52,6 @@ yyyymmddDashRegex = r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
 mmddyyyyRegex = r"^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 
 validRegexList = [quarterStringRegex, yyyymmddRegex, yyyymmddDashRegex, mmddyyyyRegex]
-
-
-def _sort_reporting_periods_ascending(periods: List[str]) -> List[str]:
-    """Sort reporting periods in ascending chronological order (oldest first).
-
-    Handles both SOAP format (YYYY-MM-DD) and REST format (MM/DD/YYYY).
-    Preserves the original format after sorting.
-
-    Args:
-        periods: List of date strings in either YYYY-MM-DD or MM/DD/YYYY format
-
-    Returns:
-        List of date strings sorted in ascending chronological order
-
-    Raises:
-        ValueError: If date formats are inconsistent or invalid
-    """
-    if not periods:
-        return periods
-
-    # Detect format from first period
-    first_period = periods[0]
-    is_soap_format = bool(re.match(yyyymmddDashRegex, first_period))
-    is_rest_format = bool(re.match(mmddyyyyRegex, first_period))
-
-    if not (is_soap_format or is_rest_format):
-        logger.warning(f"Unknown date format in reporting periods: {first_period}")
-        return periods  # Return unsorted if format is unknown
-
-    # Parse dates to datetime objects for proper sorting
-    parsed_dates = []
-    for period in periods:
-        try:
-            if is_soap_format:
-                # SOAP format: YYYY-MM-DD
-                if not re.match(yyyymmddDashRegex, period):
-                    raise ValueError(
-                        f"Inconsistent date format: expected YYYY-MM-DD, got {period}"
-                    )
-                dt = datetime.strptime(period, "%Y-%m-%d")
-            else:
-                # REST format: MM/DD/YYYY
-                if not re.match(mmddyyyyRegex, period):
-                    raise ValueError(
-                        f"Inconsistent date format: expected MM/DD/YYYY, got {period}"
-                    )
-                dt = datetime.strptime(period, "%m/%d/%Y")
-
-            parsed_dates.append((dt, period))
-        except ValueError as e:
-            logger.error(f"Failed to parse reporting period '{period}': {e}")
-            # Return original unsorted list if any date fails to parse
-            return periods
-
-    # Sort by datetime (ascending = oldest first)
-    parsed_dates.sort(key=lambda x: x[0])
-
-    # Extract the original formatted strings in sorted order
-    sorted_periods = [period for _, period in parsed_dates]
-
-    logger.debug(f"Sorted {len(periods)} reporting periods in ascending order")
-    return sorted_periods
 
 
 def _create_ffiec_date_from_datetime(indate: datetime) -> str:
@@ -527,7 +466,7 @@ def collect_reporting_periods(
     assert ret is not None
 
     # Sort reporting periods in ascending chronological order (oldest first)
-    ret_sorted = _sort_reporting_periods_ascending(ret)
+    ret_sorted = sort_reporting_periods_ascending(ret)
     ret_date_formatted: Union[List[str], List[datetime]] = ret_sorted
 
     if date_output_format == "string_yyyymmdd":
@@ -1304,7 +1243,7 @@ def collect_ubpr_reporting_periods(
             raw_periods = adapter.retrieve_ubpr_reporting_periods()
 
             # Sort reporting periods in ascending chronological order (oldest first)
-            sorted_periods = _sort_reporting_periods_ascending(raw_periods)
+            sorted_periods = sort_reporting_periods_ascending(raw_periods)
 
             # Handle output type conversion
             if output_type == "pandas":
