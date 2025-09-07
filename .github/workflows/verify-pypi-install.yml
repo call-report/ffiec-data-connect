@@ -73,7 +73,10 @@ jobs:
         # Install from Test PyPI or Production PyPI based on target
         if [ "$TARGET" == "Test PyPI" ]; then
           echo "📦 Installing from Test PyPI..."
-          pip install --no-cache-dir --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ffiec-data-connect==$VERSION
+          # Install package from Test PyPI only, then dependencies from Production PyPI
+          pip install --no-cache-dir --pre --no-deps --index-url https://test.pypi.org/simple/ ffiec-data-connect==$VERSION
+          echo "📦 Installing dependencies from Production PyPI..."
+          pip install --no-cache-dir pandas numpy requests zeep lxml openpyxl
         else
           echo "📦 Installing from Production PyPI..."
           pip install --no-cache-dir --pre ffiec-data-connect==$VERSION
