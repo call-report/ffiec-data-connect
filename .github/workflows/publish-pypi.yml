@@ -118,7 +118,7 @@ jobs:
           # Install package from Test PyPI only, then dependencies from Production PyPI
           pip install --no-cache-dir --pre --no-deps --index-url https://test.pypi.org/simple/ ffiec-data-connect==${{ steps.get_version.outputs.version }}
           echo "📦 Installing dependencies from Production PyPI..."
-          pip install --no-cache-dir pandas numpy requests zeep lxml openpyxl
+          pip install --no-cache-dir pandas numpy requests zeep lxml openpyxl defusedxml httpx pydantic xmltodict
         else
           echo "📦 Installing from Production PyPI..."
           pip install --no-cache-dir --pre ffiec-data-connect==${{ steps.get_version.outputs.version }}
