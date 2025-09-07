@@ -21,63 +21,63 @@ jobs:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: 
+    environment:
       name: ${{ github.event.inputs.target == 'Test PyPI' && 'testpypi' || 'pypi' }}
       url: ${{ github.event.inputs.target == 'Test PyPI' && 'https://test.pypi.org/p/ffiec-data-connect' || 'https://pypi.org/p/ffiec-data-connect' }}
     permissions:
       id-token: write  # Required for trusted publishing
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        
+
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build twine
-        
+
     - name: Build package
       run: |
         python -m build
-        
+
     - name: Verify package
       run: |
         python -m twine check dist/*
-        
+
     - name: Validate version matches input
       run: |
         # Extract version from pyproject.toml
         TOML_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
         INPUT_VERSION="${{ github.event.inputs.version }}"
-        
+
         if [ "$TOML_VERSION" != "$INPUT_VERSION" ]; then
           echo "❌ Version mismatch!"
           echo "pyproject.toml version: $TOML_VERSION"
           echo "Input version: $INPUT_VERSION"
           exit 1
         fi
-        
+
         echo "✅ Version match confirmed: $TOML_VERSION"
-        
+
     - name: Validate wheel dependencies
       run: |
         python dev/scripts/validate_wheel_dependencies.py dist/*.whl
-        
+
     - name: Publish to Test PyPI
       if: ${{ github.event.inputs.target == 'Test PyPI' }}
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy/
-        
+
     - name: Publish to Production PyPI
       if: ${{ github.event.inputs.target == 'Production PyPI' }}
       uses: pypa/gh-action-pypi-publish@release/v1
-      
+
   verify-install:
     name: Verify Installation
     runs-on: ubuntu-latest
@@ -86,16 +86,16 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
-    
+
     steps:
     - name: Checkout code (for version extraction)
       uses: actions/checkout@v4
-      
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Extract version from pyproject.toml
       id: get_version
       run: |
@@ -103,7 +103,7 @@ jobs:
         VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Installing version: $VERSION"
-        
+
     - name: Install specific version from PyPI
       run: |
         python -m pip install --upgrade pip
@@ -111,14 +111,19 @@ jobs:
         pip cache purge
         # Wait a few minutes for package to be available
         sleep 180
-        
+
         # Install from Test PyPI or Production PyPI based on target
         if [ "${{ github.event.inputs.target }}" == "Test PyPI" ]; then
-          pip install --no-cache-dir --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ffiec-data-connect==${{ steps.get_version.outputs.version }}
+          echo "📦 Installing from Test PyPI..."
+          # Install package from Test PyPI only, then dependencies from Production PyPI
+          pip install --no-cache-dir --pre --no-deps --index-url https://test.pypi.org/simple/ ffiec-data-connect==${{ steps.get_version.outputs.version }}
+          echo "📦 Installing dependencies from Production PyPI..."
+          pip install --no-cache-dir pandas numpy requests zeep lxml openpyxl
         else
+          echo "📦 Installing from Production PyPI..."
           pip install --no-cache-dir --pre ffiec-data-connect==${{ steps.get_version.outputs.version }}
         fi
-        
+
     - name: Test basic import and verify version
       run: |
         python -c "
