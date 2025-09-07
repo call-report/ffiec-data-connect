@@ -67,8 +67,8 @@ def sort_reporting_periods_ascending(periods: List[str]) -> List[str]:
             parsed_dates.append((dt, period))
         except ValueError as e:
             logger.error(f"Failed to parse reporting period '{period}': {e}")
-            # Fail fast with a specific error if any date fails to parse
-            raise ValueError(f"Failed to parse reporting period '{period}': {e}")
+            # Return original unsorted list if any date fails to parse
+            return periods
 
     # Sort by datetime (ascending = oldest first)
     parsed_dates.sort(key=lambda x: x[0])
