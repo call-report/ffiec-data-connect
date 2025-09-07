@@ -6,7 +6,7 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Mondays at 6 AM UTC
 
-# Cancel in-progress runs for the same branch  
+# Cancel in-progress runs for the same branch
 concurrency:
   group: deps-${{ github.ref }}
   cancel-in-progress: true
@@ -19,11 +19,11 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4.1.7
-      
+
     - name: Dependency Review
       uses: actions/dependency-review-action@v4.3.2
       with:
@@ -35,29 +35,28 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4.1.7
-      
+
     - name: Set up Python
       uses: actions/setup-python@v5.1.0
       with:
         python-version: '3.11'
-        cache: 'pip'
-        
+
     - name: Install pip-audit
       run: |
         python -m pip install --upgrade pip
         pip install pip-audit
-        
+
     - name: Run security audit
       run: |
         echo "::group::Security audit of dependencies"
         pip-audit --format=json --output=security-audit.json . || echo "Vulnerabilities found"
         pip-audit .
         echo "::endgroup::"
-        
+
     - name: Upload security audit results
       if: always()
       uses: actions/upload-artifact@v4.3.3
