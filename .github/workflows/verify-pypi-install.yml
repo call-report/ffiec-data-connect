@@ -1,0 +1,220 @@
+name: Verify PyPI Installation
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to verify (must exist on PyPI)'
+        required: true
+        type: string
+      target:
+        description: 'PyPI target to verify installation from'
+        required: true
+        type: choice
+        options:
+        - 'Production PyPI'
+        - 'Test PyPI'
+        default: 'Test PyPI'
+      wait_time:
+        description: 'Wait time in seconds before attempting install (default: 180)'
+        required: false
+        type: number
+        default: 180
+
+jobs:
+  verify-install:
+    name: Verify Installation (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
+
+    steps:
+    - name: Checkout code (for comparison)
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Validate input version format
+      run: |
+        VERSION="${{ github.event.inputs.version }}"
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "❌ Invalid version format: $VERSION"
+          echo "Expected format: X.Y.Z (e.g., 2.0.4)"
+          exit 1
+        fi
+        echo "✅ Version format validated: $VERSION"
+
+    - name: Wait for package availability
+      if: github.event.inputs.wait_time > 0
+      run: |
+        WAIT_TIME=${{ github.event.inputs.wait_time }}
+        echo "⏳ Waiting ${WAIT_TIME} seconds for package to be available on PyPI..."
+        sleep $WAIT_TIME
+
+    - name: Install package from PyPI
+      run: |
+        echo "::group::Installing package from PyPI"
+        python -m pip install --upgrade pip
+
+        # Clear pip cache to ensure fresh download
+        pip cache purge
+
+        VERSION="${{ github.event.inputs.version }}"
+        TARGET="${{ github.event.inputs.target }}"
+
+        echo "Installing ffiec-data-connect==$VERSION from $TARGET"
+
+        # Install from Test PyPI or Production PyPI based on target
+        if [ "$TARGET" == "Test PyPI" ]; then
+          echo "📦 Installing from Test PyPI..."
+          pip install --no-cache-dir --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ffiec-data-connect==$VERSION
+        else
+          echo "📦 Installing from Production PyPI..."
+          pip install --no-cache-dir --pre ffiec-data-connect==$VERSION
+        fi
+
+        echo "::endgroup::"
+
+    - name: Verify installation and version
+      run: |
+        echo "::group::Version verification"
+        python -c "
+        import sys
+        import ffiec_data_connect
+
+        expected_version = '${{ github.event.inputs.version }}'
+        actual_version = ffiec_data_connect.__version__
+
+        print(f'Python version: {sys.version}')
+        print(f'Expected package version: {expected_version}')
+        print(f'Installed package version: {actual_version}')
+
+        if actual_version != expected_version:
+            print(f'❌ Version mismatch! Expected {expected_version}, got {actual_version}')
+            sys.exit(1)
+        else:
+            print(f'✅ Version verification passed: {actual_version}')
+        "
+        echo "::endgroup::"
+
+    - name: Test core imports
+      run: |
+        echo "::group::Core import tests"
+        python -c "
+        # Test all major imports
+        try:
+            from ffiec_data_connect import WebserviceCredentials, FFIECConnection
+            print('✅ Core classes imported successfully')
+
+            from ffiec_data_connect import AsyncCompatibleClient, RateLimiter
+            print('✅ Async classes imported successfully')
+
+            # Test main functions are available
+            import ffiec_data_connect as fdc
+            functions = [name for name in dir(fdc) if not name.startswith('_')]
+            expected_functions = [
+                'WebserviceCredentials', 'FFIECConnection', 'AsyncCompatibleClient',
+                'collect_data', 'collect_reporting_periods', 'collect_ubpr_reporting_periods'
+            ]
+
+            for func in expected_functions:
+                if func not in functions:
+                    print(f'❌ Missing expected function: {func}')
+                    sys.exit(1)
+
+            print(f'✅ All expected functions available: {expected_functions}')
+            print('✅ Core import tests passed')
+
+        except ImportError as e:
+            print(f'❌ Import error: {e}')
+            sys.exit(1)
+        except Exception as e:
+            print(f'❌ Unexpected error: {e}')
+            sys.exit(1)
+        "
+        echo "::endgroup::"
+
+    - name: Test basic functionality
+      run: |
+        echo "::group::Basic functionality tests"
+        python -c "
+        from ffiec_data_connect import WebserviceCredentials
+
+        # Test credential creation (should not fail for basic validation)
+        try:
+            creds = WebserviceCredentials('test_user', 'test_pass')
+            print('✅ Credentials object creation successful')
+        except Exception as e:
+            print(f'❌ Credentials creation failed: {e}')
+            sys.exit(1)
+
+        # Test that modules can be inspected
+        import ffiec_data_connect as fdc
+        version = fdc.__version__
+        if not version or not isinstance(version, str):
+            print('❌ Package version not accessible')
+            sys.exit(1)
+        else:
+            print(f'✅ Package version accessible: {version}')
+
+        print('✅ Basic functionality tests passed')
+        "
+        echo "::endgroup::"
+
+    - name: Check package dependencies
+      run: |
+        echo "::group::Dependency verification"
+        # Show what got installed
+        pip list | grep -E "(ffiec|pandas|numpy|requests|zeep|lxml)"
+
+        # Verify key dependencies are available
+        python -c "
+        try:
+            import pandas
+            import numpy
+            import requests
+            import zeep
+            import lxml
+            print('✅ All key dependencies importable')
+        except ImportError as e:
+            print(f'❌ Missing dependency: {e}')
+            sys.exit(1)
+        "
+        echo "::endgroup::"
+
+  verification-summary:
+    name: Installation Verification Summary
+    runs-on: ubuntu-latest
+    needs: verify-install
+    if: always()
+
+    steps:
+    - name: Generate summary
+      run: |
+        echo "## PyPI Installation Verification Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Package**: ffiec-data-connect==${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Source**: ${{ github.event.inputs.target }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Wait Time**: ${{ github.event.inputs.wait_time }} seconds" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [[ "${{ needs.verify-install.result }}" == "success" ]]; then
+          echo "✅ **Installation Verification**: PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Package successfully installed and verified across all Python versions (3.10-3.13):" >> $GITHUB_STEP_SUMMARY
+          echo "- Version verification ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Core imports ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Basic functionality ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Dependencies ✅" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Installation Verification**: FAILED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "One or more verification steps failed. Check the job logs for details." >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
