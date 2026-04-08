@@ -245,7 +245,7 @@ class TestSOAPDeprecation:
         with pytest.raises(SOAPDeprecationError) as exc_info:
             collect_reporting_periods(None, creds)
         assert "OAuth2Credentials" in str(exc_info.value)
-        assert "SOAP-to-REST.md" in str(exc_info.value)
+        assert "MIGRATION.md" in str(exc_info.value)
 
     def test_deprecation_error_contains_portal_url(self):
         """Test that SOAPDeprecationError contains the FFIEC portal URL."""

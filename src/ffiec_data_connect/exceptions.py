@@ -161,7 +161,7 @@ class SOAPDeprecationError(FFIECError):
             f"{code_example}\n"
             f"\n"
             f"Get a REST API token: https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx\n"
-            f"Migration guide: https://github.com/call-report/ffiec-data-connect/blob/main/SOAP-to-REST.md\n"
+            f"Migration guide: https://github.com/call-report/ffiec-data-connect/blob/main/MIGRATION.md\n"
             f"{'=' * 70}"
         )
 
