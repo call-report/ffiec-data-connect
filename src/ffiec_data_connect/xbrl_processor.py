@@ -20,7 +20,7 @@ try:
     import xmltodict
 
     SECURE_XML = True
-except ImportError:
+except ImportError:  # pragma: no cover
     # Fallback to standard library with warning
     import warnings
 

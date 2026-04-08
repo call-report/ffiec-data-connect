@@ -2,9 +2,6 @@
 
 from typing import Any, Dict, Optional, Union
 
-from zeep import helpers
-
-
 def _normalize_output_from_reporter_panel(
     row: Dict[str, Any],
 ) -> Dict[str, Optional[Union[str, bool]]]:
@@ -19,7 +16,7 @@ def _normalize_output_from_reporter_panel(
     """
 
     new_row: Dict[str, Optional[Union[str, bool]]] = {}
-    row_keys = list(helpers.serialize_object(row).keys())  # type: ignore[no-untyped-call]
+    row_keys = list(row.keys())
 
     # process ID_RSSD - provide both field names for compatibility
     # NOTE: Property names were inconsistent in earlier code, so we provide both
@@ -85,7 +82,7 @@ def _normalize_output_from_reporter_panel(
         else:
             new_row["state"] = temp_str
     else:
-        new_row["city"] = None
+        new_row["state"] = None
 
     # Process City
     if "City" in row_keys:
@@ -104,6 +101,8 @@ def _normalize_output_from_reporter_panel(
             new_row["address"] = temp_str
         else:
             new_row["address"] = temp_str
+    else:
+        new_row["address"] = None
 
     # Process Zip (handle both "Zip" and "ZIP" for REST API compatibility)
     zip_field = None
@@ -113,11 +112,7 @@ def _normalize_output_from_reporter_panel(
         zip_field = "ZIP"
 
     if zip_field:
-        temp_str = str(row[zip_field]).zfill(5)
-        if temp_str == "0" or temp_str == "":
-            new_row["zip"] = temp_str
-        else:
-            new_row["zip"] = temp_str
+        new_row["zip"] = str(row[zip_field]).zfill(5)
     else:
         new_row["zip"] = None
 
@@ -128,6 +123,8 @@ def _normalize_output_from_reporter_panel(
             new_row["filing_type"] = temp_str
         else:
             new_row["filing_type"] = temp_str
+    else:
+        new_row["filing_type"] = None
 
     # process HasFiledForReportingPeriod
     if "HasFiledForReportingPeriod" in row_keys:

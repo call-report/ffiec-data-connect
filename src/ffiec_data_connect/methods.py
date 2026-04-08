@@ -4,6 +4,8 @@ The methods contained in this module are utilized to call and collect data from 
 
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from datetime import datetime
@@ -12,7 +14,6 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
-import requests
 
 # Polars import - optional for direct XBRL to polars conversion
 try:
@@ -23,11 +24,8 @@ except ImportError:
     POLARS_AVAILABLE = False
     pl = None  # type: ignore
 
-from zeep import Client
-
 from ffiec_data_connect import (
     credentials,
-    datahelpers,
     ffiec_connection,
     xbrl_processor,
 )
@@ -37,6 +35,7 @@ from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.exceptions import (
     ConnectionError,
     NoDataError,
+    SOAPDeprecationError,
     ValidationError,
     raise_exception,
 )
@@ -130,10 +129,8 @@ def _convert_quarter_to_date(reporting_period: str) -> Optional[datetime]:
             return datetime(year, 9, 30)
         elif quarter_number == 4:
             return datetime(year, 12, 31)
-        else:
-            return (
-                None  # Invalid quarter number - return None for backwards compatibility
-            )
+        else:  # pragma: no cover — regex [1-4] prevents this
+            return None
     else:
         return None  # Invalid reporting period format - return None for backwards compatibility
 
@@ -269,7 +266,7 @@ def _date_format_validator(date_format: str) -> bool:
 
 
 def _credentials_validator(
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
 ) -> bool:
     """Internal function to validate the credentials
 
@@ -290,40 +287,35 @@ def _credentials_validator(
             "Invalid credentials type",
             field="credentials",
             value=type(creds).__name__,
-            expected="WebserviceCredentials or OAuth2Credentials instance",
+            expected="OAuth2Credentials instance",
         )
     return True
 
 
 def _session_validator(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
+    session: Any,
 ) -> bool:
-    """Internal function to validate the session
+    """Internal function to validate the session.
+
+    REST API requires session=None. SOAP is no longer supported.
 
     Args:
-        session: The session to validate (can be None for REST API)
+        session: The session to validate (must be None for REST API)
 
     Returns:
         bool: True if valid
-
-    Raises:
-        ValidationError: If session is invalid
     """
-    # Allow None for REST API usage
     if session is None:
         return True
-    elif isinstance(session, ffiec_connection.FFIECConnection):
-        return True
-    elif isinstance(session, requests.Session):
-        return True
-    else:
-        raise_exception(
-            ValidationError,
-            "Invalid session type",
-            field="session",
-            value=type(session).__name__,
-            expected="requests.Session or FFIECConnection instance",
-        )
+    # Non-None session indicates SOAP usage pattern
+    raise SOAPDeprecationError(
+        soap_method="session parameter (SOAP)",
+        rest_equivalent="Pass session=None for REST API",
+        code_example=(
+            '  # REST API does not use a session object\n'
+            '  data = collect_data(session=None, creds=creds, ...)'
+        ),
+    )
 
 
 def _validate_rssd_id(rssd_id: str) -> int:
@@ -374,28 +366,9 @@ def _validate_rssd_id(rssd_id: str) -> int:
     return rssd_int
 
 
-def _return_client_session(
-    session: requests.Session, creds: credentials.WebserviceCredentials
-) -> Client:
-    """Internal function to return a cached zeep client session for better performance.
-
-    Args:
-        session (requests.Session): the requests.Session object to use
-        creds (credentials.WebserviceCredentials): the credentials to use
-
-    Returns:
-        Client: Cached or newly created zeep Client instance
-    """
-
-    # Use cached SOAP client for better performance and memory usage
-    from ffiec_data_connect.soap_cache import get_soap_client
-
-    return get_soap_client(creds, session)
-
-
 def collect_reporting_periods(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    session: Optional[Any],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
     series: str = "call",
     output_type: str = "list",
     date_output_format: str = "string_original",
@@ -439,86 +412,22 @@ def collect_reporting_periods(
             session, creds, series, output_type, date_output_format
         )
 
-    # Original SOAP implementation for WebserviceCredentials
-    _ = _session_validator(session)
-
-    # we have a session and valid credentials, so try to log in
-    assert session is not None, "Session should not be None after validation for SOAP"
-    client = _client_factory(session, creds)
-
-    # scope ret outside the if statement
-    ret = None
-
-    if series == "call":
-        ret = client.service.RetrieveReportingPeriods(dataSeries="Call")
-    elif series == "ubpr":
-        ret = client.service.RetrieveUBPRReportingPeriods()
-
-    # did we return anything? if not, raise an error
-    if ret is None or len(ret) == 0:
-        raise_exception(
-            NoDataError,
-            "No reporting periods available",
-            reporting_period=None,
-            rssd_id=None,
-        )
-
-    # At this point ret is guaranteed to be non-None and non-empty
-    assert ret is not None
-
-    # Sort reporting periods in ascending chronological order (oldest first)
-    ret_sorted = sort_reporting_periods_ascending(ret)
-    ret_date_formatted: Union[List[str], List[datetime]] = ret_sorted
-
-    if date_output_format == "string_yyyymmdd":
-        ret_date_formatted = [
-            datetime.strftime(datetime.strptime(x, "%Y-%m-%d"), "%Y%m%d")
-            for x in ret_sorted
-        ]
-    elif date_output_format == "python_format":
-        ret_date_formatted = [datetime.strptime(x, "%Y-%m-%d") for x in ret_sorted]
-    # the default is to return the original string
-
-    if output_type == "list":
-        return ret_date_formatted
-    elif output_type == "pandas":
-        return pd.DataFrame(ret_date_formatted, columns=["reporting_period"])
-    else:
-        # for now, default is to return a list
-        return ret_date_formatted
-
-    pass
-
-
-def _client_factory(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session],
-    creds: credentials.WebserviceCredentials,
-) -> Client:
-    """Creates a zeep client session
-
-    Determines whether the session argument is an FFIECConnection instance or a requests.Session instance.
-
-    Args:
-        session (_type_): _description_
-        creds (_type_): _description_
-
-    Returns:
-        Client: _description_
-    """
-    # we have a session and valid credentials, so try to log in
-    if isinstance(session, ffiec_connection.FFIECConnection):
-        return _return_client_session(session.session, creds)
-    elif isinstance(session, requests.Session):
-        return _return_client_session(session, creds)
-    else:
-        raise Exception(
-            "Invalid session. Must be a FFIECConnection or requests.Session instance"
-        )
+    # SOAP is no longer supported
+    raise SOAPDeprecationError(
+        soap_method="collect_reporting_periods (SOAP)",
+        rest_equivalent="collect_reporting_periods(None, OAuth2Credentials(...), series)",
+        code_example=(
+            '  from ffiec_data_connect import OAuth2Credentials, collect_reporting_periods\n'
+            '\n'
+            '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+            '  periods = collect_reporting_periods(None, creds, series="call")'
+        ),
+    )
 
 
 def collect_data(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    session: Optional[Any],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
     reporting_period: Union[str, datetime],
     rssd_id: str,
     series: str,
@@ -587,7 +496,7 @@ def collect_data(
             if TYPE_CHECKING:
                 import httpx
             adapter = create_protocol_adapter(
-                creds, cast(Union["requests.Session", "httpx.Client", None], session)
+                creds, cast(Optional["httpx.Client"], session)
             )
 
             # Attempt to retrieve data via REST API
@@ -707,207 +616,34 @@ def collect_data(
             return normalized_data
 
         except ConnectionError as e:
-            # If REST API fails with server error, log and provide helpful message
+            # If REST API fails with server error, log and re-raise with context
             if "server error" in str(e).lower() or "500" in str(e):
                 logger.warning(
                     f"REST API RetrieveFacsimile endpoint returned server error for RSSD {rssd_id}. "
-                    f"This endpoint may not be implemented yet. "
-                    f"Consider using WebserviceCredentials with SOAP API for data collection."
+                    f"This endpoint may not be fully implemented yet."
                 )
-                raise_exception(
-                    ConnectionError,
-                    "REST API data collection not available",
-                    f"The FFIEC REST API RetrieveFacsimile endpoint returned a server error. "
-                    f"This endpoint may not be implemented yet. For collecting data for RSSD {rssd_id}, "
-                    f"please use WebserviceCredentials with the SOAP API. "
-                    f"REST API currently supports: collect_reporting_periods, collect_filers_* functions.",
-                    credential_source="oauth2_rest_api",
-                )
-            else:
-                # Re-raise other errors
-                raise
+            raise
 
-    # Original SOAP implementation for WebserviceCredentials
-    _ = _session_validator(session)
-
-    # Session should not be None after validation for SOAP
-    assert session is not None, "Session should not be None after validation for SOAP"
-    # This SOAP path is only for WebserviceCredentials after OAuth2 routing
-    assert isinstance(
-        creds, credentials.WebserviceCredentials
-    ), "SOAP path requires WebserviceCredentials"
-    client = _client_factory(session, creds)
-
-    reporting_period_ffiec = _return_ffiec_reporting_date(reporting_period)
-
-    # Validate and convert RSSD ID with descriptive error
-    rssd_id_int = _validate_rssd_id(rssd_id)
-
-    # scope ret outside the if statement
-    ret = None
-
-    if series == "call":
-        ret = client.service.RetrieveFacsimile(
-            dataSeries="Call",
-            fiIDType="ID_RSSD",
-            fiID=rssd_id_int,
-            reportingPeriodEndDate=reporting_period_ffiec,
-            facsimileFormat="XBRL",
-        )
-    elif series == "ubpr":
-        ret = client.service.RetrieveUBPRXBRLFacsimile(
-            fiIDType="ID_RSSD",
-            fiID=rssd_id_int,
-            reportingPeriodEndDate=reporting_period_ffiec,
-        )
-    else:
-        raise_exception(
-            ValidationError,
-            f"Invalid series: {series}",
-            field="series",
-            value=series,
-            expected="'call' or 'ubpr'",
-        )
-
-    # Check if we received data from the webservice
-    if ret is None:
-        raise_exception(
-            NoDataError,
-            "No data returned from FFIEC webservice",
-            reporting_period=str(reporting_period),
-            rssd_id=rssd_id,
-        )
-
-    # Ensure ret is bytes for XML processing
-    if isinstance(ret, str):
-        ret_bytes = ret.encode("utf-8")
-    elif isinstance(ret, bytes):
-        ret_bytes = ret
-    else:
-        raise_exception(
-            ValidationError,
-            f"Invalid data type returned from webservice: {type(ret)}",
-            field="webservice_response",
-            value=str(type(ret)),
-            expected="bytes or str",
-        )
-
-    # Process with appropriate null handling for SOAP
-    # Determine whether to use REST nulls based on force_null_types
-    if force_null_types == "numpy":
-        use_rest_nulls = False  # Force numpy nulls
-    elif force_null_types == "pandas":
-        use_rest_nulls = True  # Force pandas nulls
-    else:
-        use_rest_nulls = False  # Default for SOAP is numpy nulls
-
-    processed_ret = xbrl_processor._process_xml(
-        ret_bytes, date_output_format, use_rest_nulls
+    # SOAP is no longer supported
+    raise SOAPDeprecationError(
+        soap_method="collect_data (SOAP)",
+        rest_equivalent="collect_data(None, OAuth2Credentials(...), reporting_period, rssd_id, series)",
+        code_example=(
+            '  from ffiec_data_connect import OAuth2Credentials, collect_data\n'
+            '\n'
+            '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+            '  data = collect_data(\n'
+            '      session=None, creds=creds,\n'
+            '      reporting_period="12/31/2025", rssd_id="480228",\n'
+            '      series="call", output_type="pandas"\n'
+            '  )'
+        ),
     )
-
-    if output_type == "list":
-        return processed_ret
-    elif output_type == "pandas":
-        # Create DataFrame with appropriate null handling
-        df = pd.DataFrame(processed_ret)
-
-        # If we're using pd.NA (either forced or REST default), need special handling
-        if use_rest_nulls:
-            # Convert pd.NA to appropriate null values for pandas dtypes
-            if "int_data" in df.columns:
-                df["int_data"] = df["int_data"].replace({pd.NA: None}).astype("Int64")
-            if "float_data" in df.columns:
-                df["float_data"] = (
-                    df["float_data"].replace({pd.NA: np.nan}).astype("float64")
-                )
-            if "bool_data" in df.columns:
-                df["bool_data"] = (
-                    df["bool_data"].replace({pd.NA: None}).astype("boolean")
-                )
-        else:
-            # Traditional SOAP path with np.nan - direct conversion
-            if "int_data" in df.columns:
-                df["int_data"] = df["int_data"].astype("Int64")  # Nullable integer
-            if "float_data" in df.columns:
-                df["float_data"] = df["float_data"].astype(
-                    "float64"
-                )  # Regular float (supports NaN)
-            if "bool_data" in df.columns:
-                df["bool_data"] = df["bool_data"].astype("boolean")  # Nullable boolean
-
-        if "str_data" in df.columns:
-            df["str_data"] = df["str_data"].astype("string")  # Pandas string dtype
-        return df
-    elif output_type == "polars":
-        if not POLARS_AVAILABLE:
-            raise_exception(
-                ValidationError,
-                "Polars not available",
-                field="output_type",
-                value="polars",
-                expected="polars package must be installed: pip install polars",
-            )
-
-        # Create polars DataFrame directly from processed XBRL data
-        # This preserves maximum precision by avoiding pandas conversion
-        if not processed_ret:
-            # Return empty DataFrame with correct schema
-            schema = {
-                "mdrm": pl.Utf8,
-                "rssd": pl.Utf8,
-                "id_rssd": pl.Utf8,  # Dual field support
-                "quarter": pl.Utf8,
-                "data_type": pl.Utf8,
-                "int_data": pl.Int64,
-                "float_data": pl.Float64,
-                "bool_data": pl.Boolean,
-                "str_data": pl.Utf8,
-            }
-            return pl.DataFrame([], schema=schema)
-
-        # Convert numpy types to native Python types for polars compatibility
-        polars_data = []
-        for row in processed_ret:
-            polars_row = {
-                "mdrm": row["mdrm"],
-                "rssd": row["rssd"],
-                "id_rssd": row.get(
-                    "id_rssd", row["rssd"]
-                ),  # Dual field support with fallback
-                "quarter": row["quarter"],
-                "data_type": row["data_type"],
-                "int_data": None if pd.isna(row["int_data"]) else int(row["int_data"]),
-                "float_data": (
-                    None if pd.isna(row["float_data"]) else float(row["float_data"])
-                ),
-                "bool_data": (
-                    None if pd.isna(row["bool_data"]) else bool(row["bool_data"])
-                ),
-                "str_data": row["str_data"],
-            }
-            polars_data.append(polars_row)
-
-        # Create DataFrame with explicit schema to ensure correct types
-        schema = {
-            "mdrm": pl.Utf8,
-            "rssd": pl.Utf8,
-            "id_rssd": pl.Utf8,  # Dual field support
-            "quarter": pl.Utf8,
-            "data_type": pl.Utf8,
-            "int_data": pl.Int64,
-            "float_data": pl.Float64,
-            "bool_data": pl.Boolean,
-            "str_data": pl.Utf8,
-        }
-
-        return pl.DataFrame(polars_data, schema=schema)
-
-    return processed_ret
 
 
 def collect_filers_since_date(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    session: Optional[Any],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
     reporting_period: Union[str, datetime],
     since_date: Union[str, datetime],
     output_type: str = "list",
@@ -956,46 +692,25 @@ def collect_filers_since_date(
             session, creds, reporting_period, since_date, output_type
         )
 
-    # Original SOAP implementation for WebserviceCredentials
-    _ = _session_validator(session)
-
-    is_valid_reporting_period = _is_valid_date_or_quarter(reporting_period)
-    if not is_valid_reporting_period:
-        raise (
-            ValueError(
-                "Reporting period must be in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', #QYYYY or a python datetime object, with the month and date set to March 31, June 30, September 30, or December 31."
-            )
-        )
-
-    # Session should not be None after validation for SOAP
-    assert session is not None, "Session should not be None after validation for SOAP"
-    client = _client_factory(session, creds)
-
-    # convert our input dates to the ffiec input date format
-    since_date_ffiec = _convert_any_date_to_ffiec_format(since_date)
-    reporting_period_datetime_ffiec = _return_ffiec_reporting_date(reporting_period)
-
-    ret = client.service.RetrieveFilersSinceDate(
-        dataSeries="Call",
-        lastUpdateDateTime=since_date_ffiec,
-        reportingPeriodEndDate=reporting_period_datetime_ffiec,
+    # SOAP is no longer supported
+    raise SOAPDeprecationError(
+        soap_method="collect_filers_since_date (SOAP)",
+        rest_equivalent="collect_filers_since_date(None, OAuth2Credentials(...), reporting_period, since_date)",
+        code_example=(
+            '  from ffiec_data_connect import OAuth2Credentials, collect_filers_since_date\n'
+            '\n'
+            '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+            '  filers = collect_filers_since_date(\n'
+            '      session=None, creds=creds,\n'
+            '      reporting_period="12/31/2025", since_date="1/1/2025"\n'
+            '  )'
+        ),
     )
-
-    if output_type == "list":
-        return ret
-    elif output_type == "pandas":
-        # Provide dual column names for compatibility
-        df = pd.DataFrame(ret, columns=["rssd_id"])
-        df["rssd"] = df["rssd_id"]  # Dual field support
-        return df
-    else:
-        # for now, default is to return a list
-        return ret
 
 
 def collect_filers_submission_date_time(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    session: Optional[Any],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
     since_date: Union[str, datetime],
     reporting_period: Union[str, datetime],
     output_type: str = "list",
@@ -1051,77 +766,25 @@ def collect_filers_submission_date_time(
             date_output_format,
         )
 
-    # Original SOAP implementation for WebserviceCredentials
-    _ = _session_validator(session)
-
-    is_valid_reporting_period = _is_valid_date_or_quarter(reporting_period)
-    if not is_valid_reporting_period:
-        raise (
-            ValueError(
-                "Reporting period must be in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', #QYYYY or a python datetime object, with the month and date set to March 31, June 30, September 30, or December 31."
-            )
-        )
-
-    # we have a session and valid credentials, so try to log in
-    # convert our input dates to the ffiec input date format
-    since_date_ffiec = _convert_any_date_to_ffiec_format(since_date)
-    reporting_period_datetime_ffiec = _return_ffiec_reporting_date(reporting_period)
-
-    # send the request
-    # first, create the client
-    assert session is not None, "Session should not be None after validation for SOAP"
-    client = _client_factory(session, creds)
-
-    ret = client.service.RetrieveFilersSubmissionDateTime(
-        dataSeries="Call",
-        lastUpdateDateTime=since_date_ffiec,
-        reportingPeriodEndDate=reporting_period_datetime_ffiec,
+    # SOAP is no longer supported
+    raise SOAPDeprecationError(
+        soap_method="collect_filers_submission_date_time (SOAP)",
+        rest_equivalent="collect_filers_submission_date_time(None, OAuth2Credentials(...), since_date, reporting_period)",
+        code_example=(
+            '  from ffiec_data_connect import OAuth2Credentials, collect_filers_submission_date_time\n'
+            '\n'
+            '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+            '  submissions = collect_filers_submission_date_time(\n'
+            '      session=None, creds=creds,\n'
+            '      since_date="1/1/2025", reporting_period="12/31/2025"\n'
+            '  )'
+        ),
     )
-
-    # normalize the output - provide both field names for compatibility
-    # NOTE: Property names were inconsistent in earlier code, so we provide both
-    # 'rssd' and 'id_rssd' to reduce need to refactor existing user code
-    normalized_ret = [
-        {
-            "rssd": str(x["ID_RSSD"]),  # Institution RSSD ID
-            "id_rssd": str(x["ID_RSSD"]),  # Institution RSSD ID (same data)
-            "datetime": x["DateTime"],
-        }
-        for x in ret
-    ]
-
-    # all submission times are in eastern time, so if we are converting to a python datetime,
-    # the datetime object needs to be timezone aware, so that the user may convert the time to their local timezone
-    origin_tz = ZoneInfo("US/Eastern")
-
-    if date_output_format == "python_format":
-        normalized_ret = [
-            {
-                "rssd": x["rssd"],
-                "id_rssd": x["id_rssd"],  # Keep both field names
-                "datetime": datetime.strptime(
-                    x["datetime"], "%m/%d/%Y %H:%M:%S %p"
-                ).replace(tzinfo=origin_tz),
-            }
-            for x in normalized_ret
-        ]
-
-    # convert the datetime to a string, if user requests
-
-    if output_type == "list":
-        return normalized_ret
-    elif output_type == "pandas":
-        return pd.DataFrame(normalized_ret)
-    else:
-        # for now, default is to return a list
-        return ret
-
-    pass
 
 
 def collect_filers_on_reporting_period(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    session: Optional[Any],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
     reporting_period: Union[str, datetime],
     output_type: str = "list",
 ) -> Union[List[Any], pd.DataFrame]:
@@ -1177,39 +840,25 @@ def collect_filers_on_reporting_period(
             session, creds, reporting_period, output_type
         )
 
-    # Original SOAP implementation for WebserviceCredentials
-    _ = _session_validator(session)
-
-    is_valid_reporting_period = _is_valid_date_or_quarter(reporting_period)
-    if not is_valid_reporting_period:
-        raise (
-            ValueError(
-                "Reporting period must be in the format of 'YYYY-MM-DD', 'YYYYMMDD', 'MM/DD/YYYY', #QYYYY or a python datetime object, with the month and date set to March 31, June 30, September 30, or December 31."
-            )
-        )
-
-    assert session is not None, "Session should not be None after validation for SOAP"
-    client = _client_factory(session, creds)
-    reporting_period_datetime_ffiec = _return_ffiec_reporting_date(reporting_period)
-
-    ret = client.service.RetrievePanelOfReporters(
-        dataSeries="Call", reportingPeriodEndDate=reporting_period_datetime_ffiec
+    # SOAP is no longer supported
+    raise SOAPDeprecationError(
+        soap_method="collect_filers_on_reporting_period (SOAP)",
+        rest_equivalent="collect_filers_on_reporting_period(None, OAuth2Credentials(...), reporting_period)",
+        code_example=(
+            '  from ffiec_data_connect import OAuth2Credentials, collect_filers_on_reporting_period\n'
+            '\n'
+            '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+            '  filers = collect_filers_on_reporting_period(\n'
+            '      session=None, creds=creds,\n'
+            '      reporting_period="12/31/2025"\n'
+            '  )'
+        ),
     )
-
-    normalized_ret = [datahelpers._normalize_output_from_reporter_panel(x) for x in ret]
-
-    if output_type == "list":
-        return normalized_ret
-    elif output_type == "pandas":
-        return pd.DataFrame(normalized_ret)
-    else:
-        # for now, default is to return a list
-        return ret
 
 
 def collect_ubpr_reporting_periods(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    session: Optional[Any],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
     output_type: str = "list",
     date_output_format: str = "string_original",
 ) -> Union[List[Any], pd.DataFrame]:
@@ -1237,45 +886,36 @@ def collect_ubpr_reporting_periods(
     from .credentials import OAuth2Credentials
 
     if isinstance(creds, OAuth2Credentials):
-        try:
-            from .protocol_adapter import create_protocol_adapter
+        from .protocol_adapter import create_protocol_adapter
 
-            adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
-            raw_periods = adapter.retrieve_ubpr_reporting_periods()
+        adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
+        raw_periods = adapter.retrieve_ubpr_reporting_periods()
 
-            # Sort reporting periods in ascending chronological order (oldest first)
-            sorted_periods = sort_reporting_periods_ascending(raw_periods)
+        # Sort reporting periods in ascending chronological order (oldest first)
+        sorted_periods = sort_reporting_periods_ascending(raw_periods)
 
-            # Handle output type conversion
-            if output_type == "pandas":
-                return pd.DataFrame({"reporting_period": sorted_periods})
-            else:
-                return sorted_periods
+        # Handle output type conversion
+        if output_type == "pandas":
+            return pd.DataFrame({"reporting_period": sorted_periods})
+        else:
+            return sorted_periods
 
-        except Exception as e:
-            logger.error(f"REST API call failed for UBPR reporting periods: {e}")
-            raise_exception(
-                ConnectionError,
-                f"Failed to retrieve UBPR reporting periods via REST API: {e}",
-            )
-
-    # SOAP implementation for WebserviceCredentials
-    _ = _session_validator(session)
-
-    # For SOAP API, UBPR periods would need to be implemented
-    # Currently not available in SOAP API per the documentation
-    raise_exception(
-        ValidationError,
-        "UBPR reporting periods are only available via REST API. Please use OAuth2Credentials.",
-        field="credentials",
-        value="WebserviceCredentials",
-        expected="OAuth2Credentials for UBPR access",
+    # SOAP is no longer supported
+    raise SOAPDeprecationError(
+        soap_method="collect_ubpr_reporting_periods (SOAP)",
+        rest_equivalent="collect_ubpr_reporting_periods(None, OAuth2Credentials(...))",
+        code_example=(
+            '  from ffiec_data_connect import OAuth2Credentials, collect_ubpr_reporting_periods\n'
+            '\n'
+            '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+            '  periods = collect_ubpr_reporting_periods(session=None, creds=creds)'
+        ),
     )
 
 
 def collect_ubpr_facsimile_data(
-    session: Union[ffiec_connection.FFIECConnection, requests.Session, None],
-    creds: Union[credentials.WebserviceCredentials, "OAuth2Credentials"],
+    session: Optional[Any],
+    creds: Union[credentials.WebserviceCredentials, OAuth2Credentials],
     reporting_period: Union[str, datetime],
     rssd_id: str,
     output_type: str = "list",
@@ -1329,104 +969,93 @@ def collect_ubpr_facsimile_data(
     from .credentials import OAuth2Credentials
 
     if isinstance(creds, OAuth2Credentials):
-        try:
-            from .protocol_adapter import create_protocol_adapter
+        from .protocol_adapter import create_protocol_adapter
 
-            # Convert reporting period to FFIEC format
-            ffiec_date: Optional[str]
-            if isinstance(reporting_period, datetime):
-                ffiec_date = _create_ffiec_date_from_datetime(reporting_period)
+        # Convert reporting period to FFIEC format
+        ffiec_date: Optional[str]
+        if isinstance(reporting_period, datetime):
+            ffiec_date = _create_ffiec_date_from_datetime(reporting_period)
+        else:
+            ffiec_date = _convert_any_date_to_ffiec_format(reporting_period)
+            if ffiec_date is None:
+                raise_exception(
+                    ValidationError,
+                    "Could not convert reporting period to FFIEC format",
+                    field="reporting_period",
+                    value=str(reporting_period),
+                )
+
+        adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
+        raw_data = adapter.retrieve_ubpr_xbrl_facsimile(rssd_id, ffiec_date)
+
+        # Handle output type
+        if output_type == "bytes":
+            return raw_data
+
+        # Process XBRL data if needed
+        if isinstance(raw_data, bytes):
+            # Determine null handling
+            if force_null_types == "numpy":
+                use_rest_nulls = False
+            elif force_null_types == "pandas":
+                use_rest_nulls = True
             else:
-                ffiec_date = _convert_any_date_to_ffiec_format(reporting_period)
-                if ffiec_date is None:
-                    raise_exception(
-                        ValidationError,
-                        "Could not convert reporting period to FFIEC format",
-                        field="reporting_period",
-                        value=str(reporting_period),
-                    )
+                use_rest_nulls = True  # Default for REST is pandas nulls
 
-            assert ffiec_date is not None  # Helps mypy understand control flow
-            adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
-            raw_data = adapter.retrieve_ubpr_xbrl_facsimile(rssd_id, ffiec_date)
+            if output_type == "list":
+                processed_data = xbrl_processor._process_xml(
+                    raw_data, "string_original", use_rest_nulls
+                )
+                return processed_data
+            elif output_type == "pandas":
+                processed_data = xbrl_processor._process_xml(
+                    raw_data, "string_original", use_rest_nulls
+                )
+                df = pd.DataFrame(processed_data)
 
-            # Handle output type
-            if output_type == "bytes":
-                return raw_data
-
-            # Process XBRL data if needed
-            if isinstance(raw_data, bytes):
-                # Determine null handling
-                if force_null_types == "numpy":
-                    use_rest_nulls = False
-                elif force_null_types == "pandas":
-                    use_rest_nulls = True
+                if use_rest_nulls:
+                    if "int_data" in df.columns:
+                        df["int_data"] = (
+                            df["int_data"].replace({pd.NA: None}).astype("Int64")
+                        )
+                    if "float_data" in df.columns:
+                        df["float_data"] = (
+                            df["float_data"]
+                            .replace({pd.NA: np.nan})
+                            .astype("float64")
+                        )
+                    if "bool_data" in df.columns:
+                        df["bool_data"] = (
+                            df["bool_data"].replace({pd.NA: None}).astype("boolean")
+                        )
                 else:
-                    use_rest_nulls = True  # Default for REST is pandas nulls
+                    if "int_data" in df.columns:  # pragma: no branch — XBRL always has these
+                        df["int_data"] = df["int_data"].astype("Int64")
+                    if "float_data" in df.columns:  # pragma: no branch
+                        df["float_data"] = df["float_data"].astype("float64")
+                    if "bool_data" in df.columns:  # pragma: no branch
+                        df["bool_data"] = df["bool_data"].astype("boolean")
 
-                if output_type == "list":
-                    # Parse XBRL and return as list
-                    processed_data = xbrl_processor._process_xml(
-                        raw_data, "string_original", use_rest_nulls
-                    )
-                    return processed_data
-                elif output_type == "pandas":
-                    processed_data = xbrl_processor._process_xml(
-                        raw_data, "string_original", use_rest_nulls
-                    )
-                    df = pd.DataFrame(processed_data)
+                if "str_data" in df.columns:  # pragma: no branch
+                    df["str_data"] = df["str_data"].astype("string")
 
-                    # Handle null types based on what we're using
-                    if use_rest_nulls:
-                        # Convert pd.NA to appropriate null values for pandas dtypes
-                        if "int_data" in df.columns:
-                            df["int_data"] = (
-                                df["int_data"].replace({pd.NA: None}).astype("Int64")
-                            )
-                        if "float_data" in df.columns:
-                            df["float_data"] = (
-                                df["float_data"]
-                                .replace({pd.NA: np.nan})
-                                .astype("float64")
-                            )
-                        if "bool_data" in df.columns:
-                            df["bool_data"] = (
-                                df["bool_data"].replace({pd.NA: None}).astype("boolean")
-                            )
-                    else:
-                        # Traditional np.nan path - direct conversion
-                        if "int_data" in df.columns:
-                            df["int_data"] = df["int_data"].astype("Int64")
-                        if "float_data" in df.columns:
-                            df["float_data"] = df["float_data"].astype("float64")
-                        if "bool_data" in df.columns:
-                            df["bool_data"] = df["bool_data"].astype("boolean")
-
-                    if "str_data" in df.columns:
-                        df["str_data"] = df["str_data"].astype("string")
-
-                    return df
-                else:
-                    return raw_data
+                return df
             else:
                 return raw_data
+        else:
+            return raw_data
 
-        except Exception as e:
-            logger.error(f"REST API call failed for UBPR facsimile data: {e}")
-            raise_exception(
-                ConnectionError,
-                f"Failed to retrieve UBPR facsimile data via REST API: {e}",
-            )
-
-    # SOAP implementation for WebserviceCredentials
-    _ = _session_validator(session)
-
-    # For SOAP API, UBPR facsimile would need to be implemented
-    # Currently not available in SOAP API per the documentation
-    raise_exception(
-        ValidationError,
-        "UBPR facsimile data is only available via REST API. Please use OAuth2Credentials.",
-        field="credentials",
-        value="WebserviceCredentials",
-        expected="OAuth2Credentials for UBPR access",
+    # SOAP is no longer supported
+    raise SOAPDeprecationError(
+        soap_method="collect_ubpr_facsimile_data (SOAP)",
+        rest_equivalent="collect_ubpr_facsimile_data(None, OAuth2Credentials(...), reporting_period, rssd_id)",
+        code_example=(
+            '  from ffiec_data_connect import OAuth2Credentials, collect_ubpr_facsimile_data\n'
+            '\n'
+            '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+            '  data = collect_ubpr_facsimile_data(\n'
+            '      session=None, creds=creds,\n'
+            '      reporting_period="12/31/2025", rssd_id="480228"\n'
+            '  )'
+        ),
     )

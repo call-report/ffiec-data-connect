@@ -6,12 +6,12 @@ Tests OAuth2 credential handling, token validation, and expiration.
 
 import os
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from ffiec_data_connect.credentials import OAuth2Credentials
-from ffiec_data_connect.exceptions import CredentialError
+from ffiec_data_connect.exceptions import CredentialError, SOAPDeprecationError
 
 
 class TestOAuth2CredentialsInitialization:
@@ -216,10 +216,9 @@ class TestOAuth2CredentialsComparison:
             token_expires=datetime.now() + timedelta(days=90)
         )
 
-        soap_creds = WebserviceCredentials(
-            username="test",
-            password="password"
-        )
+        # WebserviceCredentials now raises SOAPDeprecationError, so use a Mock
+        soap_creds = Mock(spec=WebserviceCredentials)
+        soap_creds.password = "password"
 
         # Check that they have different attributes
         assert hasattr(oauth_creds, 'bearer_token')

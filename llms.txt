@@ -1,0 +1,186 @@
+# FFIEC Data Connect - SOAP to REST Migration Guide for AI Agents
+
+> This file helps AI coding assistants (LLMs) refactor code that uses the
+> `ffiec-data-connect` Python library from the deprecated SOAP API to the REST API.
+> The FFIEC SOAP API was shut down on February 28, 2026.
+> Library versions >= 3.0.0 no longer support SOAP.
+
+## Refactoring Rules
+
+### Rule 1: Replace WebserviceCredentials with OAuth2Credentials
+
+FIND:
+```python
+from ffiec_data_connect import WebserviceCredentials
+creds = WebserviceCredentials(username="...", password="...")
+```
+OR with environment variables:
+```python
+creds = WebserviceCredentials()  # reads FFIEC_USERNAME, FFIEC_PASSWORD env vars
+```
+
+REPLACE WITH:
+```python
+from ffiec_data_connect import OAuth2Credentials
+creds = OAuth2Credentials(
+    username="<ffiec_username>",
+    bearer_token="<90_day_jwt_token>",  # starts with "ey", ends with "."
+)
+```
+
+NOTE: The user must obtain a JWT token from https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx
+Token expiry is auto-detected from the JWT payload (no need to set token_expires manually).
+
+### Rule 2: Remove FFIECConnection
+
+FIND:
+```python
+from ffiec_data_connect import FFIECConnection
+conn = FFIECConnection()
+# possibly with proxy config:
+conn.proxy_host = "..."
+conn.proxy_port = 8080
+conn.proxy_protocol = ProxyProtocol.HTTPS
+conn.use_proxy = True
+```
+
+REPLACE WITH: Delete entirely. FFIECConnection is not needed for REST API.
+
+### Rule 3: Change session parameter from conn to None
+
+FIND any of:
+```python
+collect_reporting_periods(conn, creds, ...)
+collect_data(conn, creds, ...)
+collect_filers_since_date(conn, creds, ...)
+collect_filers_submission_date_time(conn, creds, ...)
+collect_filers_on_reporting_period(conn, creds, ...)
+```
+
+REPLACE WITH:
+```python
+collect_reporting_periods(None, creds, ...)
+collect_data(None, creds, ...)
+collect_filers_since_date(None, creds, ...)
+collect_filers_submission_date_time(None, creds, ...)
+collect_filers_on_reporting_period(None, creds, ...)
+```
+
+The first argument (session) should always be `None` for REST API.
+Also applies to: `collect_ubpr_reporting_periods`, `collect_ubpr_facsimile_data`.
+
+### Rule 4: Update imports
+
+FIND:
+```python
+from ffiec_data_connect import WebserviceCredentials, FFIECConnection
+```
+
+REPLACE WITH:
+```python
+from ffiec_data_connect import OAuth2Credentials
+```
+
+KEEP unchanged: All method imports (collect_data, collect_reporting_periods, etc.)
+KEEP unchanged: Exception imports (FFIECError, CredentialError, etc.)
+KEEP unchanged: Output format parameters (output_type, date_output_format, force_null_types)
+
+### Rule 5: Remove SOAP cache calls
+
+FIND:
+```python
+from ffiec_data_connect import clear_soap_cache, get_cache_stats
+clear_soap_cache()
+stats = get_cache_stats()
+```
+
+REPLACE WITH: Delete these lines. SOAP cache is no longer used.
+
+### Rule 6: Remove proxy configuration
+
+FIND:
+```python
+conn.proxy_host = "..."
+conn.proxy_port = 8080
+conn.proxy_protocol = ProxyProtocol.HTTPS
+conn.proxy_user_name = "..."
+conn.proxy_password = "..."
+conn.use_proxy = True
+```
+
+REPLACE WITH: Delete. REST API uses httpx which respects system proxy settings (HTTP_PROXY, HTTPS_PROXY env vars).
+
+### Rule 7: Update token expiry checks
+
+FIND:
+```python
+creds = OAuth2Credentials(
+    username="...",
+    bearer_token="...",
+    token_expires=datetime(2025, 6, 15)  # manually set
+)
+```
+
+REPLACE WITH:
+```python
+creds = OAuth2Credentials(
+    username="...",
+    bearer_token="...",
+    # token_expires is auto-detected from JWT payload
+)
+```
+
+Token expiry is now automatically extracted from the JWT `exp` claim.
+`creds.is_expired` returns True if token expires within 24 hours.
+`creds.token_expires` returns the expiry datetime.
+
+## Method Reference
+
+All 7 public methods. Signature is identical between SOAP and REST except session=None:
+
+| Method | Parameters | Notes |
+|--------|-----------|-------|
+| `collect_reporting_periods` | `(None, creds, series="call", output_type="list")` | series: "call" or "ubpr" |
+| `collect_data` | `(None, creds, reporting_period, rssd_id, series, output_type="list")` | Returns XBRL data |
+| `collect_filers_since_date` | `(None, creds, reporting_period, since_date, output_type="list")` | Call Reports only |
+| `collect_filers_submission_date_time` | `(None, creds, since_date, reporting_period, output_type="list")` | Note: since_date is first param |
+| `collect_filers_on_reporting_period` | `(None, creds, reporting_period, output_type="list")` | Panel of reporters |
+| `collect_ubpr_reporting_periods` | `(None, creds, output_type="list")` | REST-only (new) |
+| `collect_ubpr_facsimile_data` | `(None, creds, reporting_period, rssd_id)` | REST-only (new) |
+
+## Environment Variable Changes
+
+| Variable | Status | Notes |
+|----------|--------|-------|
+| `FFIEC_USERNAME` | No longer used | Was for WebserviceCredentials env var mode |
+| `FFIEC_PASSWORD` | No longer used | Was for WebserviceCredentials env var mode |
+| `FFIEC_USE_LEGACY_ERRORS` | Still active | Controls error mode (ValueError vs typed exceptions) |
+
+## Output Compatibility
+
+All outputs are identical between SOAP and REST:
+- `output_type="list"` returns List[Dict]
+- `output_type="pandas"` returns pd.DataFrame
+- `output_type="polars"` returns pl.DataFrame (requires polars extra)
+- Field names `rssd` and `id_rssd` are both provided (dual field compatibility)
+- Date formats are preserved
+- ZIP codes maintain leading zeros
+- RSSD IDs are strings
+
+## Error Handling
+
+Exception hierarchy is unchanged:
+- `FFIECError` (base)
+- `CredentialError` - auth issues, expired tokens
+- `ValidationError` - invalid parameters
+- `ConnectionError` - network issues
+- `RateLimitError` - rate limit exceeded (retry_after available)
+- `NoDataError` - no data for given parameters
+- `SOAPDeprecationError` - raised when SOAP classes are used (new in v3.0.0)
+
+## Testing After Migration
+
+1. Replace `WebserviceCredentials` with `OAuth2Credentials` in test fixtures
+2. Replace `FFIECConnection()` with `None` as session parameter
+3. Use `Mock(spec=WebserviceCredentials)` if tests need a credential-like object for isinstance checks
+4. All output assertions should pass unchanged (format is identical)

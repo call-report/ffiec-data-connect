@@ -7,303 +7,154 @@ Tests credential handling, security features, and thread safety.
 import os
 import threading
 import time
+from datetime import datetime
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from requests import Session
 
-from ffiec_data_connect.credentials import CredentialType, WebserviceCredentials
-from ffiec_data_connect.exceptions import ConnectionError, CredentialError
+from ffiec_data_connect.credentials import CredentialType, OAuth2Credentials, WebserviceCredentials
+from ffiec_data_connect.exceptions import ConnectionError, CredentialError, SOAPDeprecationError
 from ffiec_data_connect.ffiec_connection import FFIECConnection
 
 
 class TestWebserviceCredentialsInitialization:
-    """Test credential initialization scenarios."""
+    """Test that WebserviceCredentials raises SOAPDeprecationError on any instantiation."""
 
-    def test_init_with_explicit_credentials(self):
-        """Test initialization with explicit username and password."""
-        creds = WebserviceCredentials("testuser", "testpass")
-
-        assert creds.username == "testuser"
-        assert creds.password == "testpass"
-        assert creds.credential_source == CredentialType.SET_FROM_INIT
+    def test_init_with_explicit_credentials_raises_soap_deprecation(self):
+        """Test that initialization with explicit username and password raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("testuser", "testpass")
 
     @patch.dict(os.environ, {"FFIEC_USERNAME": "envuser", "FFIEC_PASSWORD": "envpass"})
-    def test_init_from_environment(self):
-        """Test initialization from environment variables."""
-        creds = WebserviceCredentials()
-
-        assert creds.username == "envuser"
-        assert creds.password == "envpass"
-        assert creds.credential_source == CredentialType.SET_FROM_ENV
+    def test_init_from_environment_raises_soap_deprecation(self):
+        """Test that initialization from environment variables raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials()
 
     @patch.dict(os.environ, {"FFIEC_USERNAME": "envuser", "FFIEC_PASSWORD": "envpass"})
-    def test_explicit_overrides_environment(self):
-        """Test that explicit credentials override environment variables."""
-        creds = WebserviceCredentials("explicituser", "explicitpass")
+    def test_explicit_overrides_environment_raises_soap_deprecation(self):
+        """Test that explicit credentials also raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("explicituser", "explicitpass")
 
-        assert creds.username == "explicituser"
-        assert creds.password == "explicitpass"
-        assert creds.credential_source == CredentialType.SET_FROM_INIT
-
-    def test_missing_credentials_raises_error(self):
-        """Test that missing credentials raise appropriate error."""
+    def test_missing_credentials_raises_soap_deprecation(self):
+        """Test that missing credentials still raise SOAPDeprecationError (before any validation)."""
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises((CredentialError, ValueError)) as exc_info:
+            with pytest.raises(SOAPDeprecationError):
                 WebserviceCredentials()
 
-            error_message = str(exc_info.value)
-            assert "Missing required credentials" in error_message
-            assert "username" in error_message
-            assert "password" in error_message
-
     @patch.dict(os.environ, {"FFIEC_USERNAME": "onlyuser"})
-    def test_missing_password_only(self):
-        """Test missing password with present username."""
-        with pytest.raises((CredentialError, ValueError)) as exc_info:
+    def test_missing_password_only_raises_soap_deprecation(self):
+        """Test that missing password still raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials()
-
-        error_message = str(exc_info.value)
-        assert "password" in error_message.lower()
-        assert (
-            "environment" in error_message.lower() or "env var" in error_message.lower()
-        )
 
     @patch.dict(os.environ, {"FFIEC_PASSWORD": "onlypass"})
-    def test_missing_username_only(self):
-        """Test missing username with present password."""
-        with pytest.raises((CredentialError, ValueError)) as exc_info:
+    def test_missing_username_only_raises_soap_deprecation(self):
+        """Test that missing username still raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials()
 
-        error_message = str(exc_info.value)
-        assert "username" in error_message.lower()
+
+class TestWebserviceCredentialsSOAPDeprecationMessage:
+    """Test that the SOAPDeprecationError contains useful migration guidance."""
+
+    def test_deprecation_error_mentions_oauth2(self):
+        """Test that the deprecation error mentions OAuth2Credentials as the replacement."""
+        with pytest.raises(SOAPDeprecationError) as exc_info:
+            WebserviceCredentials("user", "pass")
+
+        assert exc_info.value.rest_equivalent == "OAuth2Credentials(username, bearer_token)"
+
+    def test_deprecation_error_soap_method_name(self):
+        """Test that the deprecation error identifies the deprecated method."""
+        with pytest.raises(SOAPDeprecationError) as exc_info:
+            WebserviceCredentials()
+
+        assert exc_info.value.soap_method == "WebserviceCredentials"
+
+    def test_deprecation_error_has_code_example(self):
+        """Test that the deprecation error includes a migration code example."""
+        with pytest.raises(SOAPDeprecationError) as exc_info:
+            WebserviceCredentials("user", "pass")
+
+        assert "OAuth2Credentials" in exc_info.value.code_example
+        assert "bearer_token" in exc_info.value.code_example
+
+
+class TestWebserviceCredentialsClassStillExists:
+    """Test that WebserviceCredentials class shell remains for isinstance checks."""
+
+    def test_class_is_importable(self):
+        """Test that WebserviceCredentials can still be imported."""
+        assert WebserviceCredentials is not None
+
+    def test_class_is_a_type(self):
+        """Test that WebserviceCredentials is still a class."""
+        assert isinstance(WebserviceCredentials, type)
 
 
 class TestCredentialSecurity:
-    """Test security aspects of credential handling."""
+    """Test security aspects of credential handling (using SOAPDeprecationError)."""
 
-    def test_credential_masking_in_str(self):
-        """Test that credentials are masked in string representation."""
-        creds = WebserviceCredentials("testuser123", "secretpassword")
-        str_repr = str(creds)
+    def test_webservice_credentials_cannot_be_instantiated(self):
+        """Confirm that all instantiation paths raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("testuser123", "secretpassword")
 
-        # Should not contain actual credentials
-        assert "testuser123" not in str_repr
-        assert "secretpassword" not in str_repr
-
-        # Should contain masked version
-        assert "t*********3" in str_repr or "***" in str_repr
-        assert "source='init'" in str_repr
-
-    def test_credential_masking_in_repr(self):
-        """Test that credentials are masked in repr."""
-        creds = WebserviceCredentials("user", "pass")
-        repr_str = repr(creds)
-
-        # Check that the original username is properly masked
-        # For "user", it should be masked as "u**r"
-        assert "user" not in repr_str or "u**r" in repr_str
-        assert "pass" not in repr_str  # Password should never appear in repr
-        assert (
-            "u**r" in repr_str or "***" in repr_str
-        )  # Some form of masking should be present
-
-    @patch.dict(os.environ, {"FFIEC_USERNAME": "envuser", "FFIEC_PASSWORD": "envpass"})
-    def test_env_credential_masking(self):
-        """Test masking for environment-sourced credentials."""
-        creds = WebserviceCredentials()
-        str_repr = str(creds)
-
-        assert "envuser" not in str_repr
-        assert "envpass" not in str_repr
-        assert "source='environment'" in str_repr
-
-    def test_mask_sensitive_string_edge_cases(self):
-        """Test edge cases in string masking."""
-        creds = WebserviceCredentials("a", "ab")
-
-        # Test very short strings
-        assert creds._mask_sensitive_string("") == "***"
-        assert creds._mask_sensitive_string("a") == "*"
-        assert creds._mask_sensitive_string("ab") == "**"
-        assert creds._mask_sensitive_string("abc") == "a*c"
-        assert creds._mask_sensitive_string("abcd") == "a**d"
-
-    def test_no_credential_state_representation(self):
-        """Test string representation when no credentials are set."""
-        # Create instance that would normally fail
+    def test_webservice_credentials_no_args_cannot_be_instantiated(self):
+        """Confirm no-arg instantiation raises SOAPDeprecationError."""
         with patch.dict(os.environ, {}, clear=True):
-            with patch("ffiec_data_connect.credentials.raise_exception") as mock_raise:
-                # Mock the exception to create instance with no credentials
-                mock_raise.side_effect = lambda *args, **kwargs: None
-                creds = WebserviceCredentials.__new__(WebserviceCredentials)
-                creds.credential_source = CredentialType.NO_CREDENTIALS
-
-                str_repr = str(creds)
-                assert "not configured" in str_repr
+            with pytest.raises(SOAPDeprecationError):
+                WebserviceCredentials()
 
 
 class TestCredentialImmutability:
-    """Test credential immutability for security."""
+    """Test credential immutability for security (SOAPDeprecationError blocks init)."""
 
-    def test_cannot_modify_username_after_init(self):
-        """Test that username cannot be modified after initialization."""
-        creds = WebserviceCredentials("originaluser", "originalpass")
-
-        with pytest.raises((CredentialError, ValueError)):
-            creds.username = "newuser"
-
-        # Original value should be unchanged
-        assert creds.username == "originaluser"
-
-    def test_cannot_modify_password_after_init(self):
-        """Test that password cannot be modified after initialization."""
-        creds = WebserviceCredentials("user", "originalpass")
-
-        with pytest.raises((CredentialError, ValueError)):
-            creds.password = "newpass"
-
-        # Original value should be unchanged
-        assert creds.password == "originalpass"
+    def test_cannot_instantiate_to_modify(self):
+        """Test that WebserviceCredentials cannot even be instantiated."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("originaluser", "originalpass")
 
     def test_immutability_thread_safety(self):
-        """Test that immutability works correctly in threaded environment."""
-        creds = WebserviceCredentials("user", "pass")
+        """Test that instantiation raises SOAPDeprecationError from multiple threads."""
         errors = []
 
-        def try_modify_credentials():
+        def try_create_credentials():
             try:
-                creds.username = "hacker"
-                errors.append("Username modification succeeded - SECURITY ISSUE")
-            except Exception:
+                WebserviceCredentials("user", "pass")
+                errors.append("Instantiation succeeded - should have raised SOAPDeprecationError")
+            except SOAPDeprecationError:
                 pass  # Expected
+            except Exception as e:
+                errors.append(f"Wrong exception type: {type(e).__name__}")
 
-            try:
-                creds.password = "hacked"
-                errors.append("Password modification succeeded - SECURITY ISSUE")
-            except Exception:
-                pass  # Expected
-
-        # Try modifications from multiple threads
         threads = []
         for i in range(10):
-            t = threading.Thread(target=try_modify_credentials)
+            t = threading.Thread(target=try_create_credentials)
             threads.append(t)
             t.start()
 
         for t in threads:
             t.join()
 
-        # Should have no successful modifications
         assert len(errors) == 0
-        assert creds.username == "user"
-        assert creds.password == "pass"
 
 
 class TestCredentialValidation:
-    """Test credential validation against FFIEC service."""
+    """Test that WebserviceCredentials raises SOAPDeprecationError before any validation."""
 
-    @patch("ffiec_data_connect.soap_cache.get_soap_client")
-    def test_successful_credential_validation(self, mock_get_client):
-        """Test successful credential validation."""
-        # Mock successful SOAP client and response
-        mock_client = Mock()
-        mock_client.service.TestUserAccess.return_value = True
-        mock_get_client.return_value = mock_client
+    def test_validation_blocked_by_deprecation(self):
+        """Test that credential validation is blocked because init raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            creds = WebserviceCredentials("validuser", "validpass")
 
-        creds = WebserviceCredentials("validuser", "validpass")
-        session = Mock(spec=Session)
-
-        # Should complete without raising exception
-        result = creds.test_credentials(session)
-        assert result is True  # Method returns True on success
-
-        mock_get_client.assert_called_once_with(creds, session)
-        mock_client.service.TestUserAccess.assert_called_once()
-
-    def test_validation_requires_username(self):
-        """Test that validation fails without username."""
-        # Create creds without proper initialization
-        creds = WebserviceCredentials.__new__(WebserviceCredentials)
-        creds._username = None
-        creds._password = "pass"
-        creds.credential_source = CredentialType.SET_FROM_INIT
-        creds._initialized = True
-
-        session = Mock(spec=Session)
-
-        with pytest.raises((CredentialError, ValueError)) as exc_info:
-            creds.test_credentials(session)
-
-        assert "username" in str(exc_info.value).lower()
-
-    def test_validation_requires_password(self):
-        """Test that validation fails without password."""
-        # Create creds without proper initialization
-        creds = WebserviceCredentials.__new__(WebserviceCredentials)
-        creds._username = "user"
-        creds._password = None
-        creds.credential_source = CredentialType.SET_FROM_INIT
-        creds._initialized = True
-
-        session = Mock(spec=Session)
-
-        with pytest.raises((CredentialError, ValueError)) as exc_info:
-            creds.test_credentials(session)
-
-        assert "password" in str(exc_info.value).lower()
-
-    @patch("ffiec_data_connect.soap_cache.get_soap_client")
-    def test_authentication_failure_handling(self, mock_get_client):
-        """Test handling of authentication failures."""
-        # Mock SOAP client that raises authentication error
-        mock_get_client.side_effect = Exception("401 Unauthorized")
-
-        creds = WebserviceCredentials("baduser", "badpass")
-        session = Mock(spec=Session)
-
-        with pytest.raises((CredentialError, ValueError)) as exc_info:
-            creds.test_credentials(session)
-
-        error_message = str(exc_info.value)
-        assert (
-            "authentication" in error_message.lower()
-            or "credential" in error_message.lower()
-        )
-
-    @patch("ffiec_data_connect.soap_cache.get_soap_client")
-    def test_connection_error_handling(self, mock_get_client):
-        """Test handling of connection errors."""
-        # Mock SOAP client that raises connection error
-        mock_get_client.side_effect = Exception("Connection timeout")
-
-        creds = WebserviceCredentials("user", "pass")
-        session = Mock(spec=Session)
-
-        with pytest.raises((ConnectionError, ValueError)) as exc_info:
-            creds.test_credentials(session)
-
-        error_message = str(exc_info.value)
-        assert (
-            "connection" in error_message.lower()
-            or "timeout" in error_message.lower()
-            or "connect" in error_message.lower()
-        )
-
-    @patch("ffiec_data_connect.soap_cache.get_soap_client")
-    def test_ffiec_connection_session_handling(self, mock_get_client):
-        """Test credential validation with FFIECConnection session."""
-        mock_client = Mock()
-        mock_client.service.TestUserAccess.return_value = True
-        mock_get_client.return_value = mock_client
-
-        creds = WebserviceCredentials("user", "pass")
-        ffiec_session = Mock(spec=FFIECConnection)
-
-        creds.test_credentials(ffiec_session)
-
-        # Should handle FFIECConnection properly
-        mock_get_client.assert_called_once_with(creds, ffiec_session)
+    def test_validation_blocked_for_bad_credentials(self):
+        """Test that even bad credentials raise SOAPDeprecationError before validation."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("baduser", "badpass")
 
 
 class TestCredentialTypes:
@@ -315,151 +166,411 @@ class TestCredentialTypes:
         assert CredentialType.SET_FROM_INIT.value == 1
         assert CredentialType.SET_FROM_ENV.value == 2
 
-    def test_credential_source_detection_init(self):
-        """Test credential source detection for init."""
-        creds = WebserviceCredentials("user", "pass")
-        assert creds.credential_source == CredentialType.SET_FROM_INIT
+    def test_credential_source_detection_init_raises_deprecation(self):
+        """Test that credential source detection for init raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("user", "pass")
 
     @patch.dict(os.environ, {"FFIEC_USERNAME": "envuser", "FFIEC_PASSWORD": "envpass"})
-    def test_credential_source_detection_env(self):
-        """Test credential source detection for environment."""
-        creds = WebserviceCredentials()
-        assert creds.credential_source == CredentialType.SET_FROM_ENV
+    def test_credential_source_detection_env_raises_deprecation(self):
+        """Test that credential source detection for environment raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials()
 
 
 class TestThreadSafety:
     """Test thread safety of credential operations."""
 
-    def test_concurrent_credential_creation(self):
-        """Test concurrent credential creation."""
+    def test_concurrent_credential_creation_raises_deprecation(self):
+        """Test concurrent credential creation all raise SOAPDeprecationError."""
         results = []
         errors = []
 
-        def create_credentials(username, password):
+        def create_credentials(index):
             try:
-                creds = WebserviceCredentials(f"user{username}", f"pass{password}")
-                results.append((creds.username, creds.password))
+                WebserviceCredentials(f"user{index}", f"pass{index}")
+                errors.append(f"Thread {index}: instantiation succeeded unexpectedly")
+            except SOAPDeprecationError:
+                results.append(index)
             except Exception as e:
-                errors.append(str(e))
+                errors.append(f"Thread {index}: wrong exception {type(e).__name__}")
 
-        # Create credentials concurrently
         threads = []
         for i in range(20):
-            t = threading.Thread(target=create_credentials, args=(i, i))
+            t = threading.Thread(target=create_credentials, args=(i,))
             threads.append(t)
             t.start()
 
         for t in threads:
             t.join()
 
-        # All should succeed
         assert len(errors) == 0
         assert len(results) == 20
-
-        # Check all credentials are unique and correct
-        for i, (username, password) in enumerate(results):
-            assert f"user{i}" in username
-            assert f"pass{i}" in password
-
-    @patch("ffiec_data_connect.soap_cache.get_soap_client")
-    def test_concurrent_credential_validation(self, mock_get_client):
-        """Test concurrent credential validation."""
-        mock_client = Mock()
-        mock_client.service.TestUserAccess.return_value = True
-        mock_get_client.return_value = mock_client
-
-        creds = WebserviceCredentials("user", "pass")
-        results = []
-        errors = []
-
-        def validate_credentials():
-            try:
-                session = Mock(spec=Session)
-                creds.test_credentials(session)
-                results.append("success")
-            except Exception as e:
-                errors.append(str(e))
-
-        # Validate concurrently
-        threads = []
-        for i in range(10):
-            t = threading.Thread(target=validate_credentials)
-            threads.append(t)
-            t.start()
-
-        for t in threads:
-            t.join()
-
-        # All should succeed
-        assert len(errors) == 0
-        assert len(results) == 10
 
 
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_empty_string_credentials(self):
-        """Test handling of empty string credentials."""
-        with pytest.raises((CredentialError, ValueError)):
+    def test_empty_string_credentials_raises_deprecation(self):
+        """Test that empty string credentials raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials("", "password")
 
-        with pytest.raises((CredentialError, ValueError)):
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials("username", "")
 
-    def test_none_credentials(self):
-        """Test handling of None credentials."""
-        with pytest.raises((CredentialError, ValueError)):
+    def test_none_credentials_raises_deprecation(self):
+        """Test that None credentials raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials(None, "password")
 
-        with pytest.raises((CredentialError, ValueError)):
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials("username", None)
 
-    def test_whitespace_credentials(self):
-        """Test handling of whitespace-only credentials."""
-        # Note: Current implementation may accept whitespace-only credentials
-        # This test may need adjustment based on actual validation logic
-        try:
+    def test_whitespace_credentials_raises_deprecation(self):
+        """Test that whitespace-only credentials raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials("   ", "password")
-            # If no exception, the implementation accepts whitespace
-            assert True  # Test passes - implementation allows whitespace
-        except (CredentialError, ValueError):
-            # If exception, the implementation rejects whitespace
-            assert True  # Test passes - implementation rejects whitespace
 
-        try:
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials("username", "   ")
-            assert True  # Implementation allows whitespace passwords
-        except (CredentialError, ValueError):
-            assert True  # Implementation rejects whitespace passwords
 
-    def test_very_long_credentials(self):
-        """Test handling of very long credentials."""
-        long_username = "a" * 1000
-        long_password = "b" * 1000
+    def test_very_long_credentials_raises_deprecation(self):
+        """Test that very long credentials raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("a" * 1000, "b" * 1000)
 
-        # Should accept long credentials
-        creds = WebserviceCredentials(long_username, long_password)
-        assert creds.username == long_username
-        assert creds.password == long_password
+    def test_unicode_credentials_raises_deprecation(self):
+        """Test that Unicode credentials raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("\u7528\u6237\u540d", "\u5bc6\u7801")
 
-        # But should still mask them properly
-        str_repr = str(creds)
-        assert long_username not in str_repr
-        assert long_password not in str_repr
 
-    def test_unicode_credentials(self):
-        """Test handling of Unicode credentials."""
-        unicode_user = "用户名"
-        unicode_pass = "密码"
+class TestOAuth2CredentialsJWTExpiryAutoDetection:
+    """Test the JWT expiry auto-detection feature of OAuth2Credentials."""
 
-        creds = WebserviceCredentials(unicode_user, unicode_pass)
-        assert creds.username == unicode_user
-        assert creds.password == unicode_pass
+    def test_jwt_expiry_extracted_when_no_token_expires_provided(self):
+        """OAuth2Credentials with no token_expires but a valid JWT extracts exp from payload."""
+        # Token payload: {"sub": "test", "exp": 1783442253}
+        test_token = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
 
-        # Should mask Unicode properly
-        str_repr = str(creds)
-        assert unicode_user not in str_repr
-        assert unicode_pass not in str_repr
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=test_token,
+        )
+
+        assert creds.token_expires is not None
+        assert creds.token_expires == datetime.fromtimestamp(1783442253)
+
+    def test_explicit_token_expires_takes_precedence(self):
+        """When token_expires is explicitly provided, it takes precedence over JWT exp."""
+        test_token = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+        explicit_expires = datetime(2030, 1, 1)
+
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=test_token,
+            token_expires=explicit_expires,
+        )
+
+        assert creds.token_expires == explicit_expires
+
+    def test_jwt_without_exp_claim_returns_none(self):
+        """A JWT without an exp claim results in token_expires being None."""
+        # Token payload: {"sub": "test"} (no exp claim)
+        # Header: {"alg":"none","typ":"JWT"} -> eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0
+        # Payload: {"sub":"test"} -> eyJzdWIiOiJ0ZXN0In0
+        import base64
+        import json
+
+        header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).decode().rstrip("=")
+        payload = base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode()).decode().rstrip("=")
+        test_token = f"{header}.{payload}."
+
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=test_token,
+        )
+
+        assert creds.token_expires is None
+
+
+class TestOAuth2CredentialsCoverage:
+    """Additional tests for full coverage of OAuth2Credentials."""
+
+    # Valid (non-expired) JWT: exp=1783442253 (~2026-07-06)
+    VALID_TOKEN = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+    # Expired JWT: exp=1000000000 (~2001-09-09)
+    EXPIRED_TOKEN = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxMDAwMDAwMDAwfQ."
+
+    @pytest.fixture(autouse=True)
+    def _disable_legacy_errors(self):
+        """Disable legacy errors so specific exception types are raised."""
+        from ffiec_data_connect.config import Config
+        Config.set_legacy_errors(False)
+        yield
+
+    def test_empty_username_raises_credential_error(self):
+        """OAuth2Credentials with empty string username raises CredentialError (line 82)."""
+        with pytest.raises(CredentialError):
+            OAuth2Credentials(
+                username="",
+                bearer_token=self.VALID_TOKEN,
+            )
+
+    def test_whitespace_only_username_raises_credential_error(self):
+        """OAuth2Credentials with whitespace-only username raises CredentialError."""
+        with pytest.raises(CredentialError):
+            OAuth2Credentials(
+                username="   ",
+                bearer_token=self.VALID_TOKEN,
+            )
+
+    def test_is_expired_when_token_expires_is_none(self):
+        """is_expired returns False when token_expires is None (line 167)."""
+        import base64
+        import json
+
+        # JWT without exp claim -> token_expires will be None
+        header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).decode().rstrip("=")
+        payload = base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode()).decode().rstrip("=")
+        no_exp_token = f"{header}.{payload}."
+
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=no_exp_token,
+        )
+
+        assert creds.token_expires is None
+        assert creds.is_expired is False
+
+    def test_test_credentials_expired_token_returns_false(self):
+        """test_credentials() returns False for expired token (lines 201-211)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.EXPIRED_TOKEN,
+        )
+
+        assert creds.is_expired is True
+        assert creds.test_credentials() is False
+
+    def test_test_credentials_valid_token_returns_true(self):
+        """test_credentials() returns True for valid token (lines 201-211)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+
+        assert creds.is_expired is False
+        assert creds.test_credentials() is True
+
+    def test_str_expired_token_shows_expired(self):
+        """__str__ with expired token shows 'EXPIRED' (line 221)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.EXPIRED_TOKEN,
+        )
+
+        result = str(creds)
+        assert "EXPIRED" in result
+
+    def test_str_valid_token_shows_days(self):
+        """__str__ with valid token shows days remaining (line 226)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+
+        result = str(creds)
+        assert "days" in result
+
+    def test_mask_sensitive_string_short(self):
+        """_mask_sensitive_string with len<=2 returns all asterisks (line 234, 236)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+
+        # len <= 2
+        assert creds._mask_sensitive_string("ab") == "**"
+        assert creds._mask_sensitive_string("a") == "*"
+
+    def test_mask_sensitive_string_normal(self):
+        """_mask_sensitive_string with normal len shows first and last char (line 236)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+
+        result = creds._mask_sensitive_string("hello")
+        assert result == "h***o"
+
+    def test_mask_sensitive_string_empty(self):
+        """_mask_sensitive_string with empty string returns '***' (line 234)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+
+        assert creds._mask_sensitive_string("") == "***"
+
+    def test_extract_jwt_expiry_invalid_base64(self):
+        """_extract_jwt_expiry with invalid base64 payload returns None (lines 263-265)."""
+        # A token where the payload section is not valid base64
+        result = OAuth2Credentials._extract_jwt_expiry("eyJhbGciOiJub25lIn0.!!!invalid-base64!!!.")
+        assert result is None
+
+    def test_extract_jwt_expiry_overflow_exp(self):
+        """_extract_jwt_expiry with overflow exp value returns None (lines 273-277)."""
+        import base64
+        import json
+
+        header = base64.urlsafe_b64encode(json.dumps({"alg": "none"}).encode()).decode().rstrip("=")
+        # Use an absurdly large exp that causes OverflowError in datetime.fromtimestamp
+        payload = base64.urlsafe_b64encode(json.dumps({"exp": 999999999999999999}).encode()).decode().rstrip("=")
+        overflow_token = f"{header}.{payload}."
+
+        result = OAuth2Credentials._extract_jwt_expiry(overflow_token)
+        assert result is None
+
+    def test_setattr_immutability_after_init(self):
+        """Setting a public attribute after init raises CredentialError (line 286)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+
+        with pytest.raises(CredentialError):
+            creds.some_new_attribute = "value"
+
+    def test_repr_delegates_to_str(self):
+        """__repr__ returns same result as __str__."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+
+        assert repr(creds) == str(creds)
+
+
+class TestOAuth2CredentialsMissingCoverage:
+    """Additional tests to cover remaining uncovered lines in credentials.py."""
+
+    VALID_TOKEN = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+    EXPIRED_TOKEN = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxMDAwMDAwMDAwfQ."
+
+    @pytest.fixture(autouse=True)
+    def _disable_legacy_errors(self):
+        from ffiec_data_connect.config import Config
+        Config.set_legacy_errors(False)
+        yield
+
+    def test_test_credentials_empty_username_returns_false(self):
+        """test_credentials() returns False when username is empty (line 202).
+
+        We bypass __init__ validation by patching the username after creation.
+        """
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+        # Force empty username to trigger line 201-202
+        object.__setattr__(creds, "_username", "")
+        assert creds.test_credentials() is False
+
+    def test_test_credentials_empty_token_returns_false(self):
+        """test_credentials() returns False when bearer_token is empty (line 202)."""
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+        )
+        # Force empty token to trigger line 201-202
+        object.__setattr__(creds, "_bearer_token", "")
+        assert creds.test_credentials() is False
+
+    def test_str_token_expires_within_24h_shows_expired(self):
+        """__str__ shows 'EXPIRED' when token_expires is set but within 24 hours (line 219->226).
+
+        token_expires is set (truthy) and is_expired is True because it falls
+        within the 24-hour warning window.
+        """
+        from datetime import timedelta
+
+        # Token that expires in 12 hours -> is_expired returns True (within 24h)
+        expires_soon = datetime.now() + timedelta(hours=12)
+        creds = OAuth2Credentials(
+            username="testuser",
+            bearer_token=self.VALID_TOKEN,
+            token_expires=expires_soon,
+        )
+
+        assert creds.is_expired is True
+        result = str(creds)
+        assert "EXPIRED" in result
+
+    def test_jwt_payload_needing_base64_padding(self):
+        """JWT payload segment that needs padding (line 260: payload_b64 += '=' * ...).
+
+        The payload 'eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxMDAwMDAwMDAwfQ' is 41 chars
+        which needs 3 '=' padding to reach a multiple of 4.
+        """
+        import base64
+        import json
+
+        # Create a payload whose base64 encoding is NOT a multiple of 4
+        payload = {"sub": "a", "exp": 1783442253}
+        payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+        # Verify it actually needs padding
+        assert len(payload_b64) % 4 != 0
+
+        header_b64 = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).decode().rstrip("=")
+        token = f"{header_b64}.{payload_b64}."
+
+        result = OAuth2Credentials._extract_jwt_expiry(token)
+        assert result == datetime.fromtimestamp(1783442253)
+
+
+class TestWebserviceCredentialsReprCoverage:
+    """Test WebserviceCredentials.__repr__ (line 325/328).
+
+    Since __init__ raises SOAPDeprecationError, __repr__ is unreachable
+    through normal construction. We mark it with pragma: no cover in source.
+    """
+
+    def test_webservice_credentials_str_and_repr_unreachable(self):
+        """Confirm that WebserviceCredentials cannot be instantiated to reach __str__/__repr__."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("user", "pass")
+
+
+class TestExtractJwtExpiryEdgeCases:
+    """Cover line 258: token with < 2 parts."""
+
+    def test_token_no_dots_returns_none(self):
+        result = OAuth2Credentials._extract_jwt_expiry("nodots")
+        assert result is None
+
+    def test_token_single_dot_returns_none(self):
+        result = OAuth2Credentials._extract_jwt_expiry("one.")
+        assert result is None
+
+
+class TestOAuth2StrNoTokenExpires:
+    """Cover branch 219->226: __str__ when token_expires is None."""
+
+    def test_str_no_token_expires(self):
+        """JWT without exp claim → token_expires=None → no expiry info in str."""
+        # JWT with no exp claim
+        import base64, json
+        header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).rstrip(b"=").decode()
+        payload = base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode()).rstrip(b"=").decode()
+        token = f"{header}.{payload}."
+
+        creds = OAuth2Credentials(username="user", bearer_token=token)
+        assert creds.token_expires is None
+        s = str(creds)
+        assert "expires_in" not in s
+        assert "EXPIRED" not in s
 
 
 if __name__ == "__main__":

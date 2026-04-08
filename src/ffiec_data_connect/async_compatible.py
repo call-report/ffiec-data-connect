@@ -426,9 +426,9 @@ class AsyncCompatibleClient:
         """
         thread_id = threading.get_ident()
         with self._lock:
-            if thread_id not in self._connection_cache:
+            if thread_id not in self._connection_cache:  # pragma: no cover — FFIECConnection raises SOAPDeprecationError
                 self._connection_cache[thread_id] = ffiec_connection.FFIECConnection()
-            return self._connection_cache[thread_id]
+            return self._connection_cache[thread_id]  # pragma: no cover
 
     def close(self) -> None:
         """Close all connections and cleanup resources."""

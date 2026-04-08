@@ -1,12 +1,15 @@
 """
-FFIEC Data Connect - Python wrapper for FFIEC webservice API.
+FFIEC Data Connect - Python wrapper for FFIEC REST API.
 
 This package provides secure, thread-safe access to FFIEC financial data
-with support for both REST and SOAP APIs.
+via the REST API with OAuth2 authentication.
+
+Note: SOAP API support was removed in v3.0.0. The FFIEC SOAP API was
+shut down on February 28, 2026.
 """
 
 # Version
-__version__ = "2.0.5"
+__version__ = "3.0.0"
 
 # New async-compatible client
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
@@ -35,6 +38,7 @@ from ffiec_data_connect.exceptions import (
     NoDataError,
     RateLimitError,
     SessionError,
+    SOAPDeprecationError,
     ValidationError,
     XMLParsingError,
 )
@@ -49,7 +53,7 @@ from ffiec_data_connect.methods import (
     collect_ubpr_reporting_periods,
 )
 
-# REST API support - Protocol adapters for automatic SOAP/REST selection
+# Protocol adapters (SOAPAdapter is a deprecated stub)
 from ffiec_data_connect.protocol_adapter import (
     ProtocolAdapter,
     RESTAdapter,
@@ -57,7 +61,7 @@ from ffiec_data_connect.protocol_adapter import (
     create_protocol_adapter,
 )
 
-# SOAP client caching utilities
+# SOAP client caching utilities (deprecated stubs)
 from ffiec_data_connect.soap_cache import clear_soap_cache, get_cache_stats
 
 # Expose main classes for easier import
@@ -88,6 +92,7 @@ __all__ = [
     "RateLimitError",
     "XMLParsingError",
     "SessionError",
+    "SOAPDeprecationError",
     # Utilities
     "RateLimiter",
     # Configuration

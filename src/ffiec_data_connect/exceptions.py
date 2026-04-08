@@ -126,3 +126,47 @@ class SessionError(FFIECError):
         if session_state:
             details["session_state"] = session_state
         super().__init__(message, details)
+
+
+class SOAPDeprecationError(FFIECError):
+    """Raised when SOAP API functionality is used.
+
+    The FFIEC SOAP API was shut down on February 28, 2026.
+    This exception provides detailed migration guidance to the REST API.
+    """
+
+    def __init__(
+        self,
+        soap_method: str,
+        rest_equivalent: str,
+        code_example: str,
+    ):
+        self.soap_method = soap_method
+        self.rest_equivalent = rest_equivalent
+        self.code_example = code_example
+
+        message = (
+            f"\n{'=' * 70}\n"
+            f"FFIEC SOAP API DISCONTINUED\n"
+            f"{'=' * 70}\n"
+            f"\n"
+            f"The FFIEC SOAP API was shut down on February 28, 2026.\n"
+            f"All legacy security tokens expired on that date.\n"
+            f"\n"
+            f"'{soap_method}' is no longer available via SOAP.\n"
+            f"\n"
+            f"REST API equivalent: {rest_equivalent}\n"
+            f"\n"
+            f"Example:\n"
+            f"{code_example}\n"
+            f"\n"
+            f"Get a REST API token: https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx\n"
+            f"Migration guide: https://github.com/call-report/ffiec-data-connect/blob/main/SOAP-to-REST.md\n"
+            f"{'=' * 70}"
+        )
+
+        details = {
+            "soap_method": soap_method,
+            "rest_equivalent": rest_equivalent,
+        }
+        super().__init__(message, details)

@@ -10,8 +10,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# Import for fixture creation
-from ffiec_data_connect import FFIECConnection, WebserviceCredentials
 from ffiec_data_connect.config import Config
 
 
@@ -31,30 +29,6 @@ def suppress_deprecation_warnings():
             "ignore", category=DeprecationWarning, module="ffiec_data_connect"
         )
         yield
-
-
-@pytest.fixture
-def mock_credentials() -> WebserviceCredentials:
-    """Create mock credentials for testing without real auth."""
-    with patch.dict(
-        os.environ, {"FFIEC_USERNAME": "testuser", "FFIEC_PASSWORD": "testpass"}
-    ):
-        return WebserviceCredentials()
-
-
-@pytest.fixture
-def mock_connection() -> FFIECConnection:
-    """Create a mock FFIECConnection for testing."""
-    return FFIECConnection()
-
-
-@pytest.fixture
-def mock_soap_response():
-    """Mock SOAP response data for testing."""
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<xbrl xmlns="http://www.xbrl.org/2003/instance">
-    <cc:test_item contextRef="test" unitRef="test" decimals="0">12345</cc:test_item>
-</xbrl>"""
 
 
 @pytest.fixture
@@ -98,21 +72,6 @@ def mock_session():
     session.get.return_value.status_code = 200
     session.post.return_value.status_code = 200
     return session
-
-
-@pytest.fixture
-def mock_soap_client():
-    """Create a mock SOAP client for testing."""
-    mock_client = Mock()
-    mock_client.service.TestUserAccess.return_value = True
-    mock_client.service.RetrieveReportingPeriods.return_value = [
-        "2023-03-31",
-        "2023-06-30",
-        "2023-09-30",
-        "2023-12-31",
-    ]
-    mock_client.service.RetrieveFacsimile.return_value = b"mock xbrl data"
-    return mock_client
 
 
 @pytest.fixture(scope="session")

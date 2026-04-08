@@ -11,12 +11,11 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, Optional
 
-import requests
-
 from ffiec_data_connect import constants
 from ffiec_data_connect.exceptions import (
     ConnectionError,
     CredentialError,
+    SOAPDeprecationError,
     raise_exception,
 )
 
@@ -100,7 +99,12 @@ class OAuth2Credentials:
         # Set credentials (immutable after this point)
         self._username = username.strip()
         self._bearer_token = bearer_token.strip()
-        self._token_expires = token_expires
+
+        # Auto-detect expiry from JWT payload if not explicitly provided
+        if token_expires is not None:
+            self._token_expires = token_expires
+        else:
+            self._token_expires = self._extract_jwt_expiry(self._bearer_token)
 
         # Set credential type for compatibility (before marking initialized)
         self.credential_source = CredentialType.SET_FROM_INIT
@@ -180,7 +184,7 @@ class OAuth2Credentials:
             "Accept": "application/json",
         }
 
-    def test_credentials(self, session: requests.Session = None) -> bool:
+    def test_credentials(self, session: Any = None) -> bool:
         """
         Test OAuth2 credentials against REST API (placeholder).
 
@@ -232,6 +236,46 @@ class OAuth2Credentials:
             return "*" * len(value)
         return f"{value[0]}{'*' * (len(value) - 2)}{value[-1]}"
 
+    @staticmethod
+    def _extract_jwt_expiry(token: str) -> Optional[datetime]:
+        """Extract expiration datetime from a JWT token's payload.
+
+        FFIEC JWT tokens are unsigned (alg: "none") with a standard exp claim.
+        Decoding the payload requires only base64 + json (no crypto needed).
+
+        Returns:
+            datetime if exp claim found and valid, None otherwise
+        """
+        import base64
+        import json
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            parts = token.split(".")
+            if len(parts) < 2:
+                return None
+            payload_b64 = parts[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            payload_bytes = base64.urlsafe_b64decode(payload_b64)
+            payload = json.loads(payload_bytes)
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.debug(f"Could not decode JWT payload for expiry extraction: {e}")
+            return None
+
+        exp = payload.get("exp")
+        if exp is None:
+            return None
+
+        try:
+            return datetime.fromtimestamp(int(exp))
+        except (ValueError, OverflowError, OSError) as e:
+            logger.warning(
+                f"JWT 'exp' claim present but not convertible to datetime: {exp!r} ({e})"
+            )
+            return None
+
     # Prevent modification after initialization (immutable for security)
     def __setattr__(self, name: str, value: Any) -> None:
         if (
@@ -263,239 +307,22 @@ class WebserviceCredentials(object):
     def __init__(
         self, username: Optional[str] = None, password: Optional[str] = None
     ) -> None:
-        # Flag to track if credentials are initialized (for immutability)
-        self._initialized = False
-
-        # Initialize credential_source
-        self.credential_source: CredentialType = CredentialType.NO_CREDENTIALS
-
-        # collect the credentials from the environment variables
-        # if the environment variables are not set, we will set the credentials from the arguments
-        username_env = os.getenv("FFIEC_USERNAME")
-        password_env = os.getenv("FFIEC_PASSWORD")
-
-        # if we are passing in credentials, use them
-        if password and username:
-            self.username = username
-            self.password = password
-            self.credential_source = CredentialType.SET_FROM_INIT
-            self._initialized = True  # Mark as initialized
-            return
-
-        # if not, check if we have the two environment variables
-
-        # do we have both environment variables?
-        elif username_env and password_env:
-            self.username = username_env
-            self.password = password_env
-            self.credential_source = CredentialType.SET_FROM_ENV
-            self._initialized = True  # Mark as initialized
-
-        else:
-            # do we have a username and password?
-            self.credential_source = CredentialType.NO_CREDENTIALS
-
-            # Provide helpful error message based on what's missing
-            missing = []
-            if not username and not username_env:
-                missing.append("username (set via argument or FFIEC_USERNAME env var)")
-            if not password and not password_env:
-                missing.append("password (set via argument or FFIEC_PASSWORD env var)")
-
-            raise_exception(
-                CredentialError,
-                f"Missing required credentials: {', '.join(missing)}",
-                f"Missing required credentials: {', '.join(missing)}. "
-                "Please provide credentials either as arguments or environment variables.",
-                credential_source="none",
-            )
-
-        return
-
-    def __str__(self) -> str:
-        """String representation of the credentials - shows username but masks password for security."""
-        if (
-            self.credential_source == CredentialType.NO_CREDENTIALS
-            or self.credential_source is None
-        ):
-            return "WebserviceCredentials(status='not configured')"
-
-        # Mask username for security
-        username_display = (
-            self._mask_sensitive_string(self.username)
-            if hasattr(self, "_username") and self._username
-            else "not_set"
+        raise SOAPDeprecationError(
+            soap_method="WebserviceCredentials",
+            rest_equivalent="OAuth2Credentials(username, bearer_token)",
+            code_example=(
+                "  from ffiec_data_connect import OAuth2Credentials\n"
+                "\n"
+                "  # Get a token at: https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx\n"
+                "  creds = OAuth2Credentials(\n"
+                '      username="your_ffiec_username",\n'
+                '      bearer_token="eyJ...",  # 90-day JWT from FFIEC portal\n'
+                "  )"
+            ),
         )
 
-        if self.credential_source == CredentialType.SET_FROM_INIT:
-            return (
-                f"WebserviceCredentials(source='init', username='{username_display}')"
-            )
-        elif self.credential_source == CredentialType.SET_FROM_ENV:
-            return f"WebserviceCredentials(source='environment', username='{username_display}')"
-        else:
-            return "WebserviceCredentials(source='unknown')"
+    def __str__(self) -> str:  # pragma: no cover
+        return "WebserviceCredentials(status='deprecated - SOAP API shut down Feb 28, 2026')"
 
-    def _mask_sensitive_string(self, value: str) -> str:
-        """Mask sensitive string data, showing only first and last character."""
-        if not value:
-            return "***"
-        if len(value) <= 2:
-            return "*" * len(value)
-        return f"{value[0]}{'*' * (len(value) - 2)}{value[-1]}"
-
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         return self.__str__()
-
-    def test_credentials(self, session: requests.Session) -> bool:
-        """Test the credentials with the FFIEC Webservice to determine if they are valid and accepted.
-
-            | Note: The session argument can be generated directly from requests, or
-            | using the helper class `FFIECConnection`
-
-
-        Args:
-            session (requests.Session): the connection to test the credentials
-
-        Returns:
-            bool: True if the credentials are valid, False otherwise
-
-        Raises:
-            ValueError: if the credentials are not set
-            Exception: Other unspecified errors
-
-        """
-
-        # check that we have a user name
-        if self.username is None:
-            raise_exception(
-                CredentialError,
-                "Username is not set",
-                "Username is not set. Please provide username via constructor or FFIEC_USERNAME environment variable.",
-                credential_source=str(self.credential_source),
-            )
-
-        # check that we have a password
-        if self.password is None:
-            raise_exception(
-                CredentialError,
-                "Password is not set",
-                "Password is not set. Please provide password via constructor or FFIEC_PASSWORD environment variable.",
-                credential_source=str(self.credential_source),
-            )
-
-        # we have a user name and password, so try to log in
-        try:
-            # Use cached SOAP client for better performance
-            from ffiec_data_connect.soap_cache import get_soap_client
-
-            soap_client = get_soap_client(self, session)
-
-            print("Standby...testing your access.")
-
-            has_access_response = soap_client.service.TestUserAccess()
-
-            if has_access_response:
-                print("Your credentials are valid.")
-                return True
-            else:
-                print(
-                    "Your credentials are invalid. Please refer to the documentation for more information."
-                )
-                print(has_access_response)
-                return False
-
-            print(has_access_response)
-
-        except Exception as e:
-            # More descriptive error message
-            error_msg = str(e)
-            if "401" in error_msg or "unauthorized" in error_msg.lower():
-                raise_exception(
-                    CredentialError,
-                    "Authentication failed",
-                    "Authentication failed: Invalid username or password. "
-                    "Please verify your FFIEC credentials are correct.",
-                    credential_source=str(self.credential_source),
-                )
-            elif "connection" in error_msg.lower() or "timeout" in error_msg.lower():
-                raise_exception(
-                    ConnectionError,
-                    "Failed to connect to FFIEC webservice",
-                    "Failed to connect to FFIEC webservice. "
-                    "Please check your internet connection and proxy settings.",
-                    url=constants.WebserviceConstants.base_url,
-                )
-            else:
-                raise_exception(
-                    CredentialError,
-                    f"Failed to validate credentials: {error_msg}",
-                    f"Failed to validate credentials: {error_msg}. "
-                    "Please refer to https://cdr.ffiec.gov/public/PWS/Home.aspx for account setup.",
-                    credential_source=str(self.credential_source),
-                )
-
-        # This should never be reached due to exceptions above
-        return False
-
-    @property
-    def username(self) -> str:
-        """Returns the username from the WebserviceCredentials instance.
-
-        Returns:
-            str: the username stored in the WebserviceCredentials instance
-        """
-        return self._username
-
-    @username.setter
-    def username(self, username: str) -> None:
-        """Sets the username in the WebserviceCredentials instance.
-
-        Args:
-            username (str): the username to set in the WebserviceCredentials instance
-
-        Raises:
-            RuntimeError: If credentials are already initialized (immutable)
-        """
-        if getattr(self, "_initialized", False):
-            from ffiec_data_connect.exceptions import CredentialError, raise_exception
-
-            raise_exception(
-                CredentialError,
-                "Cannot modify username after initialization",
-                "Cannot modify username after initialization. WebserviceCredentials are immutable for security.",
-                credential_source=str(getattr(self, "credential_source", "unknown")),
-            )
-
-        self._username = username
-
-    @property
-    def password(self) -> str:
-        """Returns the password from the WebserviceCredentials instance.
-
-        Returns:
-            str: the password stored in the WebserviceCredentials instance
-        """
-        return self._password
-
-    @password.setter
-    def password(self, password: str) -> None:
-        """Sets the password in the WebserviceCredentials instance.
-
-        Args:
-            password (str): the password to set in the WebserviceCredentials instance
-
-        Raises:
-            RuntimeError: If credentials are already initialized (immutable)
-        """
-        if getattr(self, "_initialized", False):
-            from ffiec_data_connect.exceptions import CredentialError, raise_exception
-
-            raise_exception(
-                CredentialError,
-                "Cannot modify password after initialization",
-                "Cannot modify password after initialization. WebserviceCredentials are immutable for security.",
-                credential_source=str(getattr(self, "credential_source", "unknown")),
-            )
-
-        self._password = password
