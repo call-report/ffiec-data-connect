@@ -147,8 +147,7 @@ class TestNumpyDtypeFlow:
 
                 # Call collect_data with pandas output
                 df = methods.collect_data(
-                    session=mock_session,
-                    creds=mock_creds,
+                    mock_creds,
                     reporting_period="2023-12-31",
                     rssd_id="480228",
                     series="call",

@@ -30,7 +30,7 @@ from ffiec_data_connect.methods import (
     _is_valid_date_or_quarter,
     _output_type_validator,
     _return_ffiec_reporting_date,
-    _session_validator,
+    _resolve_session_and_creds,
     _validate_rssd_id,
     collect_data,
     collect_filers_on_reporting_period,
@@ -165,9 +165,12 @@ class TestValidators:
         with pytest.raises((ValidationError, ValueError)):
             _credentials_validator(None)
 
-    def test_session_validator(self):
-        """Test session validation."""
-        assert _session_validator(None) is True
+    def test_resolve_session_and_creds(self):
+        """Test session/creds resolution."""
+        from ffiec_data_connect.credentials import OAuth2Credentials
+        creds = Mock(spec=OAuth2Credentials)
+        # New style: creds as first arg
+        assert _resolve_session_and_creds(creds) is creds
 
     def test_validate_rssd_id(self):
         """Test RSSD ID validation and conversion."""
@@ -213,37 +216,37 @@ class TestSOAPDeprecation:
         """Test that SOAP credentials raise SOAPDeprecationError."""
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError):
-            collect_reporting_periods(None, creds)
+            collect_reporting_periods(creds)
 
     def test_collect_data_soap_raises(self):
         """Test that SOAP credentials raise SOAPDeprecationError."""
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError):
-            collect_data(None, creds, "12/31/2025", "480228", "call")
+            collect_data(creds, reporting_period="12/31/2025", rssd_id="480228", series="call")
 
     def test_collect_filers_since_date_soap_raises(self):
         """Test that SOAP credentials raise SOAPDeprecationError."""
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError):
-            collect_filers_since_date(None, creds, "12/31/2025", "1/1/2025")
+            collect_filers_since_date(creds, reporting_period="12/31/2025", since_date="1/1/2025")
 
     def test_collect_filers_submission_date_time_soap_raises(self):
         """Test that SOAP credentials raise SOAPDeprecationError."""
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError):
-            collect_filers_submission_date_time(None, creds, "1/1/2025", "12/31/2025")
+            collect_filers_submission_date_time(creds, since_date="1/1/2025", reporting_period="12/31/2025")
 
     def test_collect_filers_on_reporting_period_soap_raises(self):
         """Test that SOAP credentials raise SOAPDeprecationError."""
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError):
-            collect_filers_on_reporting_period(None, creds, "12/31/2025")
+            collect_filers_on_reporting_period(creds, reporting_period="12/31/2025")
 
     def test_deprecation_error_contains_migration_info(self):
         """Test that SOAPDeprecationError contains helpful migration info."""
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError) as exc_info:
-            collect_reporting_periods(None, creds)
+            collect_reporting_periods(creds)
         assert "OAuth2Credentials" in str(exc_info.value)
         assert "MIGRATION.md" in str(exc_info.value)
 
@@ -251,7 +254,7 @@ class TestSOAPDeprecation:
         """Test that SOAPDeprecationError contains the FFIEC portal URL."""
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError) as exc_info:
-            collect_reporting_periods(None, creds)
+            collect_reporting_periods(creds)
         assert "cdr.ffiec.gov" in str(exc_info.value)
 
 
@@ -365,11 +368,10 @@ class TestMethodsCoverage:
         creds = Mock(spec=OAuth2Credentials)
         with pytest.raises((ValidationError, ValueError)):
             collect_data(
-                None,
                 creds,
-                "12/31/2025",
-                "480228",
-                "call",
+                reporting_period="12/31/2025",
+                rssd_id="480228",
+                series="call",
                 force_null_types="invalid",
             )
 
@@ -395,11 +397,10 @@ class TestMethodsCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_data(
-            None,
             creds,
-            "12/31/2025",
-            "480228",
-            "call",
+            reporting_period="12/31/2025",
+            rssd_id="480228",
+            series="call",
             output_type="polars",
         )
 
@@ -427,11 +428,10 @@ class TestMethodsCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_data(
-            None,
             creds,
-            "12/31/2025",
-            "480228",
-            "call",
+            reporting_period="12/31/2025",
+            rssd_id="480228",
+            series="call",
             output_type="list",
         )
 
@@ -470,10 +470,9 @@ class TestUBPRMethodsCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None,
             creds,
-            "12/31/2025",
-            "480228",
+            reporting_period="12/31/2025",
+            rssd_id="480228",
             output_type="list",
         )
 
@@ -492,10 +491,9 @@ class TestUBPRMethodsCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None,
             creds,
-            "12/31/2025",
-            "480228",
+            reporting_period="12/31/2025",
+            rssd_id="480228",
             output_type="pandas",
         )
 
@@ -513,10 +511,9 @@ class TestUBPRMethodsCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None,
             creds,
-            "12/31/2025",
-            "480228",
+            reporting_period="12/31/2025",
+            rssd_id="480228",
             output_type="pandas",
             force_null_types="numpy",
         )
@@ -535,10 +532,9 @@ class TestUBPRMethodsCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None,
             creds,
-            "12/31/2025",
-            "480228",
+            reporting_period="12/31/2025",
+            rssd_id="480228",
             output_type="pandas",
             force_null_types="pandas",
         )
@@ -558,10 +554,9 @@ class TestUBPRMethodsCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None,
             creds,
-            "12/31/2025",
-            "480228",
+            reporting_period="12/31/2025",
+            rssd_id="480228",
             output_type="list",
         )
 
@@ -675,7 +670,7 @@ class TestCollectDataRESTBranches:
 
         with pytest.raises((ValidationError, ValueError)):
             collect_data(
-                None, creds, "12/31/2025", "480228", "call", output_type="list"
+                creds, reporting_period="12/31/2025", rssd_id="480228", series="call", output_type="list"
             )
 
     @patch("ffiec_data_connect.protocol_adapter.create_protocol_adapter")
@@ -698,7 +693,7 @@ class TestCollectDataRESTBranches:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_data(
-            None, creds, "12/31/2025", "480228", "call", output_type="list"
+            creds, reporting_period="12/31/2025", rssd_id="480228", series="call", output_type="list"
         )
         assert isinstance(result, list)
 
@@ -722,7 +717,7 @@ class TestCollectDataRESTBranches:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_data(
-            None, creds, "12/31/2025", "480228", "call",
+            creds, reporting_period="12/31/2025", rssd_id="480228", series="call",
             output_type="list", force_null_types="numpy"
         )
         assert isinstance(result, list)
@@ -747,7 +742,7 @@ class TestCollectDataRESTBranches:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_data(
-            None, creds, "12/31/2025", "480228", "call",
+            creds, reporting_period="12/31/2025", rssd_id="480228", series="call",
             output_type="list", force_null_types="pandas"
         )
         assert isinstance(result, list)
@@ -766,7 +761,7 @@ class TestCollectDataRESTBranches:
 
         with pytest.raises(ConnectionError):
             collect_data(
-                None, creds, "12/31/2025", "480228", "call", output_type="list"
+                creds, reporting_period="12/31/2025", rssd_id="480228", series="call", output_type="list"
             )
 
     @patch("ffiec_data_connect.protocol_adapter.create_protocol_adapter")
@@ -783,7 +778,7 @@ class TestCollectDataRESTBranches:
 
         with pytest.raises(ConnectionError):
             collect_data(
-                None, creds, "12/31/2025", "480228", "call", output_type="list"
+                creds, reporting_period="12/31/2025", rssd_id="480228", series="call", output_type="list"
             )
 
     @patch("ffiec_data_connect.protocol_adapter.create_protocol_adapter")
@@ -811,7 +806,7 @@ class TestCollectDataRESTBranches:
         # We need an output_type that passes validation but isn't list/pandas/polars
         # "bytes" is valid. Let's check what happens with "bytes".
         result = collect_data(
-            None, creds, "12/31/2025", "480228", "call", output_type="bytes"
+            creds, reporting_period="12/31/2025", rssd_id="480228", series="call", output_type="bytes"
         )
         # "bytes" is valid but there's no explicit "bytes" branch in collect_data REST,
         # so it falls through to line 618 return normalized_data
@@ -844,7 +839,7 @@ class TestCollectFilersOAuth2Delegation:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_filers_submission_date_time(
-            None, creds, "1/1/2023", "12/31/2023", output_type="list"
+            creds, since_date="1/1/2023", reporting_period="12/31/2023", output_type="list"
         )
         assert isinstance(result, list)
         assert len(result) == 1
@@ -863,7 +858,7 @@ class TestCollectFilersOAuth2Delegation:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_filers_on_reporting_period(
-            None, creds, "12/31/2023", output_type="list"
+            creds, reporting_period="12/31/2023", output_type="list"
         )
         assert isinstance(result, list)
 
@@ -892,7 +887,7 @@ class TestCollectUBPRReportingPeriodsCoverage:
         ]
         mock_create_adapter.return_value = mock_adapter
 
-        result = collect_ubpr_reporting_periods(None, creds, output_type="list")
+        result = collect_ubpr_reporting_periods(creds, output_type="list")
         assert isinstance(result, list)
         assert result == ["6/30/2023", "12/31/2023"]
 
@@ -910,7 +905,7 @@ class TestCollectUBPRReportingPeriodsCoverage:
         ]
         mock_create_adapter.return_value = mock_adapter
 
-        result = collect_ubpr_reporting_periods(None, creds, output_type="pandas")
+        result = collect_ubpr_reporting_periods(creds, output_type="pandas")
         assert isinstance(result, pd.DataFrame)
         assert "reporting_period" in result.columns
         assert result["reporting_period"].tolist() == ["6/30/2023", "12/31/2023"]
@@ -921,7 +916,7 @@ class TestCollectUBPRReportingPeriodsCoverage:
 
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError):
-            collect_ubpr_reporting_periods(None, creds)
+            collect_ubpr_reporting_periods(creds)
 
 
 class TestCollectUBPRFacsimileDataCoverage:
@@ -951,7 +946,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         creds = Mock(spec=OAuth2Credentials)
         with pytest.raises((ValidationError, ValueError)):
             collect_ubpr_facsimile_data(
-                None, creds, "12/31/2025", "480228",
+                creds, reporting_period="12/31/2025", rssd_id="480228",
                 output_type="list", force_null_types="invalid"
             )
 
@@ -963,7 +958,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         creds = Mock(spec=OAuth2Credentials)
         with pytest.raises((ValidationError, ValueError)):
             collect_ubpr_facsimile_data(
-                None, creds, "invalid-date", "480228", output_type="list"
+                creds, reporting_period="invalid-date", rssd_id="480228", output_type="list"
             )
 
     @patch("ffiec_data_connect.protocol_adapter.create_protocol_adapter")
@@ -978,7 +973,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None, creds, datetime(2025, 12, 31), "480228", output_type="list"
+            creds, reporting_period=datetime(2025, 12, 31), rssd_id="480228", output_type="list"
         )
         assert isinstance(result, list)
 
@@ -1000,7 +995,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         # With legacy_errors=True (default) it raises ValueError.
         with pytest.raises((ValidationError, ValueError, TypeError)):
             collect_ubpr_facsimile_data(
-                None, creds, "3Q2025", "480228", output_type="list"
+                creds, reporting_period="3Q2025", rssd_id="480228", output_type="list"
             )
 
     @patch("ffiec_data_connect.protocol_adapter.create_protocol_adapter")
@@ -1015,7 +1010,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228", output_type="bytes"
+            creds, reporting_period="12/31/2025", rssd_id="480228", output_type="bytes"
         )
         assert result == self.SAMPLE_UBPR_XBRL
 
@@ -1031,7 +1026,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228", output_type="bytes"
+            creds, reporting_period="12/31/2025", rssd_id="480228", output_type="bytes"
         )
         assert result == "string data"
 
@@ -1047,7 +1042,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228",
+            creds, reporting_period="12/31/2025", rssd_id="480228",
             output_type="pandas", force_null_types="numpy"
         )
         assert isinstance(result, pd.DataFrame)
@@ -1064,7 +1059,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228",
+            creds, reporting_period="12/31/2025", rssd_id="480228",
             output_type="pandas", force_null_types="pandas"
         )
         assert isinstance(result, pd.DataFrame)
@@ -1081,7 +1076,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228", output_type="pandas"
+            creds, reporting_period="12/31/2025", rssd_id="480228", output_type="pandas"
         )
         assert result == "string data"
 
@@ -1092,7 +1087,7 @@ class TestCollectUBPRFacsimileDataCoverage:
         creds = Mock(spec=WebserviceCredentials)
         with pytest.raises(SOAPDeprecationError):
             collect_ubpr_facsimile_data(
-                None, creds, "12/31/2025", "480228", output_type="list"
+                creds, reporting_period="12/31/2025", rssd_id="480228", output_type="list"
             )
 
 
@@ -1137,7 +1132,7 @@ class TestCollectUBPRFacsimilePandasBranches:
 
         # With empty XBRL, _process_xml returns empty list → empty DataFrame
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228",
+            creds, reporting_period="12/31/2025", rssd_id="480228",
             output_type="pandas", force_null_types="pandas",
         )
         assert isinstance(result, pd.DataFrame)
@@ -1154,7 +1149,7 @@ class TestCollectUBPRFacsimilePandasBranches:
         mock_create_adapter.return_value = mock_adapter
 
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228", output_type="pandas",
+            creds, reporting_period="12/31/2025", rssd_id="480228", output_type="pandas",
         )
         assert result == "not-bytes"
 
@@ -1173,7 +1168,7 @@ class TestCollectUBPRFacsimilePandasBranches:
         # output_type="polars" but inside the bytes branch, only "list" and "pandas" are handled
         # so it falls through to the else at line 1044
         result = collect_ubpr_facsimile_data(
-            None, creds, "12/31/2025", "480228", output_type="polars",
+            creds, reporting_period="12/31/2025", rssd_id="480228", output_type="polars",
         )
         assert result == sample_xbrl
 

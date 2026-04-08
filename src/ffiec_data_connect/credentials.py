@@ -96,6 +96,21 @@ class OAuth2Credentials:
                 credential_source="oauth2_init",
             )
 
+        # Warn if token appears to be hardcoded (not from env var)
+        import os
+
+        env_token = os.environ.get("FFIEC_BEARER_TOKEN", "")
+        if bearer_token.strip() != env_token and env_token == "":
+            import warnings
+
+            warnings.warn(
+                "Bearer token passed directly. For security, consider storing it in the "
+                "FFIEC_BEARER_TOKEN environment variable:\n"
+                '  export FFIEC_BEARER_TOKEN=\'eyJ...\'\n'
+                "  creds = OAuth2Credentials(username=..., bearer_token=os.environ['FFIEC_BEARER_TOKEN'])",
+                stacklevel=2,
+            )
+
         # Set credentials (immutable after this point)
         self._username = username.strip()
         self._bearer_token = bearer_token.strip()

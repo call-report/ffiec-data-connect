@@ -53,8 +53,7 @@ class TestPolarsDirectConversion:
 
                     with pytest.raises(ValueError) as exc_info:
                         methods.collect_data(
-                            session=mock_session,
-                            creds=mock_creds,
+                            mock_creds,
                             reporting_period="2023-12-31",
                             rssd_id="480228",
                             series="call",
@@ -127,8 +126,7 @@ class TestPolarsDirectConversion:
 
                     # Get direct polars conversion
                     df_polars = methods.collect_data(
-                        session=mock_session,
-                        creds=mock_creds,
+                        mock_creds,
                         reporting_period="2023-12-31",
                         rssd_id="480228",
                         series="call",
@@ -186,8 +184,7 @@ class TestPolarsDirectConversion:
                     mock_process.return_value = []  # Empty data
 
                     df_polars = methods.collect_data(
-                        session=mock_session,
-                        creds=mock_creds,
+                        mock_creds,
                         reporting_period="2023-12-31",
                         rssd_id="480228",
                         series="call",
@@ -244,8 +241,7 @@ class TestPolarsDirectConversion:
                     mock_process.return_value = test_data
 
                     df_polars = methods.collect_data(
-                        session=mock_session,
-                        creds=mock_creds,
+                        mock_creds,
                         reporting_period="2023-12-31",
                         rssd_id="123456",
                         series="call",

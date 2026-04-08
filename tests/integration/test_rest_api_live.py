@@ -61,32 +61,32 @@ class TestCollectReportingPeriods:
     """Test collect_reporting_periods against the live API."""
 
     def test_call_series_list(self, live_creds):
-        periods = collect_reporting_periods(None, live_creds, series="call", output_type="list")
+        periods = collect_reporting_periods(live_creds, series="call", output_type="list")
         assert isinstance(periods, list)
         assert len(periods) > 0
         # Should be date strings
         assert "/" in periods[0]
 
     def test_call_series_sorted_ascending(self, live_creds):
-        periods = collect_reporting_periods(None, live_creds, series="call", output_type="list")
+        periods = collect_reporting_periods(live_creds, series="call", output_type="list")
         # Oldest first
         assert periods == sorted(periods, key=lambda d: datetime.strptime(d, "%m/%d/%Y"))
 
     def test_call_series_pandas(self, live_creds):
-        result = collect_reporting_periods(None, live_creds, series="call", output_type="pandas")
+        result = collect_reporting_periods(live_creds, series="call", output_type="pandas")
         assert isinstance(result, pd.DataFrame)
         assert "reporting_period" in result.columns
         assert len(result) > 0
 
     def test_ubpr_series(self, live_creds):
-        periods = collect_reporting_periods(None, live_creds, series="ubpr", output_type="list")
+        periods = collect_reporting_periods(live_creds, series="ubpr", output_type="list")
         assert isinstance(periods, list)
         assert len(periods) > 0
 
     @pytest.mark.xfail(reason="date_output_format not yet implemented in REST enhanced path")
     def test_date_format_yyyymmdd(self, live_creds):
         periods = collect_reporting_periods(
-            None, live_creds, series="call",
+            live_creds, series="call",
             output_type="list", date_output_format="string_yyyymmdd",
         )
         assert isinstance(periods, list)
@@ -97,7 +97,7 @@ class TestCollectReportingPeriods:
     @pytest.mark.xfail(reason="date_output_format not yet implemented in REST enhanced path")
     def test_date_format_python(self, live_creds):
         periods = collect_reporting_periods(
-            None, live_creds, series="call",
+            live_creds, series="call",
             output_type="list", date_output_format="python_format",
         )
         assert isinstance(periods, list)
@@ -113,7 +113,7 @@ class TestCollectData:
 
     def test_call_series_list(self, live_creds):
         data = collect_data(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, rssd_id=RSSD_ID,
             series="call", output_type="list",
         )
@@ -125,7 +125,7 @@ class TestCollectData:
 
     def test_call_series_pandas(self, live_creds):
         df = collect_data(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, rssd_id=RSSD_ID,
             series="call", output_type="pandas",
         )
@@ -136,7 +136,7 @@ class TestCollectData:
 
     def test_force_null_pandas(self, live_creds):
         df = collect_data(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, rssd_id=RSSD_ID,
             series="call", output_type="pandas",
             force_null_types="pandas",
@@ -146,7 +146,7 @@ class TestCollectData:
 
     def test_force_null_numpy(self, live_creds):
         df = collect_data(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, rssd_id=RSSD_ID,
             series="call", output_type="pandas",
             force_null_types="numpy",
@@ -158,7 +158,7 @@ class TestCollectData:
         """Multiple date input formats should work."""
         for date_fmt in ["12/31/2024", "2024-12-31"]:
             data = collect_data(
-                None, live_creds,
+                live_creds,
                 reporting_period=date_fmt, rssd_id=RSSD_ID,
                 series="call", output_type="list",
             )
@@ -166,7 +166,7 @@ class TestCollectData:
 
     def test_datetime_input(self, live_creds):
         data = collect_data(
-            None, live_creds,
+            live_creds,
             reporting_period=datetime(2024, 12, 31), rssd_id=RSSD_ID,
             series="call", output_type="list",
         )
@@ -182,7 +182,7 @@ class TestCollectFilersOnReportingPeriod:
 
     def test_list_output(self, live_creds):
         filers = collect_filers_on_reporting_period(
-            None, live_creds, reporting_period=REPORTING_PERIOD, output_type="list",
+            live_creds, reporting_period=REPORTING_PERIOD, output_type="list",
         )
         assert isinstance(filers, list)
         assert len(filers) > 100  # thousands of banks file
@@ -197,7 +197,7 @@ class TestCollectFilersOnReportingPeriod:
 
     def test_pandas_output(self, live_creds):
         df = collect_filers_on_reporting_period(
-            None, live_creds, reporting_period=REPORTING_PERIOD, output_type="pandas",
+            live_creds, reporting_period=REPORTING_PERIOD, output_type="pandas",
         )
         assert isinstance(df, pd.DataFrame)
         assert len(df) > 100
@@ -207,7 +207,7 @@ class TestCollectFilersOnReportingPeriod:
     def test_zip_codes_are_strings(self, live_creds):
         """ZIP codes should be strings (5-digit or ZIP+4)."""
         filers = collect_filers_on_reporting_period(
-            None, live_creds, reporting_period=REPORTING_PERIOD, output_type="list",
+            live_creds, reporting_period=REPORTING_PERIOD, output_type="list",
         )
         for filer in filers[:50]:
             if filer.get("zip") and filer["zip"] != "00000":
@@ -224,7 +224,7 @@ class TestCollectFilersSinceDate:
 
     def test_list_output(self, live_creds):
         filers = collect_filers_since_date(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, since_date="1/1/2024",
             output_type="list",
         )
@@ -235,7 +235,7 @@ class TestCollectFilersSinceDate:
 
     def test_pandas_output(self, live_creds):
         result = collect_filers_since_date(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, since_date="1/1/2024",
             output_type="pandas",
         )
@@ -252,7 +252,7 @@ class TestCollectFilersSubmissionDateTime:
 
     def test_list_output(self, live_creds):
         submissions = collect_filers_submission_date_time(
-            None, live_creds,
+            live_creds,
             since_date="1/1/2024", reporting_period=REPORTING_PERIOD,
             output_type="list",
         )
@@ -266,7 +266,7 @@ class TestCollectFilersSubmissionDateTime:
 
     def test_pandas_output(self, live_creds):
         df = collect_filers_submission_date_time(
-            None, live_creds,
+            live_creds,
             since_date="1/1/2024", reporting_period=REPORTING_PERIOD,
             output_type="pandas",
         )
@@ -284,12 +284,12 @@ class TestCollectUBPRReportingPeriods:
     """Test collect_ubpr_reporting_periods (REST-only endpoint)."""
 
     def test_list_output(self, live_creds):
-        periods = collect_ubpr_reporting_periods(None, live_creds, output_type="list")
+        periods = collect_ubpr_reporting_periods(live_creds, output_type="list")
         assert isinstance(periods, list)
         assert len(periods) > 0
 
     def test_pandas_output(self, live_creds):
-        result = collect_ubpr_reporting_periods(None, live_creds, output_type="pandas")
+        result = collect_ubpr_reporting_periods(live_creds, output_type="pandas")
         assert isinstance(result, pd.DataFrame)
         assert len(result) > 0
 
@@ -303,7 +303,7 @@ class TestCollectUBPRFacsimileData:
 
     def test_list_output(self, live_creds):
         data = collect_ubpr_facsimile_data(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, rssd_id=RSSD_ID,
             output_type="list",
         )
@@ -314,7 +314,7 @@ class TestCollectUBPRFacsimileData:
     @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_pandas_output(self, live_creds):
         result = collect_ubpr_facsimile_data(
-            None, live_creds,
+            live_creds,
             reporting_period=REPORTING_PERIOD, rssd_id=RSSD_ID,
             output_type="pandas",
         )
@@ -328,12 +328,10 @@ class TestCollectUBPRFacsimileData:
 class TestSOAPDeprecationLive:
     """Verify SOAP classes raise even when credentials are available."""
 
-    def test_session_not_none_still_works(self, live_creds):
-        """REST path ignores session parameter — non-None is tolerated."""
-        # The REST enhanced path doesn't check session, so this should work
-        periods = collect_reporting_periods("ignored", live_creds, series="call")
-        assert isinstance(periods, list)
-        assert len(periods) > 0
+    def test_session_not_none_raises(self, live_creds):
+        """Passing a non-None session should raise SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            collect_reporting_periods("ignored", live_creds, series="call")
 
 
 # ---------------------------------------------------------------------------
