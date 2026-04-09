@@ -33,8 +33,8 @@ context = '${COVERAGE_CONTEXT:-default}'
 data_file = .coverage
 
 [report]
-# Minimum coverage percentage to pass (temporarily lowered while building test coverage)
-fail_under = 30
+# Minimum coverage percentage to pass
+fail_under = 90
 
 # Show missing lines in report
 show_missing = True

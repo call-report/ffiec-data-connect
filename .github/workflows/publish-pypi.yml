@@ -118,7 +118,7 @@ jobs:
           # Install package from Test PyPI only, then dependencies from Production PyPI
           pip install --no-cache-dir --pre --no-deps --index-url https://test.pypi.org/simple/ ffiec-data-connect==${{ steps.get_version.outputs.version }}
           echo "📦 Installing dependencies from Production PyPI..."
-          pip install --no-cache-dir pandas numpy requests zeep lxml openpyxl defusedxml httpx pydantic xmltodict
+          pip install --no-cache-dir pandas numpy lxml defusedxml httpx pydantic xmltodict
         else
           echo "📦 Installing from Production PyPI..."
           pip install --no-cache-dir --pre ffiec-data-connect==${{ steps.get_version.outputs.version }}
@@ -133,6 +133,6 @@ jobs:
         print(f'Expected: {expected_version}')
         print(f'Installed: {actual_version}')
         assert actual_version == expected_version, f'Version mismatch! Expected {expected_version}, got {actual_version}'
-        from ffiec_data_connect import WebserviceCredentials
+        from ffiec_data_connect import OAuth2Credentials
         print('✅ Version verification and basic import test passed')
         "

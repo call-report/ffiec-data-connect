@@ -125,7 +125,7 @@ jobs:
         echo "🔍 Validating wheel contains expected dependencies..."
         for wheel in dist/*.whl; do
           [ -f "$wheel" ] || continue
-          unzip -l "$wheel" | grep -E "(numpy|pandas|requests)" && echo "✅ Core dependencies found in wheel" || echo "⚠️ Core dependencies check inconclusive"
+          unzip -l "$wheel" | grep -E "(numpy|pandas|httpx)" && echo "✅ Core dependencies found in wheel" || echo "⚠️ Core dependencies check inconclusive"
           break
         done
 
@@ -184,7 +184,7 @@ jobs:
 
         # Install test dependencies
         pip install pytest pytest-cov pytest-asyncio pytest-mock pytest-timeout pytest-xdist
-        pip install black isort flake8 mypy types-requests
+        pip install black isort flake8 mypy
 
         # Install dependencies needed by test suite
         pip install psutil  # Required by memory leak tests
@@ -204,9 +204,11 @@ jobs:
         print(f'Package version: {fdc.__version__}')
         print('Available classes:', [name for name in dir(fdc) if not name.startswith('_')])
 
-        # Test basic imports
-        from ffiec_data_connect import WebserviceCredentials, FFIECConnection
+        # Test core imports
+        from ffiec_data_connect import OAuth2Credentials, collect_data, collect_reporting_periods
         from ffiec_data_connect import AsyncCompatibleClient, RateLimiter
+        # Deprecated stubs should still be importable (backward compat)
+        from ffiec_data_connect import WebserviceCredentials, FFIECConnection
 
         print('✅ Smoke test passed - all core imports successful')
         "

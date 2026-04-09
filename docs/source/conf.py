@@ -24,7 +24,7 @@ copyright = "2025, Civic Forge Solutions LLC"
 author = "Civic Forge Solutions LLC"
 
 # The full version, including alpha/beta/rc tags
-release = "2.0.3"
+release = "3.0.0"
 
 # -- General configuration ---------------------------------------------------
 

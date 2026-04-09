@@ -19,9 +19,9 @@ JWT Token Problems
 
    1. **Using website password instead of JWT token**
 
-      ❌ **Wrong**: Using your FFIEC account password
+      Wrong: Using your FFIEC account password
 
-      ✅ **Correct**: Using the JWT token generated from your PWS account
+      Correct: Using the JWT token generated from your PWS account
 
    2. **Token expiration**
 
@@ -41,13 +41,11 @@ JWT Token Problems
 .. code-block:: python
 
    from ffiec_data_connect import OAuth2Credentials
-   from datetime import datetime, timedelta
 
-   # Check your token format and expiration
+   # token_expires is auto-detected from the JWT payload
    creds = OAuth2Credentials(
        username="your_username",
        bearer_token="eyJhbGci...",  # JWT token, NOT password!
-       token_expires=datetime.now() + timedelta(days=90)
    )
 
    # Check if token is expired
@@ -105,26 +103,6 @@ Microsoft Callback Link Problems
 
 This is a known issue with the Microsoft Entra ID callback process.
 
-Migration Failures
--------------------
-
-**"Migration invitation link doesn't work"**
-
-.. error::
-   **Symptom**: Cannot complete account migration from invitation email
-
-   **Solutions**:
-
-   1. **Try again**: Some migrations fail on first attempt
-   2. **Clear browser cache** and try the invitation link again
-   3. **Create new account**: If migration continues to fail, create a new account instead
-   4. **Contact help desk**: cdr.help@cdr.ffiec.gov
-
-**After successful migration**:
-
-.. warning::
-   You **MUST generate a new JWT token** after migration. Old tokens become invalid immediately.
-
 Token Generation Issues
 -----------------------
 
@@ -137,50 +115,6 @@ Token Generation Issues
 
 API Usage Issues
 ================
-
-SOAP vs REST Confusion
------------------------
-
-.. list-table:: API Comparison
-   :widths: 20 40 40
-   :header-rows: 1
-
-   * - Aspect
-     - SOAP (Legacy)
-     - REST (Modern)
-   * - **Credentials**
-     - ``WebserviceCredentials(username, password)``
-     - ``OAuth2Credentials(username, token, expires)``
-   * - **Session**
-     - ``FFIECConnection()`` object required
-     - ``None`` (no session needed)
-   * - **Date Format**
-     - ``MM/DD/YYYY`` (e.g., "12/31/2023")
-     - ``MM/DD/YYYY`` (e.g., "12/31/2023")
-   * - **Rate Limit**
-     - 1,000 requests/hour
-     - 2,500 requests/hour
-   * - **Status**
-     - ⚠️ **Deprecated Feb 28, 2026**
-     - ✅ **Recommended**
-
-**Solution**: Use REST API for new implementations:
-
-.. code-block:: python
-
-   # ✅ REST API (Recommended)
-   from ffiec_data_connect import OAuth2Credentials, collect_data
-
-   creds = OAuth2Credentials(username="...", bearer_token="...", token_expires=...)
-   data = collect_data(session=None, creds=creds, rssd_id="...",
-                       reporting_period="...", series="call")  # session=None for REST
-
-   # ❌ SOAP API (Deprecated)
-   from ffiec_data_connect import WebserviceCredentials, FFIECConnection
-
-   creds = WebserviceCredentials(username="...", password="...")
-   session = FFIECConnection()
-   data = collect_data(session=session, creds=creds, ...)
 
 Data Issues
 ===========
@@ -201,8 +135,7 @@ Integer Display with Decimals
 
    # Force pandas null handling for better integer display
    data = collect_data(
-       session=None,
-       creds=rest_creds,
+       creds,
        rssd_id="12345",
        reporting_period="2023-12-31",
        series="call",
@@ -220,7 +153,7 @@ Empty Datasets
    1. **Wrong reporting period**: Institution didn't file for that period
    2. **Wrong RSSD ID**: Institution ID doesn't exist or is inactive
    3. **Wrong series**: Requesting "ubpr" for institution that doesn't have UBPR data
-   4. **Invalid date format**: Both APIs use MM/DD/YYYY format
+   4. **Invalid date format**: The API uses MM/DD/YYYY format
 
 **Debugging Steps**:
 
@@ -228,19 +161,20 @@ Empty Datasets
 
    # 1. Check if institution exists in the reporting period
    filers = collect_filers_on_reporting_period(
-       session=None, creds=creds, reporting_period="2023-12-31"
+       creds, reporting_period="2023-12-31"
    )
    your_rssd = "12345"
    institution_exists = any(filer['id_rssd'] == your_rssd for filer in filers)
 
    # 2. Check available reporting periods
-   periods = collect_reporting_periods(session=None, creds=creds, series="call")
+   periods = collect_reporting_periods(creds, series="call")
    print(f"Available periods: {periods[:5]}")  # Show first 5
 
    # 3. Try different series
    for series in ["call", "ubpr"]:
        try:
-           data = collect_data(..., series=series)
+           data = collect_data(creds, rssd_id=your_rssd,
+                               reporting_period="2023-12-31", series=series)
            print(f"{series}: {len(data)} records")
        except Exception as e:
            print(f"{series}: {e}")
@@ -269,7 +203,7 @@ HTTP Status Codes
      - Check endpoint URL, verify RSSD ID exists
    * - 429
      - Rate Limited
-     - Wait before next request, consider using REST (higher limits)
+     - Wait before next request (limit: 2,500 requests/hour)
    * - 500
      - Server Error
      - Often client error (invalid params), check request format
@@ -307,10 +241,8 @@ Slow Response Times
 
 **Solutions**:
 
-1. **Use REST API** instead of SOAP (significantly faster)
-2. **Check rate limits**: Don't exceed 2,500 requests/hour (REST) or 1,000/hour (SOAP)
-3. **Use session reuse** for SOAP (automatic in library)
-4. **Consider AsyncCompatibleClient** for concurrent requests
+1. **Check rate limits**: Don't exceed 2,500 requests/hour
+2. **Consider AsyncCompatibleClient** for concurrent requests
 
 .. code-block:: python
 
@@ -333,56 +265,10 @@ Memory Issues
 2. **Process in batches** rather than all at once
 3. **Use specific date ranges** instead of all available periods
 
-Migration and Legacy Issues
-===========================
+Migration from Previous Versions
+==================================
 
-SOAP to REST Migration
------------------------
-
-**"How do I migrate from SOAP to REST?"**
-
-.. list-table:: Migration Checklist
-   :widths: 50 50
-   :header-rows: 1
-
-   * - SOAP (Old)
-     - REST (New)
-   * - Generate Security Token
-     - Generate JWT Token (90-day)
-   * - ``WebserviceCredentials(user, password)``
-     - ``OAuth2Credentials(user, token, expires)``
-   * - ``FFIECConnection()`` session
-     - ``session=None``
-   * - Date: ``"12/31/2023"``
-     - Date: ``"12/31/2023"``
-   * - Rate limit: 1,000/hour
-     - Rate limit: 2,500/hour
-
-**Migration Code Example**:
-
-.. code-block:: python
-
-   # Before (SOAP)
-   from ffiec_data_connect import WebserviceCredentials, FFIECConnection
-
-   soap_creds = WebserviceCredentials("user", "password")
-   soap_session = FFIECConnection()
-   data = collect_data(soap_session, soap_creds, reporting_period="12/31/2023",
-                       rssd_id="...", series="call")
-
-   # After (REST)
-   from ffiec_data_connect import OAuth2Credentials
-
-   rest_creds = OAuth2Credentials("user", "jwt_token", expires_date)
-   data = collect_data(None, rest_creds, reporting_period="12/31/2023", ...)
-
-Legacy Token Expiration
-------------------------
-
-.. warning::
-   **Important**: All legacy SOAP security tokens will expire on **February 28, 2026**.
-
-   You must migrate to REST API before this date.
+If you are migrating from v2.x (which supported SOAP), see ``MIGRATION.md`` in the repository root for detailed guidance.
 
 Getting Help
 ============
@@ -397,7 +283,7 @@ Support Channels
 
 Contact the FFIEC Help Desk (cdr.help@cdr.ffiec.gov) **ONLY** for:
 
-- CDR account setup and migration issues
+- CDR account setup issues
 - PWS portal access problems
 - JWT token generation problems
 - Questions about official data availability and reporting schedules
@@ -449,7 +335,7 @@ When reporting issues, include:
    print(f"Python version: {sys.version}")
    print(f"Credential type: {type(creds).__name__}")
 
-   # For REST credentials
+   # Check token status
    if hasattr(creds, 'is_expired'):
        print(f"Token expired: {creds.is_expired}")
 
@@ -457,7 +343,6 @@ When reporting issues, include:
 - Complete error messages and stack traces
 - Anonymized code snippets showing the issue
 - RSSD ID and reporting period (if data-related)
-- Whether using SOAP or REST API
 
 Additional Resources
 ====================

@@ -12,8 +12,10 @@ recursive-include docs *.rst *.py *.png *.md
 include docs/Makefile
 include docs/make.bat
 
-# Include demo notebook (users will want this)
-include ffiec_data_connect_demo.ipynb
+# Include demo notebook and migration guide
+include ffiec_data_connect_rest_demo.ipynb
+include MIGRATION.md
+include llms.txt
 
 # Exclude development files
 exclude setup.cfg

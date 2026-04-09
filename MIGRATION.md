@@ -95,7 +95,7 @@ print(creds.is_expired)     # True if token expires within 24 hours
 
 ### 5. Update method calls
 
-The only parameter change is `session`: replace your connection object with `None`.
+The `session` parameter is no longer needed. Pass credentials as the first argument:
 
 ```python
 # Before (v2.x)
@@ -105,13 +105,22 @@ filers = collect_filers_on_reporting_period(conn, creds, "12/31/2025")
 filer_ids = collect_filers_since_date(conn, creds, "12/31/2025", "1/1/2025")
 submissions = collect_filers_submission_date_time(conn, creds, "1/1/2025", "12/31/2025")
 
-# After (v3.0)
+# After (v3.0 — preferred)
+periods = collect_reporting_periods(creds, series="call")
+data = collect_data(creds, "12/31/2025", "480228", "call", output_type="pandas")
+filers = collect_filers_on_reporting_period(creds, "12/31/2025")
+filer_ids = collect_filers_since_date(creds, "12/31/2025", "1/1/2025")
+submissions = collect_filers_submission_date_time(creds, "1/1/2025", "12/31/2025")
+
+# After (v3.0 — also works, deprecated)
 periods = collect_reporting_periods(None, creds, series="call")
 data = collect_data(None, creds, "12/31/2025", "480228", "call", output_type="pandas")
 filers = collect_filers_on_reporting_period(None, creds, "12/31/2025")
 filer_ids = collect_filers_since_date(None, creds, "12/31/2025", "1/1/2025")
 submissions = collect_filers_submission_date_time(None, creds, "1/1/2025", "12/31/2025")
 ```
+
+> **Note:** The `session` parameter is deprecated. Passing `None` as the first argument still works but emits a `DeprecationWarning`. The preferred calling convention is `collect_*(creds, ...)` with no session parameter at all.
 
 All other parameters (`series`, `output_type`, `date_output_format`, `force_null_types`, `rssd_id`, `reporting_period`) are unchanged. Output format is identical.
 
@@ -121,10 +130,10 @@ v3.0 provides two endpoints that were not available via SOAP:
 
 ```python
 # UBPR reporting periods
-ubpr_periods = collect_ubpr_reporting_periods(None, creds)
+ubpr_periods = collect_ubpr_reporting_periods(creds)
 
 # UBPR XBRL data for a specific institution
-ubpr_data = collect_ubpr_facsimile_data(None, creds, "12/31/2025", "480228")
+ubpr_data = collect_ubpr_facsimile_data(creds, "12/31/2025", "480228")
 ```
 
 ### 7. Remove SOAP-specific code
@@ -171,6 +180,10 @@ These all work identically in v3.0:
 - **Error handling**: The exception hierarchy (`FFIECError`, `CredentialError`, `ValidationError`, etc.) is unchanged. Legacy error mode (`FFIEC_USE_LEGACY_ERRORS`) still works for REST errors.
 - **Null handling**: `force_null_types="numpy"` and `force_null_types="pandas"` behave the same
 - **ZIP code preservation**: Leading zeros are maintained (e.g., `"02886"`)
+
+New in v3.0 (non-breaking):
+
+- **Simplified calling convention**: `collect_*(creds, ...)` is now the preferred way to call all public methods. The older `collect_*(None, creds, ...)` form still works but emits a `DeprecationWarning`.
 
 ## REST vs SOAP: Key Differences
 

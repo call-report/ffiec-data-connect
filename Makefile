@@ -20,29 +20,25 @@ test:
 	python -m pytest tests/unit/ -v
 
 test-fast:
-	python -m pytest tests/unit/test_credentials.py tests/unit/test_ffiec_connection.py -v
+	python -m pytest tests/unit/test_credentials.py tests/unit/test_methods.py tests/unit/test_calling_conventions.py -v
 
 test-all:
 	python -m pytest tests/ -v
 
 # Coverage targets
 coverage:
-	python scripts/run_coverage.py
-
-coverage-fast:
-	python scripts/run_coverage.py --fast --html
-	@echo "📊 Fast coverage report generated: htmlcov/index.html"
-
-coverage-full:
-	python scripts/run_coverage.py --full --html --xml --json
-	@echo "📊 Full coverage reports generated:"
-	@echo "   • HTML: htmlcov/index.html"
-	@echo "   • XML: coverage.xml"  
-	@echo "   • JSON: coverage.json"
+	python -m pytest tests/unit/ --cov=src/ffiec_data_connect --cov-report=term-missing --cov-config=.coveragerc
 
 coverage-html:
-	python -m pytest tests/unit/test_credentials.py tests/unit/test_ffiec_connection.py --cov=src/ffiec_data_connect --cov-report=html --cov-config=.coveragerc
+	python -m pytest tests/unit/ --cov=src/ffiec_data_connect --cov-report=html --cov-config=.coveragerc
 	@echo "📊 HTML coverage report: htmlcov/index.html"
+
+coverage-full:
+	python -m pytest tests/unit/ --cov=src/ffiec_data_connect --cov-report=html --cov-report=xml --cov-report=json --cov-config=.coveragerc
+	@echo "📊 Full coverage reports generated:"
+	@echo "   • HTML: htmlcov/index.html"
+	@echo "   • XML: coverage.xml"
+	@echo "   • JSON: coverage.json"
 
 # Development setup
 install-dev:

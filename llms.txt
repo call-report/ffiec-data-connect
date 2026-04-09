@@ -46,7 +46,7 @@ conn.use_proxy = True
 
 REPLACE WITH: Delete entirely. FFIECConnection is not needed for REST API.
 
-### Rule 3: Change session parameter from conn to None
+### Rule 3: Remove session parameter (pass credentials first)
 
 FIND any of:
 ```python
@@ -57,17 +57,24 @@ collect_filers_submission_date_time(conn, creds, ...)
 collect_filers_on_reporting_period(conn, creds, ...)
 ```
 
-REPLACE WITH:
+REPLACE WITH (preferred):
+```python
+collect_reporting_periods(creds, ...)
+collect_data(creds, ...)
+collect_filers_since_date(creds, ...)
+collect_filers_submission_date_time(creds, ...)
+collect_filers_on_reporting_period(creds, ...)
+```
+
+The `session` parameter is deprecated. Pass credentials as the first argument directly.
+Also applies to: `collect_ubpr_reporting_periods`, `collect_ubpr_facsimile_data`.
+
+ALTERNATIVE (deprecated, emits DeprecationWarning):
 ```python
 collect_reporting_periods(None, creds, ...)
 collect_data(None, creds, ...)
-collect_filers_since_date(None, creds, ...)
-collect_filers_submission_date_time(None, creds, ...)
-collect_filers_on_reporting_period(None, creds, ...)
 ```
-
-The first argument (session) should always be `None` for REST API.
-Also applies to: `collect_ubpr_reporting_periods`, `collect_ubpr_facsimile_data`.
+Passing `None` as the first argument still works but triggers a `DeprecationWarning`.
 
 ### Rule 4: Update imports
 
@@ -136,17 +143,17 @@ Token expiry is now automatically extracted from the JWT `exp` claim.
 
 ## Method Reference
 
-All 7 public methods. Signature is identical between SOAP and REST except session=None:
+All 7 public methods. Preferred calling convention is `collect_*(creds, ...)` (no session parameter):
 
 | Method | Parameters | Notes |
 |--------|-----------|-------|
-| `collect_reporting_periods` | `(None, creds, series="call", output_type="list")` | series: "call" or "ubpr" |
-| `collect_data` | `(None, creds, reporting_period, rssd_id, series, output_type="list")` | Returns XBRL data |
-| `collect_filers_since_date` | `(None, creds, reporting_period, since_date, output_type="list")` | Call Reports only |
-| `collect_filers_submission_date_time` | `(None, creds, since_date, reporting_period, output_type="list")` | Note: since_date is first param |
-| `collect_filers_on_reporting_period` | `(None, creds, reporting_period, output_type="list")` | Panel of reporters |
-| `collect_ubpr_reporting_periods` | `(None, creds, output_type="list")` | REST-only (new) |
-| `collect_ubpr_facsimile_data` | `(None, creds, reporting_period, rssd_id)` | REST-only (new) |
+| `collect_reporting_periods` | `(creds, series="call", output_type="list")` | series: "call" or "ubpr" |
+| `collect_data` | `(creds, reporting_period, rssd_id, series, output_type="list")` | Returns XBRL data |
+| `collect_filers_since_date` | `(creds, reporting_period, since_date, output_type="list")` | Call Reports only |
+| `collect_filers_submission_date_time` | `(creds, since_date, reporting_period, output_type="list")` | Note: since_date is first param |
+| `collect_filers_on_reporting_period` | `(creds, reporting_period, output_type="list")` | Panel of reporters |
+| `collect_ubpr_reporting_periods` | `(creds, output_type="list")` | REST-only (new) |
+| `collect_ubpr_facsimile_data` | `(creds, reporting_period, rssd_id)` | REST-only (new) |
 
 ## Environment Variable Changes
 

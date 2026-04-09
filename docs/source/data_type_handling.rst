@@ -2,35 +2,15 @@
 Data Type Handling
 =======================
 
-FFIEC Data Connect provides comprehensive data type handling across multiple protocols (SOAP/REST) and output formats, ensuring data integrity and precision from the original XBRL source through to your final data structure.
+FFIEC Data Connect provides comprehensive data type handling across multiple output formats, ensuring data integrity and precision from the original XBRL source through to your final data structure.
 
 Overview
 ========
 
-The library manages data types across three key dimensions:
+The library manages data types across two key dimensions:
 
-Protocol Layer (SOAP vs REST)
-------------------------------
-
-.. list-table:: Protocol Comparison
-   :widths: 20 40 40
-   :header-rows: 1
-
-   * - Aspect
-     - SOAP API
-     - REST API
-   * - Credentials
-     - ``WebserviceCredentials``
-     - ``OAuth2Credentials``
-   * - Null Values
-     - ``np.nan`` (NumPy)
-     - ``pd.NA`` (Pandas)
-   * - Compatibility
-     - 100% backward compatible
-     - Enhanced integer handling
-   * - Use Case
-     - Existing integrations
-     - New implementations
+1. **Type Detection**: Automatic detection from XBRL unit references
+2. **Output Formatting**: Proper type mapping for list, pandas, and polars outputs
 
 Type Detection in XBRL Processing
 ==================================
@@ -48,7 +28,7 @@ The library automatically detects data types from XBRL unit references:
    * - ``USD``
      - ``"1500000"``
      - ``np.int64``
-     - Monetary values (÷1000)
+     - Monetary values (divided by 1000)
    * - ``PURE``
      - ``"1.25"``
      - ``np.float64``
@@ -71,96 +51,33 @@ Special Processing Rules
 
 1. **USD Values**: Automatically divided by 1000 using integer division (``//``)
 2. **Type Preservation**: Original types stored in ``data_type`` field
-3. **Null Handling**: Protocol-specific null values applied
+3. **Null Handling**: Uses ``pd.NA`` for proper nullable type support
 
-SOAP vs REST Null Handling
-===========================
+Null Value Handling
+====================
 
-Why Different Null Handling Strategies?
-----------------------------------------
-
-The library uses different null strategies for SOAP and REST to solve a critical problem while maintaining backward compatibility:
-
-**The Problem:**
-
-When pandas DataFrames contained ``np.nan`` values in integer columns, pandas would automatically convert those columns to ``float64`` to accommodate the NaN values. This resulted in integer values displaying with decimal points (e.g., ``1000.0`` instead of ``1000``), which was both aesthetically problematic and semantically incorrect for financial data that should be represented as whole numbers.
-
-**The Solution:**
-
-1. **SOAP Path (Original)**: Continues using ``np.nan`` to ensure 100% backward compatibility for existing integrations. Existing code that expects ``np.nan`` behavior continues to work unchanged.
-
-2. **REST Path (Enhanced)**: Uses ``pd.NA``, which is pandas' newer null value that works with nullable integer types (``Int64``). This allows integer columns to remain as integers even when containing null values.
-
-**Design Philosophy:**
-
-This dual approach follows the principle of "never break existing code." Users who have built systems around the SOAP API can upgrade the library without any changes to their code, while new REST API users automatically benefit from improved type handling.
+The library uses ``pd.NA`` (pandas' native nullable marker), which works with nullable integer types (``Int64``). This allows integer columns to remain as integers even when containing null values.
 
 .. code-block:: python
 
-   # Example of the problem this solves:
-   # Before (with np.nan):
-   df['int_data']  # Shows: [1000.0, 2000.0, NaN, 3000.0]
-
-   # After (with pd.NA for REST):
+   # With pd.NA:
    df['int_data']  # Shows: [1000, 2000, <NA>, 3000]
 
 Technical Implementation
 ------------------------
 
-The differentiation between SOAP and REST null handling is implemented at the XBRL processor level through the ``use_rest_nulls`` parameter:
+Null handling is implemented at the XBRL processor level through the ``use_rest_nulls`` parameter:
 
-- **SOAP calls**: Automatically use ``use_rest_nulls=False`` (default), applying ``np.nan``
-- **REST calls**: Explicitly set ``use_rest_nulls=True``, applying ``pd.NA``
-- **User transparency**: This is handled automatically based on credential type - users never need to specify this parameter
+- REST calls use ``use_rest_nulls=True``, applying ``pd.NA``
+- This is handled automatically -- users never need to specify this parameter
 
 This approach ensures that:
 
-1. **Zero configuration needed**: The library automatically selects the appropriate null handling based on your credentials
-2. **No breaking changes**: Existing SOAP users see no changes in behavior
-3. **Optimal for each protocol**: Each API path gets the most appropriate null handling for its use case
-4. **Future-proof**: As pandas evolves, REST users automatically benefit from improvements to nullable types
+1. **Zero configuration needed**: The library automatically selects the appropriate null handling
+2. **Optimal display**: Integer columns display without ``.0`` suffixes
+3. **Future-proof**: As pandas evolves, users automatically benefit from improvements to nullable types
 
-SOAP API (Original Behavior)
------------------------------
-
-.. list-table:: SOAP Null Value Handling
-   :widths: 20 20 30 30
-   :header-rows: 1
-
-   * - Data Type
-     - Null Value
-     - Pandas Conversion
-     - Final dtype
-   * - Integer
-     - ``np.nan``
-     - Direct to ``Int64``
-     - Nullable integer
-   * - Float
-     - ``np.nan``
-     - Direct to ``float64``
-     - Standard float
-   * - Boolean
-     - ``np.nan``
-     - Direct to ``boolean``
-     - Nullable boolean
-   * - String
-     - ``None``
-     - Direct to ``string``
-     - Pandas string
-
-.. code-block:: python
-
-   # SOAP path - original behavior preserved
-   processed_ret = xbrl_processor._process_xml(
-       data,
-       date_format,
-       use_rest_nulls=False  # Default
-   )
-
-REST API (Enhanced Behavior)
------------------------------
-
-.. list-table:: REST Null Value Handling
+.. list-table:: Null Value Handling
    :widths: 15 15 20 25 25
    :header-rows: 1
 
@@ -171,23 +88,23 @@ REST API (Enhanced Behavior)
      - Final dtype
    * - Integer
      - ``pd.NA``
-     - → ``None``
-     - → ``Int64``
+     - -> ``None``
+     - -> ``Int64``
      - Nullable integer
    * - Float
      - ``pd.NA``
-     - → ``np.nan``
-     - → ``float64``
+     - -> ``np.nan``
+     - -> ``float64``
      - Standard float
    * - Boolean
      - ``pd.NA``
-     - → ``None``
-     - → ``boolean``
+     - -> ``None``
+     - -> ``boolean``
      - Nullable boolean
    * - String
      - ``None``
      - (unchanged)
-     - → ``string``
+     - -> ``string``
      - Pandas string
 
 .. code-block:: python
@@ -196,7 +113,7 @@ REST API (Enhanced Behavior)
    processed_ret = xbrl_processor._process_xml(
        data,
        date_format,
-       use_rest_nulls=True  # Explicit for REST
+       use_rest_nulls=True
    )
 
 Output Format Type Mapping
@@ -329,26 +246,15 @@ Problem Scenario (Before Fix)
    # Original issue: integers showing as floats
    df['int_data']  # Shows: 1000.0, 2000.0, 3000.0
 
-Current Behavior - SOAP Path
------------------------------
-
-.. code-block:: python
-
-   # Input: XBRL with USD value "1500000"
-   # Processing: 1500000 // 1000 = 1500 (integer division)
-   # Storage: np.int64(1500) with np.nan for nulls
-   # DataFrame: Int64 dtype
-   # Display: 1500 (no .0 suffix)
-
-Current Behavior - REST Path
------------------------------
+Current Behavior
+-----------------
 
 .. code-block:: python
 
    # Input: JSON with integer 1500000
    # Processing: 1500000 // 1000 = 1500
    # Storage: np.int64(1500) with pd.NA for nulls
-   # Conversion: pd.NA → None → Int64
+   # Conversion: pd.NA -> None -> Int64
    # Display: 1500 (no .0 suffix)
 
 Type Conversion Decision Tree
@@ -357,23 +263,14 @@ Type Conversion Decision Tree
 .. code-block:: text
 
    Input Data
-       ├── SOAP API (WebserviceCredentials)
-       │   ├── XBRL Processing
-       │   │   ├── Detect Type (USD/PURE/etc.)
-       │   │   └── Apply np.nan for nulls
-       │   └── Output Format
-       │       ├── list → Raw dicts with np.nan
-       │       ├── pandas → DataFrame with Int64/float64/boolean
-       │       └── polars → DataFrame with native nullable types
-       │
        └── REST API (OAuth2Credentials)
            ├── XBRL Processing
-           │   ├── Detect Type
+           │   ├── Detect Type (USD/PURE/etc.)
            │   └── Apply pd.NA for nulls
            └── Output Format
-               ├── list → Raw dicts with pd.NA
-               ├── pandas → Convert pd.NA → None/np.nan → nullable dtypes
-               └── polars → Convert pd.NA → None → native nulls
+               ├── list -> Raw dicts with pd.NA
+               ├── pandas -> Convert pd.NA -> None/np.nan -> nullable dtypes
+               └── polars -> Convert pd.NA -> None -> native nulls
 
 Date Format Handling
 ====================
@@ -455,59 +352,18 @@ Type Preservation During Operations
    df['int_data'] / 1000   # Result becomes float64
    df['int_data'] // 1000  # Use // to maintain integer
 
-Migration Guide
-===============
-
-From Existing SOAP Integration
--------------------------------
-
-No changes required. The library maintains 100% backward compatibility:
-
-.. code-block:: python
-
-   # Existing code continues to work unchanged
-   df = collect_data(
-       session=connection.session,
-       creds=soap_credentials,
-       reporting_period="2023-12-31",
-       rssd_id="480228",
-       output_type="pandas"
-   )
-   # Returns DataFrame with same types as before
-
-Adopting REST API
------------------
-
-To leverage enhanced REST features:
-
-.. code-block:: python
-
-   # Use OAuth2Credentials for REST
-   creds = OAuth2Credentials(username="user", token="token")
-
-   df = collect_data(
-       session=None,  # Not needed for REST
-       creds=creds,
-       reporting_period="2023-12-31",
-       rssd_id="480228",
-       output_type="pandas"
-   )
-   # Returns DataFrame with enhanced null handling
-
 Overriding Null Value Handling
 ===============================
 
 The ``force_null_types`` Parameter
 -----------------------------------
 
-While the library automatically selects the appropriate null handling based on your API choice (SOAP vs REST), you can override this behavior using the ``force_null_types`` parameter available in ``collect_data()`` and ``collect_ubpr_facsimile_data()`` functions.
+While the library automatically uses ``pd.NA`` for null handling, you can override this behavior using the ``force_null_types`` parameter available in ``collect_data()`` and ``collect_ubpr_facsimile_data()`` functions.
 
 **When to Use This Parameter:**
 
-1. **Testing and Migration**: Test how your code would behave with different null handling before switching APIs
-2. **Compatibility Issues**: Work around specific compatibility requirements in your data pipeline
-3. **Performance Comparison**: Compare the behavior of both null handling approaches
-4. **Gradual Migration**: SOAP users can preview REST-style null handling without changing credentials
+1. **Compatibility Issues**: Work around specific compatibility requirements in your data pipeline
+2. **Legacy Code**: Force ``np.nan`` behavior for code that expects it
 
 Parameter Options
 -----------------
@@ -520,47 +376,25 @@ Parameter Options
      - Behavior
      - Use Case
    * - ``None`` (default)
-     - Automatic based on API type
+     - Uses ``pd.NA`` for null values
      - Normal operation - recommended
    * - ``"numpy"``
      - Force ``np.nan`` for all null values
-     - Legacy compatibility, SOAP-like behavior
+     - Legacy compatibility
    * - ``"pandas"``
      - Force ``pd.NA`` for null values
-     - Better integer display, REST-like behavior
+     - Explicit selection (same as default)
 
 Usage Examples
 --------------
 
-**Example 1: SOAP User Testing Pandas Null Handling**
+**Example 1: Forcing NumPy Compatibility**
 
 .. code-block:: python
-
-   # SOAP credentials normally use np.nan
-   soap_creds = WebserviceCredentials(username="user", password="pass")
-
-   # Test with pandas null handling without switching to REST
-   df = collect_data(
-       session=connection.session,
-       creds=soap_creds,
-       reporting_period="2023-12-31",
-       rssd_id="480228",
-       output_type="pandas",
-       force_null_types="pandas"  # Override to use pd.NA
-   )
-   # Now integers display without .0 suffix
-
-**Example 2: REST User Requiring NumPy Compatibility**
-
-.. code-block:: python
-
-   # REST credentials normally use pd.NA
-   rest_creds = OAuth2Credentials(username="user", token="token")
 
    # Force numpy nulls for compatibility with legacy analysis code
    df = collect_data(
-       session=None,
-       creds=rest_creds,
+       creds,
        reporting_period="2023-12-31",
        rssd_id="480228",
        output_type="pandas",
@@ -568,15 +402,14 @@ Usage Examples
    )
    # Now compatible with code expecting np.nan
 
-**Example 3: Comparing Both Approaches**
+**Example 2: Comparing Both Approaches**
 
 .. code-block:: python
 
    # Compare integer handling with different null types
    for null_type in [None, "numpy", "pandas"]:
        df = collect_data(
-           session=connection.session,
-           creds=credentials,
+           creds,
            reporting_period="2023-12-31",
            rssd_id="480228",
            output_type="pandas",
@@ -597,10 +430,9 @@ Implementation Notes
 Best Practices
 --------------
 
-1. **Use defaults when possible**: Let the library choose based on your API
+1. **Use defaults when possible**: Let the library choose automatically
 2. **Document overrides**: If you override, comment why in your code
 3. **Test thoroughly**: When overriding, test all data operations
-4. **Consider migration**: If consistently overriding, consider switching APIs
 
 .. warning::
 
@@ -636,34 +468,6 @@ Type Loss in Operations
 
 **Solution:** Use integer-preserving operations or explicitly cast back
 
-Performance Considerations
-==========================
-
-.. list-table:: Performance Comparison
-   :widths: 25 25 25 25
-   :header-rows: 1
-
-   * - Operation
-     - SOAP
-     - REST
-     - Notes
-   * - Null checking
-     - Fast (``np.isnan``)
-     - Fast (``pd.isna``)
-     - Both optimized
-   * - DataFrame creation
-     - Standard
-     - Slightly slower
-     - REST has extra conversion
-   * - Memory usage
-     - Standard
-     - ~Same
-     - Nullable types similar
-   * - Integer operations
-     - Fast
-     - Fast
-     - Int64 optimized
-
 API Reference
 =============
 
@@ -691,29 +495,26 @@ Internal Type Handling
 ----------------------
 
 .. list-table:: Internal Functions
-   :widths: 25 20 25 30
+   :widths: 25 25 50
    :header-rows: 1
 
    * - Function
      - Purpose
-     - SOAP Behavior
-     - REST Behavior
+     - Behavior
    * - ``_process_xml()``
      - Parse XBRL
-     - Uses ``np.nan``
      - Uses ``pd.NA`` with ``use_rest_nulls=True``
    * - ``_process_xbrl_item()``
      - Process single item
      - Returns typed value
-     - Returns typed value
    * - DataFrame conversion
      - Create pandas DF
-     - Direct with ``np.nan``
-     - Converts ``pd.NA`` → appropriate nulls
+     - Converts ``pd.NA`` -> appropriate nulls
 
 Version History
 ===============
 
+- **v3.0.0**: SOAP removed. REST-only with ``pd.NA`` null handling
 - **v2.0.0**: Added REST API support with enhanced null handling
 - **v1.x.x**: Original SOAP-only implementation with ``np.nan``
 
