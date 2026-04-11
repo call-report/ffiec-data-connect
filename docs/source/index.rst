@@ -45,6 +45,7 @@ The notebook is included with the package installation and provides hands-on exp
 
    account_setup
    development_setup
+   testing
    modules
    rest_api_reference
    data_type_handling
