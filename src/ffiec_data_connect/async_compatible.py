@@ -436,7 +436,7 @@ class AsyncCompatibleClient:
             # Close all cached connections
             for conn in self._connection_cache.values():
                 try:
-                    conn.close()
+                    conn.close()  # type: ignore[attr-defined]
                 except Exception:
                     pass
             self._connection_cache.clear()

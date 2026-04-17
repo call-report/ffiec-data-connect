@@ -120,7 +120,7 @@ class OAuth2Credentials:
         if token_expires is not None:
             self._token_expires = token_expires
         else:
-            self._token_expires = self._extract_jwt_expiry(self._bearer_token)
+            self._token_expires = self._extract_jwt_expiry(self._bearer_token)  # type: ignore[assignment]
 
         # Set credential type for compatibility (before marking initialized)
         self.credential_source = CredentialType.SET_FROM_INIT

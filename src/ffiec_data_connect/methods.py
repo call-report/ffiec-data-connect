@@ -513,7 +513,7 @@ def collect_data(
             logger.debug(f"Attempting to retrieve data via REST API for RSSD {rssd_id}")
             # Convert reporting_period to string format for API
             reporting_period_str = _convert_any_date_to_ffiec_format(
-                reporting_period
+                reporting_period  # type: ignore[arg-type]
             ) or str(reporting_period)
             raw_data = adapter.retrieve_facsimile(rssd_id, reporting_period_str, series)
 
@@ -663,7 +663,7 @@ def collect_filers_since_date(
     from .methods_enhanced import collect_filers_since_date_enhanced
 
     return collect_filers_since_date_enhanced(
-        None, resolved_creds, reporting_period, since_date, output_type
+        None, resolved_creds, reporting_period, since_date, output_type  # type: ignore[arg-type]
     )
 
 
@@ -700,7 +700,7 @@ def collect_filers_submission_date_time(
     from .methods_enhanced import collect_filers_submission_date_time_enhanced
 
     return collect_filers_submission_date_time_enhanced(
-        None, resolved_creds, since_date, reporting_period, output_type, date_output_format,
+        None, resolved_creds, since_date, reporting_period, output_type, date_output_format,  # type: ignore[arg-type]
     )
 
 
@@ -730,7 +730,7 @@ def collect_filers_on_reporting_period(
     from .methods_enhanced import collect_filers_on_reporting_period_enhanced
 
     return collect_filers_on_reporting_period_enhanced(
-        None, resolved_creds, reporting_period, output_type
+        None, resolved_creds, reporting_period, output_type  # type: ignore[arg-type]
     )
 
 
@@ -807,7 +807,7 @@ def collect_ubpr_facsimile_data(
             expected="None, 'numpy', or 'pandas'",
         )
 
-    if not _is_valid_date_or_quarter(reporting_period):
+    if not _is_valid_date_or_quarter(reporting_period):  # type: ignore[arg-type]
         raise_exception(
             ValidationError,
             "Invalid reporting period format",
@@ -822,7 +822,7 @@ def collect_ubpr_facsimile_data(
     if isinstance(reporting_period, datetime):
         ffiec_date = _create_ffiec_date_from_datetime(reporting_period)
     else:
-        ffiec_date = _convert_any_date_to_ffiec_format(reporting_period)
+        ffiec_date = _convert_any_date_to_ffiec_format(reporting_period)  # type: ignore[arg-type]
         if ffiec_date is None:
             raise_exception(
                 ValidationError,
@@ -832,7 +832,7 @@ def collect_ubpr_facsimile_data(
             )
 
     adapter = create_protocol_adapter(resolved_creds, None)
-    raw_data = adapter.retrieve_ubpr_xbrl_facsimile(rssd_id, ffiec_date)
+    raw_data = adapter.retrieve_ubpr_xbrl_facsimile(rssd_id, ffiec_date)  # type: ignore[arg-type]
 
     if output_type == "bytes":
         return raw_data
