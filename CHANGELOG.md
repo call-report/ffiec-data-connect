@@ -12,8 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SOAP API support removed**: `WebserviceCredentials` and `FFIECConnection` now raise `SOAPDeprecationError` on instantiation
 - **`zeep` and `requests` removed from dependencies**: If your code depended on these transitively, add them to your own project
 - **Non-None `session` parameter with OAuth2 credentials now raises `SOAPDeprecationError`**: Previously silently ignored
-- **`httpx` upper bound relaxed** from `<1.0.0` to `<2.0.0`
-- **`polars` upper bound relaxed** from `<1.0.0` to `<2.0.0`
+- **pandas 3.0 is the new baseline**: `pandas>=3.0.0,<4.0.0` (up from `>=1.3.0,<3.0.0`). pandas 2.x and older are no longer supported. Tested against 3.0.2 with 0 deprecation warnings in library code paths.
+- **Dependency upper bounds relaxed**:
+  - `httpx`: `<1.0.0` → `<2.0.0`
+  - `polars`: `<1.0.0` → `<2.0.0`
+  - `lxml`: `<6.0.0` → `<7.0.0` (needed for Python 3.14 wheels)
+  - `xmltodict`: `<1.0.0` → `<2.0.0`
+  - `pyarrow`: `<20.0.0` → `<24.0.0`
 
 ### New Features
 
@@ -21,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New preferred calling convention**: `collect_*(creds, ...)` without session parameter; the older `collect_*(None, creds, ...)` form still works but emits `DeprecationWarning`
 - **`SOAPDeprecationError`** with detailed migration guidance, code examples, and portal URL
 - **`MIGRATION.md` and `llms.txt` migration guides** for developers and AI coding assistants
-- **100% statement test coverage**: 606 unit + 26 integration tests
+- **Python 3.14 officially supported** in the CI test matrix alongside 3.10–3.13
+- **100% statement test coverage**: 652 unit + 26 integration tests
 
 ### Bug Fixes
 

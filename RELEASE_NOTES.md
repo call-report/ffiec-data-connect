@@ -37,9 +37,15 @@ Generate a JWT bearer token from the FFIEC portal, drop the `FFIECConnection()` 
 
 ### Dependency changes
 
+- **pandas 3.0 is now the baseline** — `pandas>=3.0.0,<4.0.0` (up from `>=1.3.0,<3.0.0`). If you're on pandas 2.x or earlier, upgrade before installing. The full 652-test unit suite and 24-test live integration suite pass against pandas 3.0.2 with zero deprecation warnings from our code.
 - `zeep` and `requests` removed from dependencies. If your project imported them transitively through this library, add them to your own `pyproject.toml`.
-- `httpx` upper bound relaxed from `<1.0.0` to `<2.0.0`.
-- `polars` upper bound relaxed from `<1.0.0` to `<2.0.0`.
+- Upper bounds relaxed across the board to allow modern major versions:
+  - `httpx`: `<1.0.0` → `<2.0.0`
+  - `polars`: `<1.0.0` → `<2.0.0`
+  - `lxml`: `<6.0.0` → `<7.0.0` (needed for Python 3.14 wheels)
+  - `xmltodict`: `<1.0.0` → `<2.0.0`
+  - `pyarrow`: `<20.0.0` → `<24.0.0`
+- **Python 3.14 officially supported** in the CI test matrix.
 
 ### Bug fixes
 
