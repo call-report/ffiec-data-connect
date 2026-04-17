@@ -10,7 +10,6 @@ import logging
 import re
 from datetime import datetime
 from typing import Any, List, Optional, Union
-from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -26,7 +25,6 @@ except ImportError:
 
 from ffiec_data_connect import (
     credentials,
-    ffiec_connection,
     xbrl_processor,
 )
 
@@ -34,7 +32,6 @@ from ffiec_data_connect import (
 from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.exceptions import (
     ConnectionError,
-    NoDataError,
     SOAPDeprecationError,
     ValidationError,
     raise_exception,

@@ -7,15 +7,12 @@ Credentials may be input via environment variables, or passing them as arguments
 """
 
 import logging
-import os
 import warnings
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from ffiec_data_connect import constants
 from ffiec_data_connect.exceptions import (
-    ConnectionError,
     CredentialError,
     SOAPDeprecationError,
     raise_exception,

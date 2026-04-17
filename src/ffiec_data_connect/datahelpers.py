@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, Optional, Union
 
+
 def _normalize_output_from_reporter_panel(
     row: Dict[str, Any],
 ) -> Dict[str, Optional[Union[str, bool]]]:
