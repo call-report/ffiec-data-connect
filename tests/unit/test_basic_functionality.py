@@ -20,107 +20,35 @@ from ffiec_data_connect import (
     WebserviceCredentials,
     __version__,
 )
+from ffiec_data_connect.exceptions import SOAPDeprecationError
+
+# Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
+_patch_get_conn = patch.object(
+    AsyncCompatibleClient, "_get_connection", return_value=Mock()
+)
 
 
 class TestSecurity:
     """Test security improvements."""
 
-    def test_credentials_masking(self):
-        """Test that credentials are masked in string representation."""
-        # Create credentials with known values
-        creds = WebserviceCredentials("testuser123", "secretpass")
+    def test_credentials_raise_soap_deprecation(self):
+        """Test that WebserviceCredentials raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("testuser123", "secretpass")
 
-        # String representation should mask sensitive data
-        str_repr = str(creds)
-        assert "testuser123" not in str_repr
-        assert "secretpass" not in str_repr
-        assert "t*********3" in str_repr or "***" in str_repr
-
-    def test_proxy_masking(self):
-        """Test that proxy credentials are masked."""
-        conn = FFIECConnection()
-        conn.proxy_host = "proxy.example.com"
-        conn.proxy_user_name = "proxyuser"
-        conn.proxy_password = "proxypass"
-
-        str_repr = str(conn)
-        assert "proxy.example.com" not in str_repr
-        assert "proxyuser" not in str_repr
-        assert "proxypass" not in str_repr
-        assert "example.com" in str_repr  # Should show domain only
+    def test_connection_raises_soap_deprecation(self):
+        """Test that FFIECConnection raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            FFIECConnection()
 
     def test_descriptive_errors(self):
-        """Test that errors provide helpful context."""
-        from ffiec_data_connect.config import use_legacy_errors
-
-        if use_legacy_errors():
-            # In legacy mode, should raise ValueError
-            with pytest.raises(ValueError) as exc_info:
-                WebserviceCredentials()  # No credentials provided
-        else:
-            # In new mode, should raise CredentialError
-            with pytest.raises(CredentialError) as exc_info:
-                WebserviceCredentials()  # No credentials provided
+        """Test that SOAPDeprecationError provides helpful migration info."""
+        with pytest.raises(SOAPDeprecationError) as exc_info:
+            WebserviceCredentials()
 
         error = exc_info.value
-        assert "FFIEC_USERNAME" in str(error)
-        assert "env var" in str(error)
-
-
-class TestThreadSafety:
-    """Test thread safety improvements."""
-
-    def test_connection_thread_safe(self):
-        """Test that FFIECConnection is thread-safe."""
-        conn = FFIECConnection()
-        results = []
-        errors = []
-
-        def modify_proxy(port):
-            try:
-                conn.proxy_port = port
-                conn.proxy_host = f"proxy{port}.com"
-                # Verify settings
-                assert conn.proxy_port == port
-                results.append(port)
-            except Exception as e:
-                errors.append(e)
-
-        # Create multiple threads modifying connection
-        threads = []
-        for i in range(10):
-            t = threading.Thread(target=modify_proxy, args=(8080 + i,))
-            threads.append(t)
-            t.start()
-
-        for t in threads:
-            t.join()
-
-        # Should have no errors
-        assert len(errors) == 0
-        assert len(results) == 10
-
-    def test_session_cleanup(self):
-        """Test that sessions are properly cleaned up."""
-        conn = FFIECConnection()
-
-        # Access session to create it
-        _ = conn.session
-        assert conn._session is not None
-
-        # Close should cleanup
-        conn.close()
-        assert conn._session is None
-
-    def test_context_manager(self):
-        """Test context manager for automatic cleanup."""
-        with FFIECConnection() as conn:
-            # Session should be available
-            session = conn.session
-            assert session is not None
-
-        # After context, should be cleaned up
-        assert conn._session is None
+        assert "WebserviceCredentials" in str(error)
+        assert "OAuth2Credentials" in str(error)
 
 
 class TestValidation:
@@ -182,7 +110,8 @@ class TestAsyncCapabilities:
         # Cleanup
         client.close()
 
-    def test_parallel_processing(self):
+    @_patch_get_conn
+    def test_parallel_processing(self, _mock_conn):
         """Test parallel data collection."""
         mock_creds = Mock(spec=WebserviceCredentials)
 
@@ -221,7 +150,8 @@ class TestAsyncCapabilities:
         assert elapsed >= 0.2
 
     @pytest.mark.asyncio
-    async def test_async_methods(self):
+    @_patch_get_conn
+    async def test_async_methods(self, _mock_conn):
         """Test async method execution."""
         mock_creds = Mock(spec=WebserviceCredentials)
 
@@ -240,43 +170,6 @@ class TestAsyncCapabilities:
                 )
 
                 assert len(results) == 2
-
-
-class TestMemoryManagement:
-    """Test memory leak fixes."""
-
-    def test_no_session_leak_on_property_change(self):
-        """Test that changing properties doesn't leak sessions."""
-        conn = FFIECConnection()
-
-        # Track sessions
-        sessions = []
-
-        # Change properties multiple times
-        for i in range(5):
-            conn.proxy_port = 8080 + i
-            if conn._session:
-                sessions.append(conn._session)
-
-        # Only the last session should be active
-        # Previous ones should have been closed
-        conn.close()
-
-    def test_cleanup_all_instances(self):
-        """Test class-level cleanup method."""
-        # Create multiple connections
-        conns = [FFIECConnection() for _ in range(3)]
-
-        # Access sessions to create them
-        for conn in conns:
-            _ = conn.session
-
-        # Cleanup all
-        FFIECConnection.cleanup_all()
-
-        # All should be cleaned
-        for conn in conns:
-            assert conn._session is None
 
 
 if __name__ == "__main__":

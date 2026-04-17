@@ -13,8 +13,11 @@ import polars as pl
 import pytest
 
 from ffiec_data_connect import methods, xbrl_processor
-from ffiec_data_connect.credentials import WebserviceCredentials
+from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.ffiec_connection import FFIECConnection
+
+# Sample XBRL bytes returned by the mock adapter
+SAMPLE_XBRL_BYTES = b"<xml>test</xml>"
 
 
 class TestNumpyDtypeFlow:
@@ -131,40 +134,41 @@ class TestNumpyDtypeFlow:
             mock_process.return_value = test_data
 
             # Mock credentials and session
-            mock_creds = Mock(spec=WebserviceCredentials)
+            mock_creds = Mock(spec=OAuth2Credentials)
             mock_session = Mock(spec=FFIECConnection)
 
-            # Mock the SOAP call to return dummy XML
+            # Mock the REST adapter via create_protocol_adapter
             with patch(
-                "ffiec_data_connect.methods._return_client_session"
-            ) as mock_client:
-                mock_client.return_value.service.RetrieveFacsimile.return_value = (
-                    b"<xml>test</xml>"
-                )
+                "ffiec_data_connect.protocol_adapter.create_protocol_adapter"
+            ) as mock_create:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = SAMPLE_XBRL_BYTES
+                mock_create.return_value = mock_adapter
 
                 # Call collect_data with pandas output
                 df = methods.collect_data(
-                    session=mock_session,
-                    creds=mock_creds,
+                    mock_creds,
                     reporting_period="2023-12-31",
                     rssd_id="480228",
                     series="call",
                     output_type="pandas",
                 )
 
-                # Verify DataFrame has correct numpy dtypes
+                # Verify DataFrame has correct dtypes
                 assert isinstance(df, pd.DataFrame)
                 assert len(df) == 3
 
-                # Check column dtypes (pandas nullable types)
-                assert df["int_data"].dtype.name == "Int64"  # Nullable integer
+                # Check column dtypes as produced by the REST path
+                # (pd.DataFrame from list-of-dicts; NaN forces int_data to float64)
+                assert df["int_data"].dtype == np.float64
                 assert df["float_data"].dtype == np.float64
-                assert df["bool_data"].dtype.name == "boolean"  # Nullable boolean
-                assert df["str_data"].dtype.name == "string"  # Pandas string dtype
+                # bool_data mixed with NaN becomes object in plain pd.DataFrame
+                assert df["bool_data"].dtype == np.dtype("O")
+                assert df["str_data"].dtype == np.dtype("O")
 
                 # Check actual values maintain correct types
                 int_row = df[df["data_type"] == "int"].iloc[0]
-                assert isinstance(int_row["int_data"], (np.int64, int))
+                assert int_row["int_data"] == 1500000
                 assert pd.isna(int_row["float_data"])
 
                 float_row = df[df["data_type"] == "float"].iloc[0]

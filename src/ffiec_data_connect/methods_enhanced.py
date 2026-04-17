@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Enhanced methods for REST API support
 
 This module contains the enhanced implementations of FFIEC methods that use
@@ -230,9 +233,8 @@ def collect_filers_on_reporting_period_enhanced(
 
     try:
         # Create protocol adapter and call REST endpoint
-        assert ffiec_date is not None  # Already checked above
         adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
-        normalized_filers = adapter.retrieve_panel_of_reporters(ffiec_date)
+        normalized_filers = adapter.retrieve_panel_of_reporters(ffiec_date)  # type: ignore[arg-type]
 
         logger.debug(f"Retrieved {len(normalized_filers)} filers")
 
@@ -328,11 +330,9 @@ def collect_filers_since_date_enhanced(
 
     try:
         # Create protocol adapter and call REST endpoint
-        assert ffiec_reporting_period is not None  # Already checked above
-        assert ffiec_since_date is not None  # Already checked above
         adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
         rssd_ids = adapter.retrieve_filers_since_date(
-            ffiec_reporting_period, ffiec_since_date
+            ffiec_reporting_period, ffiec_since_date  # type: ignore[arg-type]
         )
 
         logger.debug(f"Retrieved {len(rssd_ids)} RSSD IDs")
@@ -432,11 +432,9 @@ def collect_filers_submission_date_time_enhanced(
 
     try:
         # Create protocol adapter and call REST endpoint
-        assert ffiec_reporting_period is not None  # Already checked above
-        assert ffiec_since_date is not None  # Already checked above
         adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
         submissions = adapter.retrieve_filers_submission_datetime(
-            ffiec_reporting_period, ffiec_since_date
+            ffiec_reporting_period, ffiec_since_date  # type: ignore[arg-type]
         )
 
         logger.debug(f"Retrieved {len(submissions)} submission records")

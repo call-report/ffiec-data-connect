@@ -16,8 +16,13 @@ import pytest
 
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 from ffiec_data_connect.credentials import WebserviceCredentials
-from ffiec_data_connect.exceptions import RateLimitError
+from ffiec_data_connect.exceptions import RateLimitError, SOAPDeprecationError
 from ffiec_data_connect.ffiec_connection import FFIECConnection
+
+# Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
+_patch_get_conn = patch.object(
+    AsyncCompatibleClient, "_get_connection", return_value=Mock()
+)
 
 
 class TestRateLimiter:
@@ -136,28 +141,22 @@ class TestAsyncCompatibleClientInitialization:
 
         assert client.rate_limiter is None
 
-    def test_connection_caching(self):
-        """Test thread-local connection caching."""
+    def test_connection_caching_raises_for_soap(self):
+        """Test that _get_connection raises SOAPDeprecationError since FFIECConnection is deprecated."""
         creds = Mock(spec=WebserviceCredentials)
         client = AsyncCompatibleClient(creds)
 
-        # Get connection multiple times from same thread
-        conn1 = client._get_connection()
-        conn2 = client._get_connection()
-
-        # Should be same instance
-        assert conn1 is conn2
-        assert isinstance(conn1, FFIECConnection)
-
-        # Should be cached
-        assert threading.get_ident() in client._connection_cache
+        # _get_connection calls FFIECConnection() which now raises SOAPDeprecationError
+        with pytest.raises(SOAPDeprecationError):
+            client._get_connection()
 
 
 class TestSynchronousMethods:
     """Test backward-compatible synchronous methods."""
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_collect_data_sync(self, mock_collect_data):
+    def test_collect_data_sync(self, mock_collect_data, _mock_conn):
         """Test synchronous collect_data method."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -173,14 +172,14 @@ class TestSynchronousMethods:
 
         # Check arguments passed to methods.collect_data
         args = mock_collect_data.call_args[0]
-        assert isinstance(args[0], FFIECConnection)  # session
         assert args[1] is creds  # credentials
         assert args[2] == "2023-12-31"  # reporting_period
         assert args[3] == "123456"  # rssd_id
         assert args[4] == "call"  # series
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_reporting_periods")
-    def test_collect_reporting_periods_sync(self, mock_collect_periods):
+    def test_collect_reporting_periods_sync(self, mock_collect_periods, _mock_conn):
         """Test synchronous collect_reporting_periods method."""
         mock_collect_periods.return_value = ["2023-12-31", "2023-09-30"]
 
@@ -192,8 +191,9 @@ class TestSynchronousMethods:
         assert result == ["2023-12-31", "2023-09-30"]
         mock_collect_periods.assert_called_once()
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_collect_data_with_rate_limiting(self, mock_collect_data):
+    def test_collect_data_with_rate_limiting(self, mock_collect_data, _mock_conn):
         """Test that rate limiting is applied to sync methods."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -216,8 +216,9 @@ class TestSynchronousMethods:
 class TestParallelMethods:
     """Test parallel processing methods."""
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_collect_data_parallel(self, mock_collect_data):
+    def test_collect_data_parallel(self, mock_collect_data, _mock_conn):
         """Test parallel data collection."""
 
         # Mock different responses for different RSDs
@@ -241,8 +242,9 @@ class TestParallelMethods:
         # Should have been called for each RSSD
         assert mock_collect_data.call_count == 3
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_collect_data_parallel_with_errors(self, mock_collect_data):
+    def test_collect_data_parallel_with_errors(self, mock_collect_data, _mock_conn):
         """Test parallel data collection with some errors."""
 
         def side_effect(conn, creds, period, rssd_id, *args):
@@ -267,7 +269,8 @@ class TestParallelMethods:
         assert results["123456"][0]["rssd"] == "123456"
         assert results["123458"][0]["rssd"] == "123458"
 
-    def test_collect_data_parallel_progress_callback(self):
+    @_patch_get_conn
+    def test_collect_data_parallel_progress_callback(self, _mock_conn):
         """Test progress callback functionality."""
         with patch("ffiec_data_connect.methods.collect_data") as mock_collect:
             mock_collect.return_value = [{"test": "data"}]
@@ -291,8 +294,9 @@ class TestParallelMethods:
             assert "123456" in rssd_ids_from_progress
             assert "123457" in rssd_ids_from_progress
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_collect_time_series(self, mock_collect_data):
+    def test_collect_time_series(self, mock_collect_data, _mock_conn):
         """Test time series collection for single bank."""
 
         def side_effect(conn, creds, period, rssd_id, *args):
@@ -320,8 +324,9 @@ class TestAsyncMethods:
     """Test async/await methods."""
 
     @pytest.mark.asyncio
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_collect_data_async(self, mock_collect_data):
+    async def test_collect_data_async(self, mock_collect_data, _mock_conn):
         """Test async data collection."""
         mock_collect_data.return_value = [{"test": "async_data"}]
 
@@ -334,8 +339,9 @@ class TestAsyncMethods:
         mock_collect_data.assert_called_once()
 
     @pytest.mark.asyncio
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_collect_batch_async(self, mock_collect_data):
+    async def test_collect_batch_async(self, mock_collect_data, _mock_conn):
         """Test async batch collection."""
 
         def side_effect(conn, creds, period, rssd_id, *args):
@@ -356,8 +362,11 @@ class TestAsyncMethods:
             assert results[rssd_id][0]["rssd"] == rssd_id
 
     @pytest.mark.asyncio
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_collect_batch_async_with_progress(self, mock_collect_data):
+    async def test_collect_batch_async_with_progress(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test async batch with progress callback."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -378,8 +387,11 @@ class TestAsyncMethods:
         assert len(progress_calls) == 2
 
     @pytest.mark.asyncio
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_collect_batch_async_with_async_progress(self, mock_collect_data):
+    async def test_collect_batch_async_with_async_progress(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test async batch with async progress callback."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -401,8 +413,9 @@ class TestAsyncMethods:
         assert len(progress_calls) == 2
 
     @pytest.mark.asyncio
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_collect_time_series_async(self, mock_collect_data):
+    async def test_collect_time_series_async(self, mock_collect_data, _mock_conn):
         """Test async time series collection."""
 
         def side_effect(conn, creds, period, rssd_id, *args):
@@ -432,12 +445,8 @@ class TestContextManagers:
 
         with AsyncCompatibleClient(creds) as client:
             assert isinstance(client, AsyncCompatibleClient)
-            # Should be able to get connections
-            conn = client._get_connection()
-            assert isinstance(conn, FFIECConnection)
 
         # After exit, resources should be cleaned up
-        # (Specific cleanup verification would require more complex mocking)
 
     @pytest.mark.asyncio
     async def test_async_context_manager(self):
@@ -446,8 +455,6 @@ class TestContextManagers:
 
         async with AsyncCompatibleClient(creds) as client:
             assert isinstance(client, AsyncCompatibleClient)
-            conn = client._get_connection()
-            assert isinstance(conn, FFIECConnection)
 
         # After exit, resources should be cleaned up
 
@@ -460,13 +467,12 @@ class TestResourceManagement:
         creds = Mock(spec=WebserviceCredentials)
         client = AsyncCompatibleClient(creds)
 
-        # Create some cached connections
-        conn1 = client._get_connection()
-
-        # Simulate another thread
-        original_thread_id = threading.get_ident()
-        with patch("threading.get_ident", return_value=original_thread_id + 1):
-            conn2 = client._get_connection()
+        # Manually inject mock connections into the cache to test cleanup
+        mock_conn1 = Mock()
+        mock_conn2 = Mock()
+        thread_id = threading.get_ident()
+        client._connection_cache[thread_id] = mock_conn1
+        client._connection_cache[thread_id + 1] = mock_conn2
 
         # Should have 2 cached connections
         assert len(client._connection_cache) == 2
@@ -513,12 +519,14 @@ class TestResourceManagement:
         creds = Mock(spec=WebserviceCredentials)
         client = AsyncCompatibleClient(creds)
 
-        # Get a connection and mock it to raise on close
-        conn = client._get_connection()
+        # Manually inject a mock connection that raises on close
+        mock_conn = Mock()
+        mock_conn.close.side_effect = Exception("Close error")
+        thread_id = threading.get_ident()
+        client._connection_cache[thread_id] = mock_conn
 
-        with patch.object(conn, "close", side_effect=Exception("Close error")):
-            # Should not raise exception despite connection close error
-            client.close()
+        # Should not raise exception despite connection close error
+        client.close()
 
         # Cache should still be cleared
         assert len(client._connection_cache) == 0
@@ -527,40 +535,9 @@ class TestResourceManagement:
 class TestThreadSafety:
     """Test thread safety of the client."""
 
-    def test_concurrent_connection_access(self):
-        """Test concurrent access to connections from multiple threads."""
-        creds = Mock(spec=WebserviceCredentials)
-        client = AsyncCompatibleClient(creds)
-
-        connections = {}
-        errors = []
-
-        def get_connection(thread_id):
-            try:
-                conn = client._get_connection()
-                connections[thread_id] = conn
-            except Exception as e:
-                errors.append(str(e))
-
-        # Start multiple threads
-        threads = []
-        for i in range(10):
-            t = threading.Thread(target=get_connection, args=(i,))
-            threads.append(t)
-            t.start()
-
-        for t in threads:
-            t.join()
-
-        # Should have no errors
-        assert len(errors) == 0
-
-        # Each thread should get its own connection (fewer than 10 due to thread pooling)
-        assert len(connections) >= 1
-        assert len(client._connection_cache) >= 1
-
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_concurrent_data_collection(self, mock_collect_data):
+    def test_concurrent_data_collection(self, mock_collect_data, _mock_conn):
         """Test concurrent data collection."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -599,26 +576,9 @@ class TestThreadSafety:
 class TestPerformanceAndMemory:
     """Test performance characteristics and memory usage."""
 
-    def test_connection_caching_efficiency(self):
-        """Test that connection caching reduces object creation."""
-        creds = Mock(spec=WebserviceCredentials)
-        client = AsyncCompatibleClient(creds)
-
-        # Get connection multiple times
-        connections = []
-        for _ in range(10):
-            conn = client._get_connection()
-            connections.append(conn)
-
-        # All should be the same object (cached)
-        for conn in connections:
-            assert conn is connections[0]
-
-        # Should only have one cached connection for this thread
-        assert len(client._connection_cache) == 1
-
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_parallel_performance(self, mock_collect_data):
+    def test_parallel_performance(self, mock_collect_data, _mock_conn):
         """Test that parallel processing improves performance."""
 
         # Mock slow data collection
@@ -647,14 +607,14 @@ class TestPerformanceAndMemory:
         creds = Mock(spec=WebserviceCredentials)
         client = AsyncCompatibleClient(creds)
 
-        # Create connections to cache
-        for _ in range(5):
-            client._get_connection()
+        # Inject mock connections into cache
+        for i in range(5):
+            client._connection_cache[i] = Mock()
 
         # Force garbage collection and check cache
         gc.collect()
         cache_size_before = len(client._connection_cache)
-        assert cache_size_before >= 1
+        assert cache_size_before == 5
 
         # Close and verify cleanup
         client.close()
@@ -666,8 +626,9 @@ class TestPerformanceAndMemory:
 class TestRateLimitingIntegration:
     """Test rate limiting integration with client methods."""
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_rate_limiting_in_parallel_collection(self, mock_collect_data):
+    def test_rate_limiting_in_parallel_collection(self, mock_collect_data, _mock_conn):
         """Test rate limiting applied during parallel collection."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -689,8 +650,9 @@ class TestRateLimitingIntegration:
         assert len(results) == 3
 
     @pytest.mark.asyncio
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_async_rate_limiting(self, mock_collect_data):
+    async def test_async_rate_limiting(self, mock_collect_data, _mock_conn):
         """Test rate limiting in async methods."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -721,8 +683,9 @@ class TestErrorHandling:
         client = AsyncCompatibleClient(invalid_creds)
         assert client.credentials == "not_credentials"
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_method_call_exception_handling(self, mock_collect_data):
+    def test_method_call_exception_handling(self, mock_collect_data, _mock_conn):
         """Test exception handling in method calls."""
         mock_collect_data.side_effect = Exception("Network error")
 
@@ -735,8 +698,9 @@ class TestErrorHandling:
 
         assert "Network error" in str(exc_info.value)
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_parallel_partial_failure_recovery(self, mock_collect_data):
+    def test_parallel_partial_failure_recovery(self, mock_collect_data, _mock_conn):
         """Test recovery from partial failures in parallel processing."""
 
         def side_effect(*args):
@@ -762,6 +726,322 @@ class TestErrorHandling:
         # Others should succeed
         assert results["123456"][0]["success"] is True
         assert results["123458"][0]["success"] is True
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage tests for async_compatible.py
+# ---------------------------------------------------------------------------
+
+
+class TestCollectTimeSeries:
+    """Tests for collect_time_series error handling (lines 279-280)."""
+
+    @_patch_get_conn
+    @patch("ffiec_data_connect.methods.collect_data")
+    def test_error_dict_when_future_raises(self, mock_collect_data, _mock_conn):
+        """When future.result() raises, should return error dict (lines 279-280)."""
+
+        def side_effect(conn, creds, period, rssd_id, *args):
+            if period == "2023-09-30":
+                raise Exception("Period unavailable")
+            return [{"period": period, "data": "ok"}]
+
+        mock_collect_data.side_effect = side_effect
+
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+
+        periods = ["2023-12-31", "2023-09-30"]
+        results = client.collect_time_series("123456", periods)
+
+        assert len(results) == 2
+        assert "error" in results["2023-09-30"]
+        assert "Period unavailable" in results["2023-09-30"]["error"]
+        assert results["2023-09-30"]["period"] == "2023-09-30"
+        # Successful period should be fine
+        assert results["2023-12-31"][0]["period"] == "2023-12-31"
+
+
+class TestAsyncCallbackHandling:
+    """Tests for async callback handling (lines 369-372)."""
+
+    @pytest.mark.asyncio
+    @_patch_get_conn
+    @patch("ffiec_data_connect.methods.collect_data")
+    async def test_sync_callback_on_error(self, mock_collect_data, _mock_conn):
+        """Sync callback should be called even on error (line 372)."""
+        mock_collect_data.side_effect = Exception("Fetch failed")
+
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+
+        progress_calls = []
+
+        def sync_callback(rssd_id, result):
+            progress_calls.append((rssd_id, result))
+
+        rssd_ids = ["123456"]
+        results = await client.collect_batch_async(
+            "2023-12-31", rssd_ids, progress_callback=sync_callback
+        )
+
+        assert len(progress_calls) == 1
+        assert "error" in progress_calls[0][1]
+        assert "Fetch failed" in progress_calls[0][1]["error"]
+
+    @pytest.mark.asyncio
+    @_patch_get_conn
+    @patch("ffiec_data_connect.methods.collect_data")
+    async def test_async_callback_on_error(self, mock_collect_data, _mock_conn):
+        """Async callback should be called on error (lines 369-370)."""
+        mock_collect_data.side_effect = Exception("Async fetch failed")
+
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+
+        progress_calls = []
+
+        async def async_callback(rssd_id, result):
+            progress_calls.append((rssd_id, result))
+
+        rssd_ids = ["123456"]
+        results = await client.collect_batch_async(
+            "2023-12-31", rssd_ids, progress_callback=async_callback
+        )
+
+        assert len(progress_calls) == 1
+        assert "error" in progress_calls[0][1]
+        assert "Async fetch failed" in progress_calls[0][1]["error"]
+
+
+class TestAsyncTimeSeriesError:
+    """Tests for async time series error handling (lines 414-415)."""
+
+    @pytest.mark.asyncio
+    @_patch_get_conn
+    @patch("ffiec_data_connect.methods.collect_data")
+    async def test_error_in_async_time_series(self, mock_collect_data, _mock_conn):
+        """Errors in collect_time_series_async should produce error dicts (lines 414-415)."""
+
+        def side_effect(conn, creds, period, rssd_id, *args):
+            if period == "2023-06-30":
+                raise Exception("Server error")
+            return [{"period": period, "data": "ok"}]
+
+        mock_collect_data.side_effect = side_effect
+
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+
+        periods = ["2023-12-31", "2023-06-30"]
+        results = await client.collect_time_series_async("123456", periods)
+
+        assert len(results) == 2
+        assert "error" in results["2023-06-30"]
+        assert "Server error" in results["2023-06-30"]["error"]
+        assert results["2023-06-30"]["period"] == "2023-06-30"
+
+
+class TestExecutorShutdownInClose:
+    """Tests for executor shutdown in close() (line 431)."""
+
+    def test_owned_executor_shutdown_called(self):
+        """close() should call executor.shutdown when client owns the executor (line 431/446)."""
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds)
+
+        assert client._owned_executor is True
+        mock_executor = Mock()
+        client.executor = mock_executor
+
+        client.close()
+
+        mock_executor.shutdown.assert_called_once_with(wait=True)
+
+    def test_non_owned_executor_not_shutdown(self):
+        """close() should NOT call executor.shutdown when externally provided."""
+        creds = Mock(spec=WebserviceCredentials)
+        external_executor = Mock()
+        client = AsyncCompatibleClient(creds, executor=external_executor)
+
+        assert client._owned_executor is False
+
+        client.close()
+
+        external_executor.shutdown.assert_not_called()
+
+
+class TestRESTClientBranches:
+    """Tests for REST client branches in collect_data and collect_reporting_periods."""
+
+    @patch("ffiec_data_connect.methods.collect_data")
+    def test_collect_data_rest_client_passes_none_conn(self, mock_collect_data):
+        """REST client should pass None as connection (line 127)."""
+        from ffiec_data_connect.credentials import OAuth2Credentials
+
+        TEST_JWT = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+        creds = OAuth2Credentials(username="testuser", bearer_token=TEST_JWT)
+
+        mock_collect_data.return_value = [{"test": "data"}]
+
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+        result = client.collect_data("2023-12-31", "123456")
+
+        # First arg should be None for REST client
+        args = mock_collect_data.call_args[0]
+        assert args[0] is None
+        assert result == [{"test": "data"}]
+
+    @patch("ffiec_data_connect.methods.collect_reporting_periods")
+    def test_collect_reporting_periods_rest_client(self, mock_collect_periods):
+        """REST client should pass None as connection (line 166/171)."""
+        from ffiec_data_connect.credentials import OAuth2Credentials
+
+        TEST_JWT = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+        creds = OAuth2Credentials(username="testuser", bearer_token=TEST_JWT)
+
+        mock_collect_periods.return_value = ["2023-12-31"]
+
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+        result = client.collect_reporting_periods("call")
+
+        args = mock_collect_periods.call_args[0]
+        assert args[0] is None
+        assert result == ["2023-12-31"]
+
+    @patch("ffiec_data_connect.methods.collect_reporting_periods")
+    def test_collect_reporting_periods_with_rate_limiter(self, mock_collect_periods):
+        """Rate limiter should be applied in collect_reporting_periods (line 165)."""
+        from ffiec_data_connect.credentials import OAuth2Credentials
+
+        TEST_JWT = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+        creds = OAuth2Credentials(username="testuser", bearer_token=TEST_JWT)
+
+        mock_collect_periods.return_value = ["2023-12-31"]
+        mock_limiter = Mock()
+
+        client = AsyncCompatibleClient(creds, rate_limit=10)
+        client.rate_limiter = mock_limiter
+
+        client.collect_reporting_periods("call")
+
+        mock_limiter.wait_if_needed.assert_called_once()
+
+
+class TestProgressCallbackOnErrorInParallel:
+    """Test progress_callback is called on error in collect_data_parallel (line 231)."""
+
+    @_patch_get_conn
+    @patch("ffiec_data_connect.methods.collect_data")
+    def test_progress_callback_called_on_error(self, mock_collect_data, _mock_conn):
+        """When a future raises, progress_callback should be called with error dict (line 231)."""
+
+        def side_effect(conn, creds, period, rssd_id, *args):
+            if rssd_id == "111":
+                raise Exception("Connection refused")
+            return [{"rssd": rssd_id}]
+
+        mock_collect_data.side_effect = side_effect
+
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+
+        progress_calls = []
+
+        def progress_cb(rssd_id, result):
+            progress_calls.append((rssd_id, result))
+
+        results = client.collect_data_parallel(
+            "2023-12-31",
+            ["111", "222"],
+            progress_callback=progress_cb,
+        )
+
+        # Both RSDs should trigger progress callbacks
+        assert len(progress_calls) == 2
+        rssd_ids_called = [c[0] for c in progress_calls]
+        assert "111" in rssd_ids_called
+        assert "222" in rssd_ids_called
+
+        # The error callback should have an error key
+        error_call = next(c for c in progress_calls if c[0] == "111")
+        assert "error" in error_call[1]
+        assert "Connection refused" in error_call[1]["error"]
+
+
+class TestRateLimiterInTimeSeries:
+    """Test rate_limiter.wait_if_needed is called in collect_time_series (line 262)."""
+
+    @_patch_get_conn
+    @patch("ffiec_data_connect.methods.collect_data")
+    def test_rate_limiter_called_in_time_series(self, mock_collect_data, _mock_conn):
+        """Rate limiter should be called for each period in collect_time_series (line 262)."""
+        mock_collect_data.return_value = [{"data": "ok"}]
+
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=10)
+
+        # Replace rate_limiter with a mock to verify calls
+        mock_limiter = Mock()
+        client.rate_limiter = mock_limiter
+
+        periods = ["2023-12-31", "2023-09-30", "2023-06-30"]
+        results = client.collect_time_series("123456", periods)
+
+        assert len(results) == 3
+        # Called once per period in collect_time_series + once per period in collect_data
+        assert mock_limiter.wait_if_needed.call_count >= 3
+
+
+class TestRateLimiterInBatchAsync:
+    """Test rate_limiter in collect_batch_async (line 349)."""
+
+    @pytest.mark.asyncio
+    @_patch_get_conn
+    @patch("ffiec_data_connect.methods.collect_data")
+    async def test_rate_limiter_called_in_batch_async(
+        self, mock_collect_data, _mock_conn
+    ):
+        """Rate limiter should be called for each RSSD in collect_batch_async (line 349)."""
+        mock_collect_data.return_value = [{"data": "ok"}]
+
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=10)
+
+        # Replace rate_limiter with a mock that has both sync and async methods
+        mock_limiter = Mock()
+        mock_limiter.async_wait_if_needed = AsyncMock()
+        mock_limiter.wait_if_needed = Mock()
+        client.rate_limiter = mock_limiter
+
+        rssd_ids = ["111", "222"]
+        results = await client.collect_batch_async("2023-12-31", rssd_ids)
+
+        assert len(results) == 2
+        # async_wait_if_needed is called both in collect_batch_async and collect_data_async
+        assert mock_limiter.async_wait_if_needed.call_count >= 2
+
+
+class TestExecutorShutdownOwnedReal:
+    """Test executor shutdown in close() with a real owned executor (line 446)."""
+
+    def test_close_shuts_down_real_owned_executor(self):
+        """Create client without external executor, then close(). Executor should be shut down."""
+        creds = Mock(spec=WebserviceCredentials)
+        client = AsyncCompatibleClient(creds, rate_limit=None)
+
+        assert client._owned_executor is True
+        executor = client.executor
+        assert executor is not None
+
+        # Close the client -- should shut down the executor
+        client.close()
+
+        # Verify the executor is shut down by trying to submit (should raise)
+        import concurrent.futures
+
+        with pytest.raises(RuntimeError):
+            executor.submit(lambda: None)
 
 
 if __name__ == "__main__":

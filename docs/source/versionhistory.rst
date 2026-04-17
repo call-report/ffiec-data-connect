@@ -1,15 +1,55 @@
 Version History
 ===============
 
+Version 3.0.0 - Major Release
+==============================
+Date: 2026-04-09
+
+**SOAP support removed. REST-only. New calling convention.**
+
+This release removes all SOAP API support following the FFIEC's discontinuation of the SOAP webservice on February 28, 2026. The library is now REST-only with a simplified calling convention.
+
+**Breaking Changes**
+
+* **SOAP support removed**: ``WebserviceCredentials``, ``FFIECConnection``, ``SOAPAdapter``, and all SOAP-related code have been removed. Attempting to use them will raise ``SOAPDeprecationError``.
+* **New calling convention**: All ``collect_*`` functions now use ``collect_*(creds, ...)`` instead of ``collect_*(session=..., creds=...)``. The ``session`` parameter is no longer needed.
+* **Token expiration auto-detection**: ``token_expires`` is now auto-detected from the JWT payload. You no longer need to pass it explicitly to ``OAuth2Credentials``.
+* **Python 3.11 is the new minimum**: Python 3.10 support is dropped (it is EOL on 2026-10-04). This matches pandas 3.0's own requirement.
+* **pandas 3.0 is the new baseline**: ``pandas>=3.0.0,<4.0.0`` (up from ``>=1.3.0,<3.0.0``). Users on pandas 2.x or earlier must upgrade before installing.
+
+**Migration from v2.x**
+
+See ``MIGRATION.md`` in the repository root for detailed migration guidance. The key changes are:
+
+1. Replace ``WebserviceCredentials`` with ``OAuth2Credentials``
+2. Remove ``FFIECConnection`` usage
+3. Change ``collect_*(session=conn, creds=creds, ...)`` to ``collect_*(creds, ...)``
+4. Upgrade to Python >= 3.11 and pandas >= 3.0 if not already there
+
+**Dependencies**
+
+* Removed: ``zeep``, ``requests``
+* Added: ``httpx`` (async-capable HTTP client)
+* Upper bounds relaxed for modern versions: ``httpx<2.0``, ``polars<2.0``, ``lxml<7.0`` (needed for Python 3.14 wheels), ``xmltodict<2.0``, ``pyarrow<24.0``
+
+**Supported Python versions**
+
+* 3.11, 3.12, 3.13, 3.14 (tested in CI)
+
+**Quality**
+
+* 100% statement test coverage: 652 unit tests + 26 integration tests
+* All tests pass against pandas 3.0.2 with zero deprecation warnings in library code paths
+
 Version 2.0.0 - Major Release
 ==============================
 Date: 2025-09-05
 
-**🎯 Production Release with REST API Support**
+**Production Release with REST API Support**
 
 Major release introducing comprehensive REST API support, OAuth2 authentication, and dual protocol architecture.
 
-**🔄 Recent Updates**
+**Recent Updates**
 
 * **Comprehensive Test Suite**: Added 30+ new tests for OAuth2, force_null_types, and protocol adapters
 * **Enhanced Documentation**:
@@ -26,16 +66,16 @@ Major release introducing comprehensive REST API support, OAuth2 authentication,
   - Added reverse-engineered OpenAPI schema integration
   - Fixed GitHub URLs to use call-report organization
 
-**🎉 Major Features**
+**Major Features**
 
-This release provides a complete dual-protocol implementation supporting both the modern REST API and legacy SOAP API, with seamless migration capabilities.
+This release provided a complete dual-protocol implementation supporting both the modern REST API and legacy SOAP API, with seamless migration capabilities.
 
-**🚀 New Features**
+**New Features**
 
 * **REST API Support**: Full support for modern OAuth2-based REST API alongside legacy SOAP
 * **AsyncCompatibleClient**: Full async/await support with rate limiting and concurrency control
 * **Parallel Processing**: Collect data from multiple banks simultaneously
-* **Direct Polars Conversion**: XBRL → Polars pipeline preserves maximum numerical precision
+* **Direct Polars Conversion**: XBRL to Polars pipeline preserves maximum numerical precision
 * **Advanced Error Handling**: Custom exception types with rich context
 * **Memory Management**: Proper cleanup, context managers, SOAP client caching
 * **Thread Safety**: Race condition resolution and concurrent access support
@@ -45,7 +85,7 @@ This release provides a complete dual-protocol implementation supporting both th
   - ``collect_filers_since_date()``
   - ``collect_filers_submission_date_time()``
 
-**🔒 Security Improvements**
+**Security Improvements**
 
 * Comprehensive input validation for all method parameters
 * Credential security with password masking
@@ -53,7 +93,7 @@ This release provides a complete dual-protocol implementation supporting both th
 * Immutable credentials after initialization
 * Secure session management
 
-**🧠 Performance & Reliability**
+**Performance & Reliability**
 
 * Memory leak prevention with proper resource cleanup
 * SOAP client caching to prevent expensive recreation
@@ -61,23 +101,23 @@ This release provides a complete dual-protocol implementation supporting both th
 * Up to 5x performance improvement with async operations
 * Comprehensive test suite with 253 tests
 
-**📊 Data Processing Enhancements**
+**Data Processing Enhancements**
 
 * Type-specific columns (int_data, float_data, bool_data, str_data)
 * NumPy dtype consistency throughout data pipeline
 * Support for list, pandas DataFrame, and Polars DataFrame outputs
 * Maximum precision preservation in XBRL processing
 
-**📚 Documentation & Developer Experience**
+**Documentation & Developer Experience**
 
 * Comprehensive Jupyter notebook demonstration
 * Technical analysis documents for security, memory, and performance
 * Complete API documentation with examples
 * Migration guides and backward compatibility
 
-**🔧 Breaking Changes**
+**Breaking Changes**
 
-While backward compatibility is maintained, some advanced usage patterns may need updates. See CHANGELOG.md for detailed migration guidance.
+While backward compatibility was maintained, some advanced usage patterns may have needed updates. See CHANGELOG.md for detailed migration guidance.
 
 Version 0.3.0
 -------------

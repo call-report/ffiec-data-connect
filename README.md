@@ -6,40 +6,22 @@ The FFIEC Data Connect Python library allows researchers, analysts, and financia
 
 ## Overview
 
-The FFIEC Data Connect Python library (`ffiec_data_connect`) downloads data from the FFIEC (Federal Financial Institution Examination Council) via both SOAP and REST APIs.
+The FFIEC Data Connect Python library (`ffiec_data_connect`) downloads data from the FFIEC (Federal Financial Institution Examination Council) via the REST API.
 
 >**`ffiec-data-connect` is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.**
 
-> **Authentication Migration Notice (Effective August 25, 2025)**
-> 
-> The FFIEC CDR is transitioning to Microsoft Entra ID authentication with optional multifactor authentication (MFA). All users must complete a registration process to migrate their accounts to the new authentication protocol.
-> 
-> - Legacy SOAP API will remain available until **February 28, 2026**
-> - All legacy security tokens will expire on **February 28, 2026**
-> - Users must transition to the REST API before this date
-
 ## Key Features
 
-- **Dual Protocol Support**: Supports both SOAP (legacy) and REST (new) APIs
-- **Automatic Protocol Selection**: Automatically selects the appropriate protocol based on credential type
+- **REST API Access**: Modern RESTful interface with OAuth2 bearer tokens
 - **OAuth2 Authentication**: REST API support with 90-day bearer tokens
-- **Higher Rate Limits**: REST API allows 2500 requests/hour vs 1000 for SOAP
-- **Data Normalization**: Ensures consistency between SOAP and REST responses
+- **Higher Rate Limits**: REST API allows 2500 requests/hour
+- **Data Normalization**: Ensures consistent data normalization
 - **Multiple Output Formats**: Returns data as Python lists, Pandas DataFrames, or Polars DataFrames
 - **Field Name Compatibility**: Provides both `rssd` and `id_rssd` field names to support existing code
 
 ### Disclaimer
 
 - __Please review the license and disclaimer before using this package.__
-
-## Overview
-
-The FFIEC Data Connect library provides a Python interface to both the SOAP-based and REST-based FFIEC APIs. As of version 2.0, the library supports:
-
-- **SOAP API**: Traditional webservice interface (uses `WebserviceCredentials`)
-- **REST API**: Modern RESTful interface with OAuth2 (uses `OAuth2Credentials`)
-
-The library automatically selects the appropriate protocol based on the credentials you provide.
 
 ## Field Name Compatibility
 
@@ -64,14 +46,14 @@ rssd_id = filer.get("rssd") or filer.get("id_rssd")
 This dual field name support applies to:
 - `collect_filers_on_reporting_period()`
 - `collect_filers_submission_date_time()` 
-- All REST and SOAP implementations
+- All implementations
 - All output formats (list, pandas, polars)
 
 ## Installation
 
 ### Requirements
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - pip package manager
 
 > **Note**: This library requires modern Python versions. For best compatibility, use Python 3.11+ on macOS/Linux. Windows users may experience SSL certificate issues and should consider using Google Colab, WSL, or a Linux environment.
@@ -95,24 +77,21 @@ pip install ffiec-data-connect
    - If the callback link fails (common issue), manually navigate to: https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx
 
 3. **Generate credentials**:
-   - For **REST API** (Recommended): Generate a 90-day JWT bearer token from the Account Details tab
-   - For **SOAP API** (Deprecated): Use your username and Security Token
+   - Generate a 90-day JWT bearer token from the Account Details tab
 
 > **JWT Token Requirements**: Valid tokens must start with `ey` and end with `.` (e.g., `eyJhbGci...ifQ.`). Tokens expire after **90 days**, and must be manually regenerated via the FFIEC portal. This software does not automatically refresh tokens, and JWT refresh tokens are not supported by FFIEC.
 
-### Using the REST API (Recommended)
+### Using the REST API
 
 ```python
 from ffiec_data_connect import OAuth2Credentials, collect_data, collect_reporting_periods
 
 # Setup REST API credentials
-from datetime import datetime, timedelta
-
 creds = OAuth2Credentials(
     username="your_username",
     bearer_token="eyJhbGci...",  # JWT token (NOT your password!)
-    token_expires=datetime.now() + timedelta(days=90)
 )
+# Note: token_expires is auto-detected from the JWT token
 
 # Check if token is expired
 if creds.is_expired:
@@ -120,46 +99,19 @@ if creds.is_expired:
 
 # Get reporting periods
 periods = collect_reporting_periods(
-    session=None,  # REST doesn't need session
-    creds=creds,
+    creds,
     series="call",
     output_type="list"
 )
 
 # Get individual bank data
 data = collect_data(
-    session=None,
-    creds=creds,
-    reporting_period="12/31/2023",  # Both APIs use MM/DD/YYYY format
+    creds,
+    reporting_period="12/31/2023",
     rssd_id="480228",  # JPMorgan Chase
     series="call",
     output_type="pandas",  # Returns DataFrame
     force_null_types="pandas"  # Better integer display (optional)
-)
-```
-
-### Using the SOAP API (Legacy)
-
-```python
-from ffiec_data_connect import WebserviceCredentials, FFIECConnection, collect_data
-
-# Setup SOAP API credentials
-creds = WebserviceCredentials(
-    username="your_username",
-    password="your_security_token"  # Note: This is the Security Token, not your password
-)
-
-# Create connection
-conn = FFIECConnection()
-
-# Get data
-data = collect_data(
-    session=conn,
-    creds=creds,
-    reporting_period="12/31/2023",  # SOAP also uses MM/DD/YYYY format
-    rssd_id="480228",
-    series="call",
-    output_type="pandas"
 )
 ```
 
@@ -174,20 +126,6 @@ The library supports all 7 FFIEC REST API endpoints (per CDR-PDD-SIS-611 v1.10):
 5. **RetrieveFacsimile** - Get individual bank data (XBRL/PDF/SDF)
 6. **RetrieveUBPRReportingPeriods** - Get UBPR reporting periods
 7. **RetrieveUBPRXBRLFacsimile** - Get UBPR XBRL data
-
-## Key Differences Between SOAP and REST
-
-| Feature | SOAP API | REST API |
-|---------|----------|----------|
-| Authentication | Username + Security Token | OAuth2 Bearer Token (JWT) |
-| Token Lifecycle | No expiration | 90 days |
-| Token Format | Any string | Must start with `ey` and end with `.` |
-| Rate Limit | 1000 requests/hour | 2500 requests/hour |
-| Date Format | MM/DD/YYYY | MM/DD/YYYY |
-| Protocol | SOAP/XML | REST/JSON |
-| Headers | Standard SOAP | Non-standard (`UserID`, `Authentication`) |
-| Library Used | zeep + requests | httpx |
-| Status | ⚠️ **Deprecated Feb 28, 2026** | ✅ **Recommended** |
 
 ## Error Handling
 
@@ -207,7 +145,7 @@ try:
     data = collect_data(...)
 except CredentialError as e:
     print(f"Authentication failed: {e}")
-    # Common causes: expired token, wrong password, invalid JWT format
+    # Common causes: expired token, invalid JWT format
 except RateLimitError as e:
     print(f"Rate limited. Retry after: {e.retry_after} seconds")
 except NoDataError as e:
@@ -234,14 +172,14 @@ The library preserves data integrity and provides flexible null handling:
 
 ### Data Preservation
 - **ZIP codes**: Preserved as strings with leading zeros
-- **RSSD IDs**: Normalized as strings across both APIs
+- **RSSD IDs**: Normalized as strings
 - **Dates**: Consistent datetime format (MM/DD/YYYY input, configurable output)
 
 ### Null Value Handling
 The library supports different null value strategies:
 
 ```python
-# Default: numpy nulls (SOAP) or pandas nulls (REST)
+# Default: pandas nulls
 data = collect_data(...)
 
 # Force pandas nulls (better integer display)
@@ -254,14 +192,10 @@ data = collect_data(..., force_null_types="numpy")
 **Why this matters**: 
 - **numpy nulls** (`np.nan`) convert integers to floats (displays as `100.0`)
 - **pandas nulls** (`pd.NA`) preserve integer types (displays as `100`)
-- REST API defaults to pandas nulls for better data fidelity
-- SOAP API defaults to numpy nulls for backward compatibility
 
 ## Rate Limiting
 
-Both APIs have rate limits:
-- **SOAP**: ~1000 requests/hour
-- **REST**: ~2500 requests/hour
+The REST API has a rate limit of ~2500 requests/hour.
 
 The library includes automatic rate limiting to help stay within these limits.
 
@@ -278,47 +212,22 @@ The library includes comprehensive Jupyter notebook tutorials with executable ex
 - Error handling and troubleshooting
 - Advanced features: rate limiting, batch operations
 
-**🔧 SOAP API Demo** (`ffiec_data_connect_soap_demo.ipynb`) 
-- Legacy SOAP API implementation
-- Credential management for WebserviceCredentials
-- Session handling and connection management
-- Data collection examples with real banking data
-- Migration guidance to REST API
-
 ### 🎯 Quick Start Examples
 
-**REST API (Recommended)**
 ```python
 from ffiec_data_connect import OAuth2Credentials, collect_data
-from datetime import datetime, timedelta
 
 # Setup
 creds = OAuth2Credentials(
     username="your_username",
     bearer_token="eyJhbGci...",  # 90-day JWT token
-    token_expires=datetime.now() + timedelta(days=90)
 )
+# Note: token_expires is auto-detected from the JWT token
 
 # Get data
 data = collect_data(
-    session=None, creds=creds, 
+    creds,
     reporting_period="12/31/2023", rssd_id="480228",
-    series="call", output_type="pandas"
-)
-```
-
-**SOAP API (Legacy)**
-```python
-from ffiec_data_connect import WebserviceCredentials, FFIECConnection, collect_data
-
-# Setup  
-creds = WebserviceCredentials(username="your_username", password="your_token")
-conn = FFIECConnection()
-
-# Get data
-data = collect_data(
-    session=conn, creds=creds,
-    reporting_period="12/31/2023", rssd_id="480228", 
     series="call", output_type="pandas"
 )
 ```
@@ -361,7 +270,7 @@ data = collect_data(..., force_null_types="pandas")
 **Empty Datasets**
 - Check if institution filed for that period: `collect_filers_on_reporting_period()`
 - Verify RSSD ID exists and is active
-- Ensure correct date format: MM/DD/YYYY for both APIs
+- Ensure correct date format: MM/DD/YYYY
 
 ### Technical Issues
 
@@ -386,10 +295,13 @@ For comprehensive troubleshooting, see the full documentation.
 - **Email**: cdr.help@cdr.ffiec.gov
 - **Scope**: CDR account setup, migration, token generation, Microsoft Entra ID issues
 
-**Commercial Support**
-Enhanced support available for commercial entities requiring priority technical support, custom modifications, or integration consulting.
-
 This library is provided by Civic Forge Solutions LLC under the Mozilla Public License 2.0.
+
+## Commercial Support
+
+`ffiec-data-connect` is free and open-source under MPL 2.0 — you can use it commercially, modify it, and distribute it without any payment or license key. Organizations that want priority support with guaranteed response times, migration assistance, or custom development can purchase an optional commercial support agreement from Civic Forge Solutions LLC.
+
+The commercial offering does not gate any features of the library; it is strictly a support and services agreement for teams that need a formal vendor relationship (common in regulated finance). See [COMMERCIAL.md](COMMERCIAL.md) for what's included, who it's for, and how to get in touch. For inquiries, contact michael@civicforge.solutions.
 
 ## Additional Resources
 

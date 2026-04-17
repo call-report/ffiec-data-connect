@@ -103,28 +103,25 @@ Using the ``ffiec_data_connect`` package:
 .. code-block:: python
 
    from ffiec_data_connect import OAuth2Credentials
-   from datetime import datetime, timedelta
    import ffiec_data_connect as fdc
 
    # Setup credentials
+   # token_expires is auto-detected from the JWT payload
    creds = OAuth2Credentials(
        username="your_username",
        bearer_token="eyJhbGci...",  # Your JWT token
-       token_expires=datetime.now() + timedelta(days=90)
    )
 
    # Collect reporting periods
    periods = fdc.collect_reporting_periods(
-       session=None,  # None for REST API
-       creds=creds,
+       creds,
        series="call",
        output_type="list"
    )
 
    # Collect data for a specific bank
    data = fdc.collect_data(
-       session=None,
-       creds=creds,
+       creds,
        rssd_id="37",
        reporting_period="12/31/2024",
        series="call"
@@ -148,20 +145,10 @@ Direct API Usage with curl
         -H "dataSeries: Call" \
         -H "reportingPeriodEndDate: 12/31/2024"
 
-Migration from SOAP to REST
-----------------------------
+Historical Note
+----------------
 
-Key differences when migrating from SOAP:
-
-1. **Authentication**: Use JWT tokens instead of username/password
-2. **Headers**: All parameters in headers, not SOAP envelope
-3. **Date Format**: Still uses ``MM/DD/YYYY`` format like SOAP
-4. **Response Format**: JSON instead of XML/XBRL
-5. **Performance**: Significantly faster response times
-
-.. warning::
-   The legacy SOAP API will be discontinued on **February 28, 2026**.
-   All integrations must migrate to REST before this date.
+The FFIEC previously offered a SOAP-based webservice alongside this REST API. The SOAP API was discontinued on February 28, 2026. All integrations now use the REST API exclusively. For migration guidance from older versions of this library that supported SOAP, see ``MIGRATION.md`` in the repository.
 
 Additional Resources
 --------------------

@@ -6,12 +6,12 @@ Tests OAuth2 credential handling, token validation, and expiration.
 
 import os
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from ffiec_data_connect.credentials import OAuth2Credentials
-from ffiec_data_connect.exceptions import CredentialError
+from ffiec_data_connect.exceptions import CredentialError, SOAPDeprecationError
 
 
 class TestOAuth2CredentialsInitialization:
@@ -23,7 +23,7 @@ class TestOAuth2CredentialsInitialization:
         creds = OAuth2Credentials(
             username="testuser",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.test.",
-            token_expires=token_expires
+            token_expires=token_expires,
         )
 
         assert creds.username == "testuser"
@@ -37,7 +37,7 @@ class TestOAuth2CredentialsInitialization:
         creds = OAuth2Credentials(
             username="testuser",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.test.",
-            token_expires=token_expires
+            token_expires=token_expires,
         )
 
         assert creds.is_expired
@@ -48,17 +48,20 @@ class TestOAuth2CredentialsInitialization:
             OAuth2Credentials(
                 username="testuser",
                 bearer_token="invalid_token",  # Should start with 'ey' and end with '.'
-                token_expires=datetime.now() + timedelta(days=90)
+                token_expires=datetime.now() + timedelta(days=90),
             )
 
-        assert "JWT token" in str(exc_info.value) or "bearer token" in str(exc_info.value).lower()
+        assert (
+            "JWT token" in str(exc_info.value)
+            or "bearer token" in str(exc_info.value).lower()
+        )
 
     def test_init_missing_username(self):
         """Test that missing username raises error."""
         with pytest.raises((CredentialError, ValueError, TypeError)) as exc_info:
             OAuth2Credentials(
                 bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.test.",
-                token_expires=datetime.now() + timedelta(days=90)
+                token_expires=datetime.now() + timedelta(days=90),
             )
 
         assert "username" in str(exc_info.value).lower()
@@ -67,11 +70,13 @@ class TestOAuth2CredentialsInitialization:
         """Test that missing bearer token raises error."""
         with pytest.raises((CredentialError, ValueError, TypeError)) as exc_info:
             OAuth2Credentials(
-                username="testuser",
-                token_expires=datetime.now() + timedelta(days=90)
+                username="testuser", token_expires=datetime.now() + timedelta(days=90)
             )
 
-        assert "bearer" in str(exc_info.value).lower() or "token" in str(exc_info.value).lower()
+        assert (
+            "bearer" in str(exc_info.value).lower()
+            or "token" in str(exc_info.value).lower()
+        )
 
     def test_token_validation_valid_format(self):
         """Test JWT token format validation for valid tokens."""
@@ -85,7 +90,7 @@ class TestOAuth2CredentialsInitialization:
             creds = OAuth2Credentials(
                 username="test",
                 bearer_token=token,
-                token_expires=datetime.now() + timedelta(days=90)
+                token_expires=datetime.now() + timedelta(days=90),
             )
             assert creds.bearer_token == token
 
@@ -105,7 +110,7 @@ class TestOAuth2CredentialsInitialization:
                 OAuth2Credentials(
                     username="test",
                     bearer_token=token,
-                    token_expires=datetime.now() + timedelta(days=90)
+                    token_expires=datetime.now() + timedelta(days=90),
                 )
 
 
@@ -117,7 +122,7 @@ class TestOAuth2CredentialsSecurity:
         creds = OAuth2Credentials(
             username="testuser",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.secretpayload.",
-            token_expires=datetime.now() + timedelta(days=90)
+            token_expires=datetime.now() + timedelta(days=90),
         )
 
         str_repr = str(creds)
@@ -133,7 +138,7 @@ class TestOAuth2CredentialsSecurity:
         creds = OAuth2Credentials(
             username="testuser",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.secretpayload.",
-            token_expires=datetime.now() + timedelta(days=90)
+            token_expires=datetime.now() + timedelta(days=90),
         )
 
         repr_str = repr(creds)
@@ -150,7 +155,7 @@ class TestOAuth2CredentialsExpiration:
         creds = OAuth2Credentials(
             username="test",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.",
-            token_expires=datetime.now() + timedelta(days=30)
+            token_expires=datetime.now() + timedelta(days=30),
         )
 
         assert not creds.is_expired
@@ -160,7 +165,7 @@ class TestOAuth2CredentialsExpiration:
         creds = OAuth2Credentials(
             username="test",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.",
-            token_expires=datetime.now() - timedelta(days=1)
+            token_expires=datetime.now() - timedelta(days=1),
         )
 
         assert creds.is_expired
@@ -171,11 +176,13 @@ class TestOAuth2CredentialsExpiration:
         creds = OAuth2Credentials(
             username="test",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.",
-            token_expires=datetime.now() + timedelta(hours=1)
+            token_expires=datetime.now() + timedelta(hours=1),
         )
 
         # Should be marked as expired since it expires within 24 hours
-        assert creds.is_expired  # is_expired returns True for tokens expiring within 24 hours
+        assert (
+            creds.is_expired
+        )  # is_expired returns True for tokens expiring within 24 hours
 
     def test_token_expiration_calculation(self):
         """Test token expiration time calculation."""
@@ -184,19 +191,21 @@ class TestOAuth2CredentialsExpiration:
         creds = OAuth2Credentials(
             username="test",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.",
-            token_expires=expires_at
+            token_expires=expires_at,
         )
 
         # Check that expiration is set correctly
         assert creds.token_expires == expires_at
-        assert not creds.is_expired  # Should not be expired (90 days > 24 hour threshold)
+        assert (
+            not creds.is_expired
+        )  # Should not be expired (90 days > 24 hour threshold)
 
     def test_token_expired_calculation(self):
         """Test expired token detection."""
         creds = OAuth2Credentials(
             username="test",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.",
-            token_expires=datetime.now() - timedelta(days=10)
+            token_expires=datetime.now() - timedelta(days=10),
         )
 
         # Should be marked as expired
@@ -213,16 +222,15 @@ class TestOAuth2CredentialsComparison:
         oauth_creds = OAuth2Credentials(
             username="test",
             bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.",
-            token_expires=datetime.now() + timedelta(days=90)
+            token_expires=datetime.now() + timedelta(days=90),
         )
 
-        soap_creds = WebserviceCredentials(
-            username="test",
-            password="password"
-        )
+        # WebserviceCredentials now raises SOAPDeprecationError, so use a Mock
+        soap_creds = Mock(spec=WebserviceCredentials)
+        soap_creds.password = "password"
 
         # Check that they have different attributes
-        assert hasattr(oauth_creds, 'bearer_token')
-        assert hasattr(oauth_creds, 'token_expires')
-        assert not hasattr(soap_creds, 'bearer_token')
-        assert hasattr(soap_creds, 'password')
+        assert hasattr(oauth_creds, "bearer_token")
+        assert hasattr(oauth_creds, "token_expires")
+        assert not hasattr(soap_creds, "bearer_token")
+        assert hasattr(soap_creds, "password")

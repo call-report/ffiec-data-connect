@@ -11,16 +11,11 @@ Repo: https://github.com/call-report/ffiec-data-connect
 * **This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.**
 * **Please review the license and disclaimer before using this package.**
 
-The FFIEC Webservice Python Connector (`ffiec_data_connect`) was created to facilitate the use of both the SOAP-based FFIEC Webservice and the modern REST API.
+The FFIEC Webservice Python Connector (`ffiec_data_connect`) was created to facilitate the use of the FFIEC REST API.
 
 Although limited documentation is provided for the Webservice by the FFIEC, practical use of the Webservice via Python requires a considerable amount of boilerplate code - and knowledge of esoteric terms and concepts inherent to bank regulatory data.
 
-With these challenges in mind, this package provides a Python wrapper for both FFIEC APIs:
-
-* **SOAP API**: The legacy webservice using WebserviceCredentials (username/password)
-* **REST API**: The modern API using OAuth2Credentials (bearer tokens)
-
-Both APIs provide access to the same data, with the REST API offering improved performance and reliability. The package automatically handles protocol differences, providing a unified interface for data collection.
+With these challenges in mind, this package provides a Python wrapper for the FFIEC REST API using OAuth2Credentials (bearer tokens). The package automatically handles authentication, data normalization, and type handling, providing a unified interface for data collection.
 
 Data returned from the APIs may be returned as:
 
@@ -31,22 +26,18 @@ Data returned from the APIs may be returned as:
 Getting Started with Interactive Tutorials
 ===========================================
 
-📓 **Jupyter Notebook Demos**
-
-The best way to learn the library is through our comprehensive Jupyter notebook tutorials:
+The best way to learn the library is through our comprehensive Jupyter notebook tutorial:
 
 * **``ffiec_data_connect_rest_demo.ipynb``** - Complete REST API walkthrough with executable examples
-* **``ffiec_data_connect_soap_demo.ipynb``** - Legacy SOAP API implementation and migration guidance
 
-These notebooks include:
+This notebook includes:
 
 * Step-by-step setup instructions with real credentials
-* Executable code examples using actual banking data  
+* Executable code examples using actual banking data
 * Troubleshooting guides for common issues
 * Performance optimization techniques
-* Migration strategies from SOAP to REST
 
-The notebooks are included with the package installation and provide hands-on experience with both APIs.
+The notebook is included with the package installation and provides hands-on experience with the REST API.
 
 .. toctree::
    :maxdepth: 3
@@ -54,6 +45,7 @@ The notebooks are included with the package installation and provide hands-on ex
 
    account_setup
    development_setup
+   testing
    modules
    rest_api_reference
    data_type_handling

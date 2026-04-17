@@ -2,6 +2,10 @@
 Test legacy error compatibility mode.
 
 Ensures backward compatibility for users expecting ValueError exceptions.
+
+Note: WebserviceCredentials now raises SOAPDeprecationError unconditionally,
+regardless of legacy mode. Legacy error mode only affects validation errors
+and other non-SOAP-related exceptions.
 """
 
 import os
@@ -18,6 +22,7 @@ from ffiec_data_connect import (
     set_legacy_errors,
     use_legacy_errors,
 )
+from ffiec_data_connect.exceptions import SOAPDeprecationError
 from ffiec_data_connect.methods import _validate_rssd_id
 
 
@@ -95,27 +100,17 @@ class TestLegacyErrorMode:
 
             Config.reset()
 
-    def test_credentials_error_legacy_mode(self):
-        """Test that credentials errors raise ValueError in legacy mode."""
+    def test_credentials_always_raise_soap_deprecation(self):
+        """Test that WebserviceCredentials always raises SOAPDeprecationError regardless of legacy mode."""
+        # In legacy mode
         enable_legacy_mode()
-
-        # Should raise ValueError instead of CredentialError
-        with pytest.raises(ValueError) as exc_info:
-            WebserviceCredentials()  # No credentials
-
-        # Check it's ValueError, not CredentialError
-        assert type(exc_info.value) is ValueError
-        assert "Missing required credentials" in str(exc_info.value)
-
-        # Disable legacy mode
-        disable_legacy_mode()
-
-        # Now should raise CredentialError
-        with pytest.raises(CredentialError) as exc_info:
+        with pytest.raises(SOAPDeprecationError):
             WebserviceCredentials()
 
-        assert type(exc_info.value) is CredentialError
-        assert "Missing required credentials" in str(exc_info.value)
+        # In new mode
+        disable_legacy_mode()
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials()
 
     def test_validation_error_legacy_mode(self):
         """Test that validation errors raise ValueError in legacy mode."""

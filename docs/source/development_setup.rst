@@ -10,7 +10,7 @@ Prerequisites
 System Requirements
 -------------------
 
-- Python 3.10 or higher (required for modern type hints and zoneinfo support)
+- Python 3.11 or higher (required for pandas 3.0+ and modern type hints)
 - Git for version control
 - Virtual environment tool (venv, virtualenv, or conda)
 
@@ -55,7 +55,7 @@ Using conda
 .. code-block:: bash
 
    # Create conda environment
-   conda create -n ffiec-dev python=3.10
+   conda create -n ffiec-dev python=3.11
 
    # Activate it
    conda activate ffiec-dev
@@ -88,7 +88,7 @@ If you only need the core dependencies without development tools:
    pip install -r requirements.txt
 
    # Or manually install required packages:
-   pip install pandas numpy requests zeep defusedxml
+   pip install pandas numpy httpx defusedxml
 
    # Optional: Install polars for polars output support
    pip install polars
@@ -121,10 +121,13 @@ When the library is installed in editable mode, you can use it as if it were ins
 .. code-block:: python
 
    # Your script.py
-   from ffiec_data_connect import methods, credentials, ffiec_connection
+   from ffiec_data_connect import methods, credentials
 
    # Use the library normally
-   creds = credentials.WebserviceCredentials(username="...", password="...")
+   creds = credentials.OAuth2Credentials(
+       username="...",
+       bearer_token="eyJhbGci..."
+   )
    # ... rest of your code
 
 Direct Path Import (Alternative)
@@ -345,11 +348,11 @@ Understanding the project structure helps with development:
    ├── src/
    │   └── ffiec_data_connect/
    │       ├── __init__.py           # Package initialization
-   │       ├── credentials.py        # Credential handling
+   │       ├── credentials.py        # Credential handling (OAuth2Credentials)
    │       ├── methods.py            # Main API methods
    │       ├── methods_enhanced.py   # REST API enhancements
-   │       ├── ffiec_connection.py   # SOAP connection handling
-   │       ├── protocol_adapter.py   # REST/SOAP adapter
+   │       ├── ffiec_connection.py   # Legacy connection module (deprecated)
+   │       ├── protocol_adapter.py   # REST adapter
    │       ├── xbrl_processor.py     # XBRL data processing
    │       └── ...
    ├── tests/
@@ -371,8 +374,7 @@ For development, you may need to set environment variables:
 
    # For testing with credentials (create .env file)
    export FFIEC_USERNAME="your_username"
-   export FFIEC_PASSWORD="your_password"
-   export FFIEC_TOKEN="your_token"  # For REST API
+   export FFIEC_BEARER_TOKEN="your_jwt_token"
 
    # Or use a .env file with python-dotenv
    pip install python-dotenv
@@ -387,7 +389,7 @@ Then in your code:
    load_dotenv()
 
    username = os.getenv('FFIEC_USERNAME')
-   password = os.getenv('FFIEC_PASSWORD')
+   bearer_token = os.getenv('FFIEC_BEARER_TOKEN')
 
 Troubleshooting Development Setup
 ==================================

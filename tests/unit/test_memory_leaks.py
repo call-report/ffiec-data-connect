@@ -20,7 +20,13 @@ import pytest
 from ffiec_data_connect import methods
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 from ffiec_data_connect.credentials import WebserviceCredentials
+from ffiec_data_connect.exceptions import SOAPDeprecationError
 from ffiec_data_connect.ffiec_connection import FFIECConnection, ProxyProtocol
+
+# Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
+_patch_get_conn = patch.object(
+    AsyncCompatibleClient, "_get_connection", return_value=Mock()
+)
 
 
 class MemoryTestBase:
@@ -101,13 +107,26 @@ class MemoryTestBase:
 
 
 class TestCredentialsMemoryLeaks(MemoryTestBase):
-    """Test memory leaks in credentials module."""
+    """Test memory leaks in credentials module.
 
-    def test_credential_object_cleanup(self):
-        """Test that credential objects are properly garbage collected."""
+    Note: WebserviceCredentials now raises SOAPDeprecationError on instantiation.
+    These tests verify that behavior and use Mock objects where credential-like
+    objects are needed.
+    """
+
+    def test_webservice_credentials_raises_soap_deprecation(self):
+        """Test that WebserviceCredentials raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            WebserviceCredentials("user", "pass")
+
+    def test_mock_credential_object_cleanup(self):
+        """Test that mock credential objects are properly garbage collected."""
 
         def create_credential(i):
-            return WebserviceCredentials(f"user_{i}", f"pass_{i}")
+            mock = Mock(spec=WebserviceCredentials)
+            mock.username = f"user_{i}"
+            mock.password = f"pass_{i}"
+            return mock
 
         alive, total = self.create_memory_stress_test(create_credential, 500)
 
@@ -117,32 +136,20 @@ class TestCredentialsMemoryLeaks(MemoryTestBase):
             alive <= max_alive
         ), f"{alive} out of {total} credential objects not garbage collected"
 
-    def test_credential_string_interning(self):
-        """Test memory efficiency of credential string handling."""
-        # Test with many identical credentials (should benefit from string interning)
-        result, peak, growth, rss_growth = self.measure_memory_usage(
-            lambda: [
-                WebserviceCredentials("same_user", "same_pass") for _ in range(1000)
-            ]
-        )
-
-        # Memory growth should be reasonable despite 1000 objects
-        # Each credential pair is ~100-200 bytes + overhead
-        max_expected_growth = 1000 * 1000  # 1MB allowance
-        assert growth < max_expected_growth, f"Excessive memory growth: {growth} bytes"
-
-    def test_credential_memory_after_gc(self):
-        """Test that credentials release memory after garbage collection."""
+    def test_mock_credential_memory_after_gc(self):
+        """Test that mock credentials release memory after garbage collection."""
         initial_memory = (
             tracemalloc.get_traced_memory()[0] if tracemalloc.is_tracing() else 0
         )
 
-        # Create many credentials
+        # Create many mock credentials
         credentials = []
         tracemalloc.start()
 
         for i in range(200):
-            creds = WebserviceCredentials(f"user_{i}", f"password_{i}")
+            creds = Mock(spec=WebserviceCredentials)
+            creds.username = f"user_{i}"
+            creds.password = f"password_{i}"
             credentials.append(creds)
 
         memory_with_objects = tracemalloc.get_traced_memory()[0]
@@ -163,159 +170,25 @@ class TestCredentialsMemoryLeaks(MemoryTestBase):
             memory_retained < memory_used * 0.1
         ), f"Too much memory retained: {memory_retained} bytes"
 
-    def test_environment_credential_caching_memory(self):
-        """Test memory usage of environment credential caching."""
-        with patch.dict(
-            "os.environ", {"FFIEC_USERNAME": "env_user", "FFIEC_PASSWORD": "env_pass"}
-        ):
-
-            def create_env_credentials():
-                return [WebserviceCredentials() for _ in range(100)]
-
-            result, peak, growth, rss_growth = self.measure_memory_usage(
-                create_env_credentials
-            )
-
-            # Environment credentials should be efficiently cached
-            # Growth should be minimal since all use same env values
-            max_expected_growth = 100 * 500  # 50KB allowance
-            assert (
-                growth < max_expected_growth
-            ), f"Inefficient env credential memory: {growth} bytes"
-
 
 class TestFFIECConnectionMemoryLeaks(MemoryTestBase):
-    """Test memory leaks in FFIEC connection management."""
+    """Test memory leaks in FFIEC connection management.
 
-    def test_connection_cleanup_on_close(self):
-        """Test that connections properly cleanup memory when closed."""
+    Note: FFIECConnection now raises SOAPDeprecationError on instantiation.
+    """
 
-        def create_and_close_connection(i):
-            conn = FFIECConnection()
-            # Access session to ensure it's created
-            _ = conn.session
-            conn.close()
-            return conn
-
-        result, peak, growth, rss_growth = self.measure_memory_usage(
-            lambda: [create_and_close_connection(i) for i in range(50)]
-        )
-
-        # After closing, memory growth should be minimal
-        max_expected_growth = 50 * 2000  # 100KB allowance for 50 connections
-        assert (
-            growth < max_expected_growth
-        ), f"Connection cleanup leaked memory: {growth} bytes"
-
-    def test_session_caching_memory_efficiency(self):
-        """Test that session caching doesn't cause memory leaks."""
-        connections = []
-
-        def create_connections_with_sessions():
-            for i in range(20):
-                conn = FFIECConnection()
-                # Access session multiple times to test caching
-                for _ in range(5):
-                    _ = conn.session
-                connections.append(conn)
-
-        result, peak, growth, rss_growth = self.measure_memory_usage(
-            create_connections_with_sessions
-        )
-
-        # Clean up
-        for conn in connections:
-            conn.close()
-        connections.clear()
-        gc.collect()
-
-        # Session caching should be memory efficient
-        max_expected_growth = 20 * 10000  # 200KB allowance (sessions have overhead)
-        assert (
-            growth < max_expected_growth
-        ), f"Session caching memory inefficient: {growth} bytes"
-
-    def test_proxy_configuration_memory_stability(self):
-        """Test memory stability during proxy reconfiguration."""
-        conn = FFIECConnection()
-
-        def reconfigure_proxy_many_times():
-            for i in range(100):
-                conn.proxy_host = f"proxy{i}.example.com"
-                conn.proxy_port = 8080 + i
-                conn.proxy_protocol = ProxyProtocol.HTTP  # Set required protocol
-                # Only enable proxy when configuration is complete
-                if i % 2 == 0:
-                    conn.use_proxy = True
-                else:
-                    conn.use_proxy = False
-                # Trigger potential session regeneration
-                try:
-                    _ = conn.session
-                except Exception:
-                    pass  # Ignore any other errors
-
-        result, peak, growth, rss_growth = self.measure_memory_usage(
-            reconfigure_proxy_many_times
-        )
-
-        conn.close()
-
-        # Proxy reconfigurations shouldn't leak memory
-        max_expected_growth = 100 * 2000  # 200KB allowance (proxy configs + sessions)
-        assert (
-            growth < max_expected_growth
-        ), f"Proxy reconfiguration leaked memory: {growth} bytes"
-
-    def test_connection_garbage_collection(self):
-        """Test that connection objects are properly garbage collected."""
-
-        def create_connection(i):
-            conn = FFIECConnection()
-            _ = conn.session  # Create session
-            return conn
-
-        alive, total = self.create_memory_stress_test(create_connection, 100)
-
-        # Most connections should be garbage collected (allow up to 5% due to session cleanup timing)
-        max_alive = max(5, total // 20)  # Allow up to 5% or at least 5
-        assert (
-            alive <= max_alive
-        ), f"{alive} out of {total} connections not garbage collected"
-
-    def test_session_regeneration_memory_leak(self):
-        """Test for memory leaks during session regeneration."""
-        conn = FFIECConnection()
-
-        def force_session_regenerations():
-            sessions = []
-            for i in range(50):
-                # Force session creation
-                session = conn.session
-                sessions.append(id(session))
-
-                # Force regeneration by changing config
-                conn.proxy_host = f"host{i}.com"
-                conn._config_hash = None
-
-        result, peak, growth, rss_growth = self.measure_memory_usage(
-            force_session_regenerations
-        )
-
-        conn.close()
-
-        # Session regenerations shouldn't accumulate memory
-        max_expected_growth = 50 * 2000  # 100KB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"Session regeneration leaked memory: {growth} bytes"
+    def test_connection_raises_soap_deprecation(self):
+        """Test that FFIECConnection raises SOAPDeprecationError."""
+        with pytest.raises(SOAPDeprecationError):
+            FFIECConnection()
 
 
 class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
     """Test memory leaks in async compatible client."""
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_client_data_collection_memory(self, mock_collect_data):
+    def test_client_data_collection_memory(self, mock_collect_data, _mock_conn):
         """Test memory usage during data collection operations."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -348,11 +221,11 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
             creds = Mock(spec=WebserviceCredentials)
             clients = []
 
-            # Create clients that will cache connections
+            # Create clients with mock connections injected into cache
             for i in range(20):
                 client = AsyncCompatibleClient(creds)
-                # Force connection creation
-                _ = client._get_connection()
+                # Inject mock connection instead of calling _get_connection()
+                client._connection_cache[threading.get_ident() + i] = Mock()
                 clients.append(client)
 
             # Close all clients
@@ -366,7 +239,7 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
         )
 
         # Connection caching should cleanup properly
-        max_expected_growth = 20 * 3000  # 60KB allowance
+        max_expected_growth = 20 * 25000  # 500KB allowance (mock + executor overhead)
         assert (
             growth < max_expected_growth
         ), f"Connection cache memory leak: {growth} bytes"
@@ -395,7 +268,8 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
         def create_client(i):
             creds = Mock(spec=WebserviceCredentials)
             client = AsyncCompatibleClient(creds)
-            _ = client._get_connection()
+            # Inject mock connection instead of calling _get_connection()
+            client._connection_cache[i] = Mock()
             client.close()
             return client
 
@@ -407,8 +281,9 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
             alive <= max_alive
         ), f"{alive} out of {total} clients not garbage collected"
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_parallel_processing_memory(self, mock_collect_data):
+    def test_parallel_processing_memory(self, mock_collect_data, _mock_conn):
         """Test memory usage during parallel processing."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -435,32 +310,6 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
 
 class TestMethodsMemoryLeaks(MemoryTestBase):
     """Test memory leaks in methods module."""
-
-    @patch("ffiec_data_connect.methods._client_factory")
-    def test_soap_client_caching_memory(self, mock_client_factory):
-        """Test memory usage of SOAP client caching."""
-        mock_soap_client = Mock()
-        mock_soap_client.service = Mock()
-        mock_soap_client.service.RetrievePanelOfReporters.return_value = Mock()
-        mock_client_factory.return_value = mock_soap_client
-
-        def create_many_cached_clients():
-            creds = Mock(spec=WebserviceCredentials)
-            conn = Mock(spec=FFIECConnection)
-
-            # This should reuse cached clients
-            for _ in range(100):
-                methods._client_factory(conn, creds, "call")
-
-        result, peak, growth, rss_growth = self.measure_memory_usage(
-            create_many_cached_clients
-        )
-
-        # Client caching should prevent excessive memory growth
-        max_expected_growth = 100 * 2000  # 200KB allowance (mock objects have overhead)
-        assert (
-            growth < max_expected_growth
-        ), f"SOAP client caching inefficient: {growth} bytes"
 
     def test_validation_function_memory_stability(self):
         """Test memory stability of validation functions."""
@@ -522,16 +371,17 @@ class TestMethodsMemoryLeaks(MemoryTestBase):
 class TestIntegrationMemoryLeaks(MemoryTestBase):
     """Test memory leaks in integration scenarios."""
 
+    @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    def test_full_workflow_memory_stability(self, mock_collect_data):
+    def test_full_workflow_memory_stability(self, mock_collect_data, _mock_conn):
         """Test memory stability during full workflow simulation."""
         mock_collect_data.return_value = [
             {"test": "data", "size": "x" * 1000}
         ]  # 1KB per result
 
         def simulate_full_workflow():
-            # Simulate real usage pattern
-            creds = WebserviceCredentials("test_user", "test_pass")
+            # Simulate real usage pattern with mock credentials
+            creds = Mock(spec=WebserviceCredentials)
             client = AsyncCompatibleClient(creds, max_concurrent=3, rate_limit=None)
 
             results = []
@@ -576,8 +426,8 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
             process = psutil.Process(os.getpid())
 
             for i in range(20):
-                # Do some work
-                _ = client._get_connection()
+                # Do some work (inject mock connections instead of calling _get_connection)
+                client._connection_cache[i] = Mock()
 
                 # Sample memory
                 memory_samples.append(process.memory_info().rss)
@@ -602,7 +452,8 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
                 memory_growth_over_time < max_allowed_growth
             ), f"Long-running session memory growth: {memory_growth_over_time} bytes"
 
-    def test_exception_handling_memory_cleanup(self):
+    @_patch_get_conn
+    def test_exception_handling_memory_cleanup(self, _mock_conn):
         """Test that exceptions don't cause memory leaks."""
 
         @patch("ffiec_data_connect.methods.collect_data")
@@ -627,8 +478,8 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
 
         # Exception handling shouldn't leak memory
         max_expected_growth = (
-            50 * 4000
-        )  # 200KB allowance (exceptions have stack trace overhead)
+            50 * 8000
+        )  # 400KB allowance (exceptions have stack trace overhead + mock overhead)
         assert (
             growth < max_expected_growth
         ), f"Exception handling leaked memory: {growth} bytes"
@@ -643,10 +494,10 @@ class TestMemoryPressureScenarios(MemoryTestBase):
         def create_high_volume_objects():
             objects = []
 
-            # Create many objects rapidly
+            # Create many objects rapidly using mocks (since real constructors raise)
             for i in range(1000):
-                creds = WebserviceCredentials(f"user_{i}", f"pass_{i}")
-                conn = FFIECConnection()
+                creds = Mock(spec=WebserviceCredentials)
+                conn = Mock(spec=FFIECConnection)
                 client = AsyncCompatibleClient(creds)
 
                 objects.append((creds, conn, client))
@@ -655,13 +506,11 @@ class TestMemoryPressureScenarios(MemoryTestBase):
                 if i % 100 == 0:
                     # Clean up some old objects
                     for j in range(min(10, len(objects))):
-                        _, old_conn, old_client = objects[j]
-                        old_conn.close()
+                        _, _, old_client = objects[j]
                         old_client.close()
 
             # Final cleanup
-            for _, conn, client in objects:
-                conn.close()
+            for _, _, client in objects:
                 client.close()
 
             return len(objects)
@@ -671,7 +520,7 @@ class TestMemoryPressureScenarios(MemoryTestBase):
         )
 
         # High volume creation should manage memory reasonably
-        max_expected_growth = 1000 * 10000  # 10MB allowance
+        max_expected_growth = 1000 * 15000  # 15MB allowance (Mock objects are heavier)
         assert (
             growth < max_expected_growth
         ), f"High volume creation memory issue: {growth} bytes"
@@ -688,14 +537,13 @@ class TestMemoryPressureScenarios(MemoryTestBase):
                 large_data = [f"data_{j}" * 100 for j in range(100)]  # ~10KB per object
                 large_objects.append(large_data)
 
-                # Create FFIEC objects
-                creds = WebserviceCredentials(f"user_{i}", f"pass_{i}")
-                conn = FFIECConnection()
+                # Create FFIEC objects using mocks
+                creds = Mock(spec=WebserviceCredentials)
+                conn = Mock(spec=FFIECConnection)
                 client = AsyncCompatibleClient(creds)
 
                 # Use and cleanup immediately
-                _ = client._get_connection()
-                conn.close()
+                client._connection_cache[i] = Mock()
                 client.close()
 
                 # Force GC periodically

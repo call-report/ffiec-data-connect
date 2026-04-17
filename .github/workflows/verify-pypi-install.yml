@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
       fail-fast: false
 
     steps:
@@ -76,7 +76,7 @@ jobs:
           # Install package from Test PyPI only, then dependencies from Production PyPI
           pip install --no-cache-dir --pre --no-deps --index-url https://test.pypi.org/simple/ ffiec-data-connect==$VERSION
           echo "📦 Installing dependencies from Production PyPI..."
-          pip install --no-cache-dir pandas numpy requests zeep lxml openpyxl defusedxml httpx pydantic xmltodict
+          pip install --no-cache-dir pandas numpy lxml defusedxml httpx pydantic xmltodict
         else
           echo "📦 Installing from Production PyPI..."
           pip install --no-cache-dir --pre ffiec-data-connect==$VERSION
@@ -112,17 +112,21 @@ jobs:
         python -c "
         # Test all major imports
         try:
-            from ffiec_data_connect import WebserviceCredentials, FFIECConnection
+            from ffiec_data_connect import OAuth2Credentials, collect_data, collect_reporting_periods
             print('✅ Core classes imported successfully')
 
             from ffiec_data_connect import AsyncCompatibleClient, RateLimiter
             print('✅ Async classes imported successfully')
 
+            # Verify deprecated stubs are still importable (backward compat)
+            from ffiec_data_connect import WebserviceCredentials, FFIECConnection
+            print('✅ Deprecated stubs importable (backward compat)')
+
             # Test main functions are available
             import ffiec_data_connect as fdc
             functions = [name for name in dir(fdc) if not name.startswith('_')]
             expected_functions = [
-                'WebserviceCredentials', 'FFIECConnection', 'AsyncCompatibleClient',
+                'OAuth2Credentials', 'AsyncCompatibleClient',
                 'collect_data', 'collect_reporting_periods', 'collect_ubpr_reporting_periods'
             ]
 
@@ -147,15 +151,23 @@ jobs:
       run: |
         echo "::group::Basic functionality tests"
         python -c "
-        from ffiec_data_connect import WebserviceCredentials
+        import warnings
+        from ffiec_data_connect import OAuth2Credentials, SOAPDeprecationError, WebserviceCredentials
 
-        # Test credential creation (should not fail for basic validation)
+        # Test OAuth2 credential creation with a test JWT
+        test_jwt = 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ.'
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            creds = OAuth2Credentials(username='test_user', bearer_token=test_jwt)
+        print(f'✅ OAuth2Credentials creation successful (expires: {creds.token_expires})')
+
+        # Verify SOAP classes raise SOAPDeprecationError
         try:
-            creds = WebserviceCredentials('test_user', 'test_pass')
-            print('✅ Credentials object creation successful')
-        except Exception as e:
-            print(f'❌ Credentials creation failed: {e}')
+            WebserviceCredentials('test_user', 'test_pass')
+            print('❌ WebserviceCredentials should have raised SOAPDeprecationError')
             sys.exit(1)
+        except SOAPDeprecationError:
+            print('✅ WebserviceCredentials correctly raises SOAPDeprecationError')
 
         # Test that modules can be inspected
         import ffiec_data_connect as fdc
@@ -174,16 +186,16 @@ jobs:
       run: |
         echo "::group::Dependency verification"
         # Show what got installed
-        pip list | grep -E "(ffiec|pandas|numpy|requests|zeep|lxml)"
+        pip list | grep -E "(ffiec|pandas|numpy|httpx|lxml|pydantic)"
 
         # Verify key dependencies are available
         python -c "
         try:
             import pandas
             import numpy
-            import requests
-            import zeep
+            import httpx
             import lxml
+            import pydantic
             print('✅ All key dependencies importable')
         except ImportError as e:
             print(f'❌ Missing dependency: {e}')
@@ -210,7 +222,7 @@ jobs:
         if [[ "${{ needs.verify-install.result }}" == "success" ]]; then
           echo "✅ **Installation Verification**: PASSED" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Package successfully installed and verified across all Python versions (3.10-3.13):" >> $GITHUB_STEP_SUMMARY
+          echo "Package successfully installed and verified across all Python versions (3.11-3.14):" >> $GITHUB_STEP_SUMMARY
           echo "- Version verification ✅" >> $GITHUB_STEP_SUMMARY
           echo "- Core imports ✅" >> $GITHUB_STEP_SUMMARY
           echo "- Basic functionality ✅" >> $GITHUB_STEP_SUMMARY

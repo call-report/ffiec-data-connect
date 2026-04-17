@@ -2,14 +2,29 @@
 .vscode/
 .idea/
 
+# AI assistants / developer tooling (per-user state — never commit)
+.claude/
+.cursor/
+.continue/
+.aider*
+
+# Virtual environments
+.venv/
+venv/
+env/
+
 # Python bytecode and cache
 *.pyc
 *__pycache__*
 .mypy_cache/
 .ruff_cache/
 
+# uv lockfile — libraries should not ship lockfiles (applications do)
+uv.lock
+
 # OS files
 .DS_Store
+Thumbs.db
 
 # Testing and coverage
 .pytest_cache/
@@ -33,11 +48,11 @@ ffiec_data_*.json
 ffiec_data_*.png
 rest_api_response_data.json
 
-# Debug and test scripts with potential credentials
-test_*.py
-collect_*.py
-*_debug.py
-*_test.py
+# Debug and test scripts with potential credentials (root only, not tests/)
+/test_*.py
+/collect_*.py
+/*_debug.py
+/*_test.py
 
 # Internal documentation - prevent accidental commit
 *_IMPLEMENTATION_*.md
@@ -45,6 +60,9 @@ collect_*.py
 *_RELEASE_*.md
 *_MAPPING.md
 *_FIXES.md
+
+# Claude Code
+CLAUDE.md
 
 # Temporary files
 *.tmp

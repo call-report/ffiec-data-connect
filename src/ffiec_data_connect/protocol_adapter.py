@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """
 FFIEC Protocol Adapter - Phase 1 Implementation
 
@@ -19,7 +22,6 @@ Version: Phase 1 - Protocol Abstraction
 import logging
 import threading
 import time
-import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
@@ -27,12 +29,6 @@ import httpx
 
 # Import Pydantic models for response validation
 from pydantic import ValidationError as PydanticValidationError
-
-# Keep requests import for SOAP adapter backward compatibility
-try:
-    import requests
-except ImportError:
-    requests = None  # type: ignore
 
 from .credentials import OAuth2Credentials, WebserviceCredentials
 from .data_normalizer import DataNormalizer
@@ -42,6 +38,7 @@ from .exceptions import (
     FFIECError,
     NoDataError,
     RateLimitError,
+    SOAPDeprecationError,
     ValidationError,
 )
 from .models import (
@@ -249,7 +246,7 @@ class RESTAdapter(ProtocolAdapter):
             Various FFIEC exceptions based on response status
         """
         # Apply rate limiting
-        if self.rate_limiter:
+        if self.rate_limiter:  # pragma: no branch — always initialized in __init__
             self.rate_limiter.wait_if_needed()
 
         # Check token expiration
@@ -509,7 +506,7 @@ class RESTAdapter(ProtocolAdapter):
                 }
             )
 
-            if self.rate_limiter:
+            if self.rate_limiter:  # pragma: no branch
                 self.rate_limiter.wait_if_needed()
 
             url = f"{self.BASE_URL}/RetrieveFacsimile"
@@ -563,12 +560,12 @@ class RESTAdapter(ProtocolAdapter):
                 raise ConnectionError(
                     "RetrieveFacsimile endpoint returned server error. "
                     "This REST endpoint may not be implemented yet. "
-                    "Consider using SOAP API for individual bank data retrieval."
+                    "This endpoint may not be fully available yet."
                 )
             else:
                 self._handle_response(response, "RetrieveFacsimile")
-                # If we get here, raise an error as we didn't get expected data
-                raise ConnectionError(
+                # _handle_response always raises for non-200
+                raise ConnectionError(  # pragma: no cover
                     f"Unexpected response status {response.status_code} for RetrieveFacsimile"
                 )
 
@@ -785,7 +782,7 @@ class RESTAdapter(ProtocolAdapter):
                 }
             )
 
-            if self.rate_limiter:
+            if self.rate_limiter:  # pragma: no branch
                 self.rate_limiter.wait_if_needed()
 
             url = f"{self.BASE_URL}/RetrieveUBPRXBRLFacsimile"
@@ -833,8 +830,8 @@ class RESTAdapter(ProtocolAdapter):
                 )
             else:
                 self._handle_response(response, "RetrieveUBPRXBRLFacsimile")
-                # If we get here, raise an error as we didn't get expected data
-                raise ConnectionError(
+                # _handle_response always raises for non-200
+                raise ConnectionError(  # pragma: no cover
                     f"Unexpected response status {response.status_code} for RetrieveUBPRXBRLFacsimile"
                 )
 
@@ -852,154 +849,20 @@ class RESTAdapter(ProtocolAdapter):
         return True
 
 
-class SOAPAdapter(ProtocolAdapter):
-    """
-    SOAP API adapter wrapping existing functionality.
+class SOAPAdapter:
+    """Deprecated stub. The FFIEC SOAP API was shut down on February 28, 2026."""
 
-    This adapter provides a consistent interface to the existing SOAP-based
-    functionality, allowing for transparent protocol selection.
-    """
-
-    def __init__(
-        self,
-        credentials: WebserviceCredentials,
-        session: Optional["requests.Session"] = None,
-    ):
-        """
-        Initialize SOAP API adapter.
-
-        Args:
-            credentials: WebserviceCredentials for SOAP authentication
-            session: Optional requests session
-        """
-        if not isinstance(credentials, WebserviceCredentials):
-            raise CredentialError(
-                "SOAPAdapter requires WebserviceCredentials. "
-                "For REST API, use RESTAdapter with OAuth2Credentials."
-            )
-
-        self.credentials = credentials
-        self.session = session
-
-        # Issue deprecation warning
-        warnings.warn(
-            "SOAP API is deprecated and will be removed in v3.0.0. "
-            "For better performance and reliability, migrate to REST API using OAuth2Credentials. "
-            "See documentation for migration guide.",
-            DeprecationWarning,
-            stacklevel=3,
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        raise SOAPDeprecationError(
+            soap_method="SOAPAdapter",
+            rest_equivalent="RESTAdapter(OAuth2Credentials(...))",
+            code_example=(
+                "  from ffiec_data_connect import OAuth2Credentials, create_protocol_adapter\n"
+                "\n"
+                '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+                "  adapter = create_protocol_adapter(creds)"
+            ),
         )
-
-    def retrieve_reporting_periods(self, series: str) -> List[str]:
-        """Retrieve reporting periods via SOAP (delegates to existing implementation)."""
-        # Import here to avoid circular imports
-        from . import methods
-
-        # Use existing implementation
-        result = methods.collect_reporting_periods(
-            self.session,
-            self.credentials,
-            series=series,
-            date_output_format="string_original",
-        )
-        # Ensure we return List[str] as expected by the interface
-        # Since we use date_output_format="string_original", result should be List[str]
-        if isinstance(result, list):
-            # Runtime assertion to ensure type safety - should always be strings
-            assert all(
-                isinstance(x, str) for x in result
-            ), f"Expected all string values, got types: {[type(x).__name__ for x in result]}"
-            return result  # type: ignore[return-value]
-        else:
-            # Convert pandas Series to list and ensure all are strings
-            result_list = result.tolist()
-            assert all(
-                isinstance(x, str) for x in result_list
-            ), f"Expected all string values, got types: {[type(x).__name__ for x in result_list]}"
-            return result_list  # type: ignore[return-value]
-
-    def retrieve_facsimile(
-        self, rssd_id: Union[str, int], reporting_period: str, series: str
-    ) -> bytes:
-        """Retrieve facsimile data via SOAP (delegates to existing implementation)."""
-        from . import methods
-
-        # Use existing implementation
-        return methods.collect_data(  # type: ignore[no-any-return]
-            self.session,
-            self.credentials,
-            reporting_period,
-            str(rssd_id),
-            series=series,
-        )
-
-    def retrieve_panel_of_reporters(
-        self, reporting_period: str
-    ) -> List[Dict[str, Any]]:
-        """Retrieve panel of reporters via SOAP (delegates to existing implementation)."""
-        from . import methods
-
-        # Use existing implementation
-        return methods.collect_filers_on_reporting_period(
-            self.session, self.credentials, reporting_period
-        )
-
-    def retrieve_filers_since_date(
-        self, reporting_period: str, since_date: str
-    ) -> List[str]:
-        """Retrieve filers since date via SOAP (delegates to existing implementation)."""
-        from . import methods
-
-        # Use existing implementation
-        return methods.collect_filers_since_date(
-            self.session, self.credentials, reporting_period, since_date
-        )
-
-    def retrieve_filers_submission_datetime(
-        self, reporting_period: str, since_date: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """Retrieve filer submission info via SOAP (delegates to existing implementation)."""
-        from . import methods
-
-        # Use existing implementation - note SOAP method expects since_date before reporting_period
-        return methods.collect_filers_submission_date_time(
-            self.session,
-            self.credentials,
-            since_date or reporting_period,
-            reporting_period,
-        )
-
-    def retrieve_ubpr_reporting_periods(self) -> List[str]:
-        """Retrieve UBPR reporting periods via SOAP (delegates to existing implementation)."""
-        from . import methods
-
-        # Use existing SOAP implementation
-        return methods.collect_ubpr_reporting_periods(self.session, self.credentials)
-
-    def retrieve_ubpr_xbrl_facsimile(
-        self, rssd_id: Union[str, int], reporting_period: str
-    ) -> bytes:
-        """Retrieve UBPR XBRL facsimile via SOAP (delegates to existing implementation)."""
-        # Use existing SOAP implementation
-        # Note: SOAP methods return processed data, not raw bytes like REST
-        # This cast maintains interface compatibility
-        from typing import cast
-
-        from . import methods
-
-        result = methods.collect_ubpr_facsimile_data(
-            self.session, self.credentials, str(rssd_id), reporting_period
-        )
-        return cast(bytes, result)
-
-    @property
-    def protocol_name(self) -> str:
-        """Return the protocol name."""
-        return "SOAP"
-
-    def is_rest(self) -> bool:
-        """Return False since this is a SOAP adapter."""
-        return False
 
 
 class RateLimiter:
@@ -1051,7 +914,12 @@ class RateLimiter:
                 oldest_call = self.call_history[0]
                 wait_time = oldest_call + 3600 - now
 
-                if wait_time > 0:
+                # The False branch here is unreachable in practice: the filter above keeps only
+                # timestamps strictly greater than `hour_ago = now - 3600`, so the surviving
+                # oldest_call must satisfy `oldest_call > now - 3600`, which forces
+                # `wait_time = oldest_call + 3600 - now > 0`. The `if` remains as defense against
+                # future refactors that might relax the filter's strict inequality.
+                if wait_time > 0:  # pragma: no branch
                     logger.warning(
                         f"Hourly rate limit reached. Waiting {wait_time:.1f} seconds"
                     )
@@ -1094,42 +962,44 @@ class RateLimiter:
 
 def create_protocol_adapter(
     credentials: Union[WebserviceCredentials, OAuth2Credentials],
-    session: Union[Optional["requests.Session"], Optional["httpx.Client"]] = None,
+    session: Optional[Any] = None,
 ) -> ProtocolAdapter:
     """
     Factory function to create appropriate protocol adapter based on credential type.
 
-    This is the main entry point for automatic protocol selection. Based on the
-    credential type provided, it returns either a SOAP or REST adapter.
-
     Args:
-        credentials: Either WebserviceCredentials (SOAP) or OAuth2Credentials (REST)
-        session: Optional requests session
+        credentials: OAuth2Credentials for REST API access
+        session: Optional session (ignored for REST, pass None)
 
     Returns:
-        Appropriate protocol adapter
+        RESTAdapter instance
 
     Raises:
+        SOAPDeprecationError: If WebserviceCredentials are provided
         CredentialError: If credential type is not supported
     """
     if isinstance(credentials, OAuth2Credentials):
         logger.info("Creating REST adapter for OAuth2 credentials")
-        # REST adapter expects httpx.Client, not requests.Session
         from typing import cast
 
         client_session = cast(Optional["httpx.Client"], session)
         return RESTAdapter(credentials, session=client_session)
 
     elif isinstance(credentials, WebserviceCredentials):
-        logger.info("Creating SOAP adapter for WebserviceCredentials")
-        # SOAP adapter expects requests.Session
-        from typing import cast
-
-        soap_session = cast(Optional["requests.Session"], session)
-        return SOAPAdapter(credentials, session=soap_session)
+        raise SOAPDeprecationError(
+            soap_method="create_protocol_adapter (SOAP)",
+            rest_equivalent="create_protocol_adapter(OAuth2Credentials(...))",
+            code_example=(
+                "  from ffiec_data_connect import OAuth2Credentials\n"
+                "  from ffiec_data_connect.protocol_adapter import create_protocol_adapter\n"
+                "\n"
+                '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+                "  adapter = create_protocol_adapter(creds)"
+            ),
+        )
 
     else:
         raise CredentialError(
             f"Unsupported credential type: {type(credentials)}. "
-            "Use WebserviceCredentials for SOAP or OAuth2Credentials for REST."
+            "Use OAuth2Credentials for REST API access."
         )

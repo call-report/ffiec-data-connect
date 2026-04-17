@@ -1,54 +1,45 @@
 Examples & Interactive Tutorials
 ==================================
 
-Interactive Jupyter Notebook Demos
+Interactive Jupyter Notebook Demo
 -----------------------------------
 
-📓 **Comprehensive Tutorial Notebooks**
+**Comprehensive Tutorial Notebook**
 
-The library includes two detailed Jupyter notebook tutorials with executable examples and real data:
+The library includes a detailed Jupyter notebook tutorial with executable examples and real data:
 
-🚀 **REST API Demo** (``ffiec_data_connect_rest_demo.ipynb``)
-    Complete walkthrough of the modern REST API including:
-    
+**REST API Demo** (``ffiec_data_connect_rest_demo.ipynb``)
+    Complete walkthrough of the REST API including:
+
     * OAuth2 credential setup and JWT token management
-    * Authentication troubleshooting and token validation  
+    * Authentication troubleshooting and token validation
     * All 7 REST API endpoints with real banking data examples
     * Performance optimization and rate limiting strategies
     * Advanced features: batch operations, error handling
-    * Migration from SOAP to REST API
 
-🔧 **SOAP API Demo** (``ffiec_data_connect_soap_demo.ipynb``)
-    Legacy SOAP API implementation covering:
-    
-    * WebserviceCredentials setup and session management
-    * Connection handling and error recovery
-    * Historical data collection examples
-    * Comparison with REST API functionality
-    * Step-by-step migration guidance
-
-💡 **Getting Started with Notebooks**
+**Getting Started with the Notebook**
     1. Install the library: ``pip install ffiec-data-connect``
-    2. Open the notebooks in your preferred environment (Jupyter Lab, VS Code, Colab)
+    2. Open the notebook in your preferred environment (Jupyter Lab, VS Code, Colab)
     3. Follow the step-by-step instructions with executable code cells
     4. Experiment with your own credentials and data queries
 
 Code Examples
 =============
 
-Loading credentials and starting a connection to the FFIEC Webservice
+Loading credentials
 ---------------------------------------------------------------------
-When using the package, credentials to the Webservice may be loaded from environment variables, or through the instantiation of the `WebserviceCredentials` class.
+When using the package, credentials may be loaded from environment variables, or through the instantiation of the `OAuth2Credentials` class.
 
+The following example shows how to load credentials from instantiation (note that the username and bearer token included are placeholders)::
 
-The following example shows how to load credentials from instantiation (note that the username and password included are placeholders)::
+    from ffiec_data_connect import OAuth2Credentials
 
-    from ffiec_data_connect import credentials, ffiec_connection
-
-
-    creds = credentials.WebserviceCredentials(username="user1234", password="password1234")
-
-    conn = ffiec_connection.FFIECConnection()
+    # token_expires is auto-detected from the JWT token payload.
+    # You only need to supply username and bearer_token.
+    creds = OAuth2Credentials(
+        username="user1234",
+        bearer_token="eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJBY2Nlc3MgVG9rZW4ifQ."
+    )
 
 Collecting the reporting periods
 ================================
@@ -59,13 +50,12 @@ These reporting periods may be utilized for subsequent queries to the FFIEC Webs
 
 Output is returned as a list of dates in the format of mm/dd/YYYY, which is the "native" format of the FFIEC Webservice.
 
-This code example assumes that a `FFIECConnection` object named ``conn`` and `WebserviceCredentials` object named ``creds`` has been instantiated. (See previous example) ::
+This code example assumes that an `OAuth2Credentials` object named ``creds`` has been instantiated. (See previous example) ::
 
         from ffiec_data_connect import methods
 
         reporting_periods = methods.collect_reporting_periods(
-            session=conn,
-            creds=creds,
+            creds,
             output_type="list",
             date_output_format="string_original"
         )
@@ -87,13 +77,12 @@ Collect the list of filers for a particular reporting period
 
     `A data dictionary for the output is provided below the output`
 
-    This code example assumes that a `FFIECConnection` object named ``conn`` and `WebserviceCredentials` object named ``creds`` has been instantiated. (See previous example) ::
+    This code example assumes that an `OAuth2Credentials` object named ``creds`` has been instantiated. (See previous example) ::
 
         from ffiec_data_connect import methods
 
         filers = methods.collect_filers_on_reporting_period(
-            session=conn,
-            creds=creds,
+            creds,
             reporting_period="6/30/2022",
             output_type="list"
         )
@@ -177,13 +166,12 @@ Collect the rssd IDs and submission datetimes of all filers who have filed for a
     Filers may also re-submit their filings for the reporting period, so this method may also be useful for determining which and how many filers have re-submitted.
 
 
-    This code example assumes that a `FFIECConnection` object named ``conn`` and `WebserviceCredentials` object named ``creds`` has been instantiated. (See previous example) ::
+    This code example assumes that an `OAuth2Credentials` object named ``creds`` has been instantiated. (See previous example) ::
 
         from ffiec_data_connect import methods
 
         last_filing_date_time = methods.collect_filers_submission_date_time(
-            session=conn,
-            creds=creds,
+            creds,
             since_date="6/30/2022",
             reporting_period="6/30/2022",
         )
@@ -210,13 +198,12 @@ Collect the list of rssd(s) that have filed in a reporting period since a partic
 
     The difference between this example and the prior example is that this example only returns a list of RSSDs, not a list of RSSDs and the RSSD's last filing date and time.
 
-    This code example assumes that a `FFIECConnection` object named ``conn`` and `WebserviceCredentials` object named ``creds`` has been instantiated. (See previous example) ::
+    This code example assumes that an `OAuth2Credentials` object named ``creds`` has been instantiated. (See previous example) ::
 
         from ffiec_data_connect import methods
 
         inst_list = methods.collect_filers_since_date(
-            session=conn,
-            creds=creds,
+            creds,
             since_date="6/30/2022",
             reporting_period="6/30/2022",
         )
@@ -226,45 +213,16 @@ Collect the list of rssd(s) that have filed in a reporting period since a partic
         >> [688556, 175458, 92144, 750444, 715630]
 
 
-REST API Examples
-=================
+Collecting data with force_null_types
+======================================
 
-The package also supports the modern REST API using OAuth2 credentials. Here are examples using the REST API:
-
-**Loading OAuth2 credentials and connecting**::
-
-    from ffiec_data_connect import OAuth2Credentials
-    from datetime import datetime, timedelta
-
-    # Create OAuth2 credentials for REST API
-    rest_creds = OAuth2Credentials(
-        username="your_username",
-        bearer_token="your_bearer_token",
-        token_expires=datetime.now() + timedelta(days=90)
-    )
-
-    # No connection object needed for REST - pass None as session
-
-**Collecting reporting periods via REST**::
+.. code-block:: python
 
     from ffiec_data_connect import methods
 
-    reporting_periods = methods.collect_reporting_periods(
-        session=None,  # None for REST API
-        creds=rest_creds,
-        output_type="list",
-        date_output_format="string_original"
-    )
-
-    print(reporting_periods[0:5])
-    >> ['2024-09-30', '2024-06-30', '2024-03-31', '2023-12-31', '2023-09-30']
-
-**Collecting data via REST with force_null_types**::
-
     # Collect data with pandas null handling (better for integer display)
     time_series = methods.collect_data(
-        session=None,
-        creds=rest_creds,
+        creds,
         rssd_id="37",
         reporting_period="2024-06-30",
         series="call",
@@ -273,20 +231,12 @@ The package also supports the modern REST API using OAuth2 credentials. Here are
 
     # Or force numpy nulls for compatibility
     time_series_compat = methods.collect_data(
-        session=None,
-        creds=rest_creds,
+        creds,
         rssd_id="37",
         reporting_period="2024-06-30",
         series="call",
         force_null_types="numpy"  # Use np.nan for nulls
     )
-
-**REST API Advantages**:
-
-* Better performance and reliability
-* Modern authentication with OAuth2
-* Automatic retry logic built-in
-* No session management required
 
 
 Collect the time series data associated with a particular rssd and reporting period.
@@ -298,13 +248,12 @@ Collect the time series data associated with a particular rssd and reporting per
 
     (For more information on these reports and data, visit https://call.report)
 
-    This code example assumes that a `FFIECConnection` object named ``conn`` and `WebserviceCredentials` object named ``creds`` has been instantiated. (See previous example) ::
+    This code example assumes that an `OAuth2Credentials` object named ``creds`` has been instantiated. (See previous example) ::
 
         from ffiec_data_connect import methods
 
         time_series = methods.collect_data(
-            session=conn,
-            creds=creds,
+            creds,
             rssd_id="37",
             reporting_period="6/30/2022",
             series="call"

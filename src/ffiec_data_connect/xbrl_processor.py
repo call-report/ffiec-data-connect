@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Internal functions used to process XBRL data received from the FFIEC Webservice
 
 This module provides secure XML/XBRL processing with XXE attack prevention.
@@ -20,7 +23,7 @@ try:
     import xmltodict
 
     SECURE_XML = True
-except ImportError:
+except ImportError:  # pragma: no cover
     # Fallback to standard library with warning
     import warnings
 
@@ -116,7 +119,9 @@ def _process_xml(
             )
 
             for row in items_to_process:
-                if row:  # Skip None/empty rows
+                if (
+                    row
+                ):  # Skip None/empty rows — defensive; _process_xbrl_item never returns falsy entries  # pragma: no branch
                     data_type = row.get("data_type")
                     value = row.get("value")
 

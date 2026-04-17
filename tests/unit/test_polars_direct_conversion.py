@@ -12,9 +12,12 @@ import polars as pl
 import pytest
 
 from ffiec_data_connect import methods
-from ffiec_data_connect.credentials import WebserviceCredentials
+from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.exceptions import ValidationError
 from ffiec_data_connect.ffiec_connection import FFIECConnection
+
+# Sample XBRL bytes returned by the mock adapter
+SAMPLE_XBRL_BYTES = b"<xml>test</xml>"
 
 
 class TestPolarsDirectConversion:
@@ -31,17 +34,17 @@ class TestPolarsDirectConversion:
 
     def test_polars_unavailable_error(self):
         """Test proper error when polars is not available."""
-        mock_creds = Mock(spec=WebserviceCredentials)
+        mock_creds = Mock(spec=OAuth2Credentials)
         mock_session = Mock(spec=FFIECConnection)
 
         # Mock polars as unavailable
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", False):
             with patch(
-                "ffiec_data_connect.methods._return_client_session"
-            ) as mock_client:
-                mock_client.return_value.service.RetrieveFacsimile.return_value = (
-                    b"<xml>test</xml>"
-                )
+                "ffiec_data_connect.protocol_adapter.create_protocol_adapter"
+            ) as mock_create:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = SAMPLE_XBRL_BYTES
+                mock_create.return_value = mock_adapter
 
                 with patch(
                     "ffiec_data_connect.methods.xbrl_processor._process_xml"
@@ -50,8 +53,7 @@ class TestPolarsDirectConversion:
 
                     with pytest.raises(ValueError) as exc_info:
                         methods.collect_data(
-                            session=mock_session,
-                            creds=mock_creds,
+                            mock_creds,
                             reporting_period="2023-12-31",
                             rssd_id="480228",
                             series="call",
@@ -106,16 +108,16 @@ class TestPolarsDirectConversion:
             },
         ]
 
-        mock_creds = Mock(spec=WebserviceCredentials)
+        mock_creds = Mock(spec=OAuth2Credentials)
         mock_session = Mock(spec=FFIECConnection)
 
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", True):
             with patch(
-                "ffiec_data_connect.methods._return_client_session"
-            ) as mock_client:
-                mock_client.return_value.service.RetrieveFacsimile.return_value = (
-                    b"<xml>test</xml>"
-                )
+                "ffiec_data_connect.protocol_adapter.create_protocol_adapter"
+            ) as mock_create:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = SAMPLE_XBRL_BYTES
+                mock_create.return_value = mock_adapter
 
                 with patch(
                     "ffiec_data_connect.methods.xbrl_processor._process_xml"
@@ -124,8 +126,7 @@ class TestPolarsDirectConversion:
 
                     # Get direct polars conversion
                     df_polars = methods.collect_data(
-                        session=mock_session,
-                        creds=mock_creds,
+                        mock_creds,
                         reporting_period="2023-12-31",
                         rssd_id="480228",
                         series="call",
@@ -153,10 +154,14 @@ class TestPolarsDirectConversion:
 
                     # Verify actual values are correct and properly typed
                     int_row = df_polars.filter(pl.col("data_type") == "int").row(0)
-                    assert int_row[5] == 1500000  # int_data column (index 5 after adding id_rssd)
+                    assert (
+                        int_row[5] == 1500000
+                    )  # int_data column (index 5 after adding id_rssd)
 
                     float_row = df_polars.filter(pl.col("data_type") == "float").row(0)
-                    assert abs(float_row[6] - 1.25) < 0.001  # float_data column (index 6)
+                    assert (
+                        abs(float_row[6] - 1.25) < 0.001
+                    )  # float_data column (index 6)
 
                     bool_row = df_polars.filter(pl.col("data_type") == "bool").row(0)
                     assert bool_row[7] is True  # bool_data column (index 7)
@@ -166,16 +171,16 @@ class TestPolarsDirectConversion:
 
     def test_empty_data_returns_correct_schema(self):
         """Test that empty data returns polars DataFrame with correct schema."""
-        mock_creds = Mock(spec=WebserviceCredentials)
+        mock_creds = Mock(spec=OAuth2Credentials)
         mock_session = Mock(spec=FFIECConnection)
 
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", True):
             with patch(
-                "ffiec_data_connect.methods._return_client_session"
-            ) as mock_client:
-                mock_client.return_value.service.RetrieveFacsimile.return_value = (
-                    b"<xml>test</xml>"
-                )
+                "ffiec_data_connect.protocol_adapter.create_protocol_adapter"
+            ) as mock_create:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = SAMPLE_XBRL_BYTES
+                mock_create.return_value = mock_adapter
 
                 with patch(
                     "ffiec_data_connect.methods.xbrl_processor._process_xml"
@@ -183,8 +188,7 @@ class TestPolarsDirectConversion:
                     mock_process.return_value = []  # Empty data
 
                     df_polars = methods.collect_data(
-                        session=mock_session,
-                        creds=mock_creds,
+                        mock_creds,
                         reporting_period="2023-12-31",
                         rssd_id="480228",
                         series="call",
@@ -224,16 +228,16 @@ class TestPolarsDirectConversion:
             }
         ]
 
-        mock_creds = Mock(spec=WebserviceCredentials)
+        mock_creds = Mock(spec=OAuth2Credentials)
         mock_session = Mock(spec=FFIECConnection)
 
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", True):
             with patch(
-                "ffiec_data_connect.methods._return_client_session"
-            ) as mock_client:
-                mock_client.return_value.service.RetrieveFacsimile.return_value = (
-                    b"<xml>test</xml>"
-                )
+                "ffiec_data_connect.protocol_adapter.create_protocol_adapter"
+            ) as mock_create:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = SAMPLE_XBRL_BYTES
+                mock_create.return_value = mock_adapter
 
                 with patch(
                     "ffiec_data_connect.methods.xbrl_processor._process_xml"
@@ -241,8 +245,7 @@ class TestPolarsDirectConversion:
                     mock_process.return_value = test_data
 
                     df_polars = methods.collect_data(
-                        session=mock_session,
-                        creds=mock_creds,
+                        mock_creds,
                         reporting_period="2023-12-31",
                         rssd_id="123456",
                         series="call",
@@ -251,7 +254,9 @@ class TestPolarsDirectConversion:
 
                     # Verify nulls are handled correctly
                     row = df_polars.row(0)
-                    assert row[5] == 1000  # int_data is not null (index 5 after adding id_rssd)
+                    assert (
+                        row[5] == 1000
+                    )  # int_data is not null (index 5 after adding id_rssd)
                     assert row[6] is None  # float_data is null (index 6)
                     assert row[7] is None  # bool_data is null (index 7)
                     assert row[8] is None  # str_data is null (index 8)

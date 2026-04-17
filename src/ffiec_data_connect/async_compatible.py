@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """
 Async-compatible client for FFIEC Data Connect.
 
@@ -426,9 +429,11 @@ class AsyncCompatibleClient:
         """
         thread_id = threading.get_ident()
         with self._lock:
-            if thread_id not in self._connection_cache:
+            if (
+                thread_id not in self._connection_cache
+            ):  # pragma: no cover — FFIECConnection raises SOAPDeprecationError
                 self._connection_cache[thread_id] = ffiec_connection.FFIECConnection()
-            return self._connection_cache[thread_id]
+            return self._connection_cache[thread_id]  # pragma: no cover
 
     def close(self) -> None:
         """Close all connections and cleanup resources."""
@@ -436,7 +441,7 @@ class AsyncCompatibleClient:
             # Close all cached connections
             for conn in self._connection_cache.values():
                 try:
-                    conn.close()
+                    conn.close()  # type: ignore[attr-defined]
                 except Exception:
                     pass
             self._connection_cache.clear()
