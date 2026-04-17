@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """FFIECConnection - DEPRECATED.
 
 The FFIEC SOAP API was shut down on February 28, 2026.

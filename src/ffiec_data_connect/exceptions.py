@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Descriptive exceptions for the ffiec_data_connect package
 
 This module provides custom exceptions with detailed error messages

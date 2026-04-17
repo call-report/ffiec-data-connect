@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Internal functions used to process XBRL data received from the FFIEC Webservice
 
 This module provides secure XML/XBRL processing with XXE attack prevention.

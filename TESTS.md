@@ -1,6 +1,6 @@
 # Test Catalog
 
-**606 unit tests, 26 integration tests** | 100% statement coverage, 99.7% total
+**652 unit tests, 26 integration tests** | 100% statement coverage, ~99.7% total
 
 ## Running Tests
 

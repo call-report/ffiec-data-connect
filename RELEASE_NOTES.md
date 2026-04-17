@@ -33,7 +33,7 @@ Generate a JWT bearer token from the FFIEC portal, drop the `FFIECConnection()` 
 - JWT expiry is auto-detected from the token payload. The `token_expires` parameter on `OAuth2Credentials` is now optional.
 - `SOAPDeprecationError` provides detailed migration guidance, code examples, and the FFIEC portal URL when legacy code paths are hit.
 - New `MIGRATION.md` and `llms.txt` guides for developers and AI coding assistants.
-- 100% statement test coverage: 606 unit tests + 26 integration tests.
+- 100% statement test coverage: 652 unit tests + 26 integration tests.
 
 ### Dependency changes
 

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Enhanced methods for REST API support
 
 This module contains the enhanced implementations of FFIEC methods that use

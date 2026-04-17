@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Internal functions to assist with processing results from the Webservice"""
 
 from typing import Any, Dict, Optional, Union

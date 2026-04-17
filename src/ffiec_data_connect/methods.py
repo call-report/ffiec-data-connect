@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Methods that wrap the FFIEC Webservice API
 
 The methods contained in this module are utilized to call and collect data from the FFIEC Webservice API.

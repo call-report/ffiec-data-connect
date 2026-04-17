@@ -20,11 +20,11 @@ sys.path.insert(0, os.path.abspath("../../src/ffiec_data_connect"))
 # -- Project information -----------------------------------------------------
 
 project = "FFIEC Data Connect"
-copyright = "2025, Civic Forge Solutions LLC"
+copyright = "2025-2026, Civic Forge Solutions LLC"
 author = "Civic Forge Solutions LLC"
 
 # The full version, including alpha/beta/rc tags
-release = "3.0.0"
+release = "3.0.0rc1"
 
 # -- General configuration ---------------------------------------------------
 

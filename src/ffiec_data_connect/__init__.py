@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """
 FFIEC Data Connect - Python wrapper for FFIEC REST API.
 

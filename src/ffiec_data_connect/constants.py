@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Constant values utilized for data collection and other purposes.
 
 This module contains constant values that are unlikely to change,

@@ -14,6 +14,8 @@ This release removes all SOAP API support following the FFIEC's discontinuation 
 * **SOAP support removed**: ``WebserviceCredentials``, ``FFIECConnection``, ``SOAPAdapter``, and all SOAP-related code have been removed. Attempting to use them will raise ``SOAPDeprecationError``.
 * **New calling convention**: All ``collect_*`` functions now use ``collect_*(creds, ...)`` instead of ``collect_*(session=..., creds=...)``. The ``session`` parameter is no longer needed.
 * **Token expiration auto-detection**: ``token_expires`` is now auto-detected from the JWT payload. You no longer need to pass it explicitly to ``OAuth2Credentials``.
+* **Python 3.11 is the new minimum**: Python 3.10 support is dropped (it is EOL on 2026-10-04). This matches pandas 3.0's own requirement.
+* **pandas 3.0 is the new baseline**: ``pandas>=3.0.0,<4.0.0`` (up from ``>=1.3.0,<3.0.0``). Users on pandas 2.x or earlier must upgrade before installing.
 
 **Migration from v2.x**
 
@@ -22,11 +24,22 @@ See ``MIGRATION.md`` in the repository root for detailed migration guidance. The
 1. Replace ``WebserviceCredentials`` with ``OAuth2Credentials``
 2. Remove ``FFIECConnection`` usage
 3. Change ``collect_*(session=conn, creds=creds, ...)`` to ``collect_*(creds, ...)``
+4. Upgrade to Python >= 3.11 and pandas >= 3.0 if not already there
 
 **Dependencies**
 
 * Removed: ``zeep``, ``requests``
 * Added: ``httpx`` (async-capable HTTP client)
+* Upper bounds relaxed for modern versions: ``httpx<2.0``, ``polars<2.0``, ``lxml<7.0`` (needed for Python 3.14 wheels), ``xmltodict<2.0``, ``pyarrow<24.0``
+
+**Supported Python versions**
+
+* 3.11, 3.12, 3.13, 3.14 (tested in CI)
+
+**Quality**
+
+* 100% statement test coverage: 652 unit tests + 26 integration tests
+* All tests pass against pandas 3.0.2 with zero deprecation warnings in library code paths
 
 Version 2.0.0 - Major Release
 ==============================

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright 2025-2026 Civic Forge Solutions LLC
+
 """Methods to utilize for inputting credentials for the FFIEC data connection.
 
 This module provides secure methods for inputting credentials for the FFIEC webservice data connection.
