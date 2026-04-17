@@ -561,7 +561,8 @@ class TestOAuth2StrNoTokenExpires:
     def test_str_no_token_expires(self):
         """JWT without exp claim → token_expires=None → no expiry info in str."""
         # JWT with no exp claim
-        import base64, json
+        import base64
+        import json
         header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).rstrip(b"=").decode()
         payload = base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode()).rstrip(b"=").decode()
         token = f"{header}.{payload}."

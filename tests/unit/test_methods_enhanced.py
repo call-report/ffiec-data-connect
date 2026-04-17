@@ -13,6 +13,7 @@ import pandas as pd
 import pytest
 
 from ffiec_data_connect.config import Config
+from ffiec_data_connect.exceptions import ConnectionError, ValidationError
 from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.methods_enhanced import (
     _format_datetime_for_output,
@@ -601,9 +602,6 @@ class TestFormatDatetimeForOutput:
 # ---------------------------------------------------------------------------
 # Additional coverage tests for methods_enhanced.py
 # ---------------------------------------------------------------------------
-
-from ffiec_data_connect.exceptions import ConnectionError, ValidationError
-
 
 class TestCollectReportingPeriodsEnhancedExtended:
     """Additional tests for collect_reporting_periods_enhanced coverage."""

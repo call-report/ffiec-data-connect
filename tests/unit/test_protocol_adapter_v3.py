@@ -30,6 +30,7 @@ from ffiec_data_connect.protocol_adapter import (
     create_protocol_adapter,
 )
 
+
 @pytest.fixture(autouse=True)
 def _disable_legacy_errors():
     """Disable legacy errors so tests get specific exception types."""

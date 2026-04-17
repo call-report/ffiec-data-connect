@@ -253,8 +253,10 @@ class TestXBRLProcessorOuterUnicodeDecodeError:
         # Mock xmltodict.parse to raise UnicodeDecodeError on first call (direct bytes),
         # then the fallback data.decode("utf-8") at line 73 will also raise UnicodeDecodeError
         # because bad_bytes is not valid UTF-8 — triggering the outer handler at line 88.
-        with _patch("ffiec_data_connect.xbrl_processor.xmltodict.parse",
-                     side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "mock")):
+        with _patch(
+            "ffiec_data_connect.xbrl_processor.xmltodict.parse",
+            side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "mock"),
+        ):
             with pytest.raises((XMLParsingError, ValueError)):
                 _process_xml(bad_bytes, "string_original", False)
 

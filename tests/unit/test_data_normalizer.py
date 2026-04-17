@@ -7,6 +7,7 @@ so no mocking or live API access is required.
 
 import logging
 from datetime import datetime
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -636,7 +637,6 @@ class TestCountObjectChanges:
 # ---------------------------------------------------------------------------
 # Additional coverage tests for data_normalizer.py
 # ---------------------------------------------------------------------------
-from unittest.mock import patch, Mock
 
 
 class TestNormalizeResponseFailure:
@@ -775,18 +775,15 @@ class TestValidatePydanticCompatibilityException:
         # Actually, let's just patch the internal check to raise
         bad_data = Mock()
         bad_data.__iter__ = Mock(side_effect=RuntimeError("bad iteration"))
-        # The code checks isinstance(data, list) first, so we need actual list behavior
-        # Use a proper approach: patch something inside the method
-        with patch('builtins.isinstance', side_effect=lambda obj, cls: (_ for _ in ()).throw(RuntimeError("type check boom")) if cls == list and obj is bad_data else isinstance.__wrapped__(obj, cls) if hasattr(isinstance, '__wrapped__') else type(obj) == cls or issubclass(type(obj), cls)):
-            # This approach is too fragile, let's use a simpler method
-            pass
 
-        # Simpler approach: create data whose enumeration raises inside the try block
+        # Create data whose enumeration raises inside the try block
         class ExplodingDict(dict):
+
             def __getitem__(self, key):
                 if key == "ID_RSSD":
                     raise RuntimeError("kaboom")
                 return super().__getitem__(key)
+
             def __contains__(self, key):
                 if key == "ID_RSSD":
                     raise RuntimeError("kaboom")
