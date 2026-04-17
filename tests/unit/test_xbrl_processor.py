@@ -37,7 +37,11 @@ class TestXBRLProcessorCoverage:
     def test_xbrl_item_without_valid_date_in_context_skipped(self):
         """XBRL items without a valid date in context are skipped (line 192)."""
         # contextRef without a date pattern (YYYY-MM-DD)
-        items = {"@contextRef": "ctx_480228_nodatehere", "@unitRef": "USD", "#text": "1000000"}
+        items = {
+            "@contextRef": "ctx_480228_nodatehere",
+            "@unitRef": "USD",
+            "#text": "1000000",
+        }
         result = _process_xbrl_item("cc:RCON0010", items, "string_original")
         assert result == []
 
@@ -130,7 +134,7 @@ class TestXBRLProcessorAdditionalCoverage:
             b'<?xml version="1.0" encoding="latin-1"?>'
             b'<xbrl xmlns:cc="http://www.ffiec.gov/call">'
             b'<cc:RCON0010 contextRef="ctx_480228_2023-12-31" unitRef="USD" decimals="0">100000</cc:RCON0010>'
-            b'</xbrl>'
+            b"</xbrl>"
         )
         # Insert a non-UTF-8 byte that makes the first parse attempt fail
         # Use \xe9 in a comment to cause UnicodeDecodeError
@@ -244,7 +248,9 @@ class TestXBRLProcessorOuterUnicodeDecodeError:
     def test_corrupt_bytes_raises_xml_parsing_error(self):
         """Bytes that can't be decoded as UTF-8, and xmltodict also fails."""
         from unittest.mock import patch as _patch
+
         from ffiec_data_connect.config import Config
+
         Config.set_legacy_errors(False)
 
         # Invalid UTF-8 bytes that will fail .decode("utf-8")
@@ -272,11 +278,13 @@ class TestXBRLProcessorDateFormatFallthrough:
         The three known formats are 'string_original', 'string_yyyymmdd', and 'python_format'.
         Anything else must bypass transformation, leaving the ISO date string intact.
         """
-        items = [{
-            "@contextRef": "PeriodContext_1234567_2023-12-31",
-            "@unitRef": "USD",
-            "#text": "1000",
-        }]
+        items = [
+            {
+                "@contextRef": "PeriodContext_1234567_2023-12-31",
+                "@unitRef": "USD",
+                "#text": "1000",
+            }
+        ]
         result = _process_xbrl_item("cc:RCON2170", items, "unrecognized_format")
         # Quarter remains as the original raw YYYY-MM-DD string since no branch transformed it.
         assert result[0]["quarter"] == "2023-12-31"

@@ -13,35 +13,41 @@ import pytest
 
 from ffiec_data_connect.data_normalizer import DataNormalizer
 
-
 # ---------------------------------------------------------------------------
 # 1. _fix_zip_code
 # ---------------------------------------------------------------------------
 
+
 class TestFixZipCode:
     """Tests for ZIP code leading-zero restoration."""
 
-    @pytest.mark.parametrize("input_zip,expected", [
-        (2886, "02886"),       # 4-digit int -> 5-digit with leading zero
-        (886, "00886"),        # 3-digit int
-        (86, "00086"),         # 2-digit int
-        (6, "00006"),          # 1-digit int
-        (12345, "12345"),      # already 5 digits
-        (99999, "99999"),      # max 5-digit
-        (0, "00000"),          # zero
-    ])
+    @pytest.mark.parametrize(
+        "input_zip,expected",
+        [
+            (2886, "02886"),  # 4-digit int -> 5-digit with leading zero
+            (886, "00886"),  # 3-digit int
+            (86, "00086"),  # 2-digit int
+            (6, "00006"),  # 1-digit int
+            (12345, "12345"),  # already 5 digits
+            (99999, "99999"),  # max 5-digit
+            (0, "00000"),  # zero
+        ],
+    )
     def test_integer_inputs(self, input_zip, expected):
         result = DataNormalizer._fix_zip_code(input_zip)
         assert result == expected
         assert isinstance(result, str)
 
-    @pytest.mark.parametrize("input_zip,expected", [
-        ("2886", "02886"),     # 4-char string padded
-        ("886", "00886"),      # 3-char string padded
-        ("02886", "02886"),    # already correct
-        ("12345", "12345"),    # already 5 digits
-        ("1", "00001"),        # single char
-    ])
+    @pytest.mark.parametrize(
+        "input_zip,expected",
+        [
+            ("2886", "02886"),  # 4-char string padded
+            ("886", "00886"),  # 3-char string padded
+            ("02886", "02886"),  # already correct
+            ("12345", "12345"),  # already 5 digits
+            ("1", "00001"),  # single char
+        ],
+    )
     def test_string_inputs_needing_padding(self, input_zip, expected):
         result = DataNormalizer._fix_zip_code(input_zip)
         assert result == expected
@@ -80,6 +86,7 @@ class TestFixZipCode:
 # 2. _normalize_datetime
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeDatetime:
     """Tests for datetime normalization to SOAP format."""
 
@@ -115,14 +122,18 @@ class TestNormalizeDatetime:
 # 3. _normalize_date_string
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeDateString:
     """Tests for reporting-period date string normalization."""
 
-    @pytest.mark.parametrize("date_str", [
-        "12/31/2023",
-        "1/1/2024",
-        "6/30/2023",
-    ])
+    @pytest.mark.parametrize(
+        "date_str",
+        [
+            "12/31/2023",
+            "1/1/2024",
+            "6/30/2023",
+        ],
+    )
     def test_valid_mm_dd_yyyy_returned(self, date_str):
         assert DataNormalizer._normalize_date_string(date_str) == date_str
 
@@ -130,7 +141,9 @@ class TestNormalizeDateString:
         assert DataNormalizer._normalize_date_string("  3/31/2024  ") == "3/31/2024"
 
     def test_invalid_format_returned_with_warning(self, caplog):
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             result = DataNormalizer._normalize_date_string("2024-01-01")
         assert result == "2024-01-01"
         assert any("Unexpected date format" in r.message for r in caplog.records)
@@ -146,6 +159,7 @@ class TestNormalizeDateString:
 # ---------------------------------------------------------------------------
 # 4. normalize_for_validation
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizeForValidation:
     """Tests for the combined normalize + stats entry point."""
@@ -177,6 +191,7 @@ class TestNormalizeForValidation:
 # ---------------------------------------------------------------------------
 # 5. validate_pydantic_compatibility
 # ---------------------------------------------------------------------------
+
 
 class TestValidatePydanticCompatibility:
     """Tests for Pydantic pre-validation checks."""
@@ -240,6 +255,7 @@ class TestValidatePydanticCompatibility:
 # 6. normalize_response
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeResponse:
     """Tests for the main normalization entry point."""
 
@@ -263,7 +279,9 @@ class TestNormalizeResponse:
                 "MailingState": "RI",
             }
         ]
-        result = DataNormalizer.normalize_response(rest, "RetrievePanelOfReporters", "REST")
+        result = DataNormalizer.normalize_response(
+            rest, "RetrievePanelOfReporters", "REST"
+        )
         item = result[0]
 
         assert item["ID_RSSD"] == "480228"
@@ -278,30 +296,47 @@ class TestNormalizeResponse:
 
     def test_filers_since_date_int_to_str(self):
         rest = [480228, 852320, 628403]
-        result = DataNormalizer.normalize_response(rest, "RetrieveFilersSinceDate", "REST")
+        result = DataNormalizer.normalize_response(
+            rest, "RetrieveFilersSinceDate", "REST"
+        )
         assert result == ["480228", "852320", "628403"]
         assert all(isinstance(x, str) for x in result)
 
     def test_reporting_periods_date_normalization(self):
         rest = ["12/31/2023", "6/30/2023"]
-        result = DataNormalizer.normalize_response(rest, "RetrieveReportingPeriods", "REST")
+        result = DataNormalizer.normalize_response(
+            rest, "RetrieveReportingPeriods", "REST"
+        )
         assert result == ["12/31/2023", "6/30/2023"]
 
     def test_unknown_endpoint_warns_returns_unchanged(self, caplog):
         data = {"foo": "bar"}
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             result = DataNormalizer.normalize_response(data, "UnknownEndpoint", "REST")
         assert result == data
         assert any("UnknownEndpoint" in r.message for r in caplog.records)
 
     def test_empty_data_returns_unchanged(self):
-        assert DataNormalizer.normalize_response(None, "RetrievePanelOfReporters", "REST") is None
-        assert DataNormalizer.normalize_response([], "RetrievePanelOfReporters", "REST") == []
-        assert DataNormalizer.normalize_response({}, "RetrievePanelOfReporters", "REST") == {}
+        assert (
+            DataNormalizer.normalize_response(None, "RetrievePanelOfReporters", "REST")
+            is None
+        )
+        assert (
+            DataNormalizer.normalize_response([], "RetrievePanelOfReporters", "REST")
+            == []
+        )
+        assert (
+            DataNormalizer.normalize_response({}, "RetrievePanelOfReporters", "REST")
+            == {}
+        )
 
     def test_soap_protocol_returns_unchanged(self):
         data = [{"ID_RSSD": "480228", "ZIP": "02886"}]
-        result = DataNormalizer.normalize_response(data, "RetrievePanelOfReporters", "SOAP")
+        result = DataNormalizer.normalize_response(
+            data, "RetrievePanelOfReporters", "SOAP"
+        )
         assert result is data
 
     def test_retrieve_facsimile_preserves_binary(self):
@@ -328,6 +363,7 @@ class TestNormalizeResponse:
 # ---------------------------------------------------------------------------
 # 7. _apply_normalizations
 # ---------------------------------------------------------------------------
+
 
 class TestApplyNormalizations:
     """Tests for the internal normalization dispatch."""
@@ -370,6 +406,7 @@ class TestApplyNormalizations:
 # 8. _normalize_object
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeObject:
     """Tests for per-object field coercion."""
 
@@ -393,13 +430,18 @@ class TestNormalizeObject:
 
         coercions = {"field": bad_coercion}
         obj = {"field": "original"}
-        with caplog.at_level(logging.ERROR, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.ERROR, logger="ffiec_data_connect.data_normalizer"
+        ):
             result = DataNormalizer._normalize_object(obj, coercions, "ctx")
         assert result["field"] == "original"
         assert any("Failed to normalize" in r.message for r in caplog.records)
 
     def test_meta_fields_skipped(self):
-        coercions = {"_array_items": lambda x: str(x), "real_field": lambda x: x.upper()}
+        coercions = {
+            "_array_items": lambda x: str(x),
+            "real_field": lambda x: x.upper(),
+        }
         obj = {"real_field": "hello"}
         result = DataNormalizer._normalize_object(obj, coercions, "test")
         assert result["real_field"] == "HELLO"
@@ -426,12 +468,15 @@ class TestNormalizeObject:
 # 9. _validate_normalized_data
 # ---------------------------------------------------------------------------
 
+
 class TestValidateNormalizedData:
     """Tests for post-normalization validation."""
 
     def test_valid_data_no_warnings(self, caplog):
         data = [{"ID_RSSD": "480228", "ZIP": "02886", "FDICCertNumber": "1039"}]
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             DataNormalizer._validate_normalized_data(data, "RetrievePanelOfReporters")
         warnings = [r for r in caplog.records if r.levelno >= logging.WARNING]
         assert len(warnings) == 0
@@ -439,13 +484,17 @@ class TestValidateNormalizedData:
     def test_invalid_zip_4_digit_warns(self, caplog):
         # A 4-digit string ZIP hits the pattern branch (^\d{5}$ fails) -> "format invalid"
         data = [{"ZIP": "2886"}]
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             DataNormalizer._validate_normalized_data(data, "Test")
         assert any("format invalid" in r.message for r in caplog.records)
 
     def test_non_string_id_rssd_warns(self, caplog):
         data = [{"ID_RSSD": 480228}]
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             DataNormalizer._validate_normalized_data(data, "Test")
         assert any("must be string" in r.message for r in caplog.records)
 
@@ -457,20 +506,26 @@ class TestValidateNormalizedData:
     def test_dict_input_validated(self, caplog):
         # Dict path: string ZIP "2886" fails the ^\d{5}$ pattern -> "format invalid"
         data = {"ZIP": "2886"}
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             DataNormalizer._validate_normalized_data(data, "Test")
         assert any("format invalid" in r.message for r in caplog.records)
 
     def test_non_string_zip_warns(self, caplog):
         # Non-string ZIP hits the elif branch -> "must be string"
         data = [{"ZIP": 2886}]
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             DataNormalizer._validate_normalized_data(data, "Test")
         assert any("must be string" in r.message for r in caplog.records)
 
     def test_zip_pattern_mismatch_warns(self, caplog):
         data = [{"ZIP": "1234X"}]
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             DataNormalizer._validate_normalized_data(data, "Test")
         assert any("format invalid" in r.message for r in caplog.records)
 
@@ -479,13 +534,16 @@ class TestValidateNormalizedData:
 # 10. get_normalization_stats
 # ---------------------------------------------------------------------------
 
+
 class TestGetNormalizationStats:
     """Tests for normalization statistics."""
 
     def test_counts_transformations(self):
         before = {"ID_RSSD": 480228, "ZIP": 2886}
         after = {"ID_RSSD": "480228", "ZIP": "02886"}
-        stats = DataNormalizer.get_normalization_stats(before, after, "RetrievePanelOfReporters")
+        stats = DataNormalizer.get_normalization_stats(
+            before, after, "RetrievePanelOfReporters"
+        )
         assert stats["transformations_applied"] >= 2
         assert len(stats["fields_normalized"]) >= 2
 
@@ -528,6 +586,7 @@ class TestGetNormalizationStats:
 # 11. _estimate_data_size
 # ---------------------------------------------------------------------------
 
+
 class TestEstimateDataSize:
     """Tests for data size estimation."""
 
@@ -557,6 +616,7 @@ class TestEstimateDataSize:
 # ---------------------------------------------------------------------------
 # 12. _count_object_changes
 # ---------------------------------------------------------------------------
+
 
 class TestCountObjectChanges:
     """Tests for per-object change counting."""
@@ -646,9 +706,11 @@ class TestNormalizeResponseFailure:
         """If _apply_normalizations raises, should return original data (lines 340-344)."""
         data = [{"ID_RSSD": 480228}]
         with patch.object(
-            DataNormalizer, '_apply_normalizations', side_effect=RuntimeError("boom")
+            DataNormalizer, "_apply_normalizations", side_effect=RuntimeError("boom")
         ):
-            with caplog.at_level(logging.ERROR, logger="ffiec_data_connect.data_normalizer"):
+            with caplog.at_level(
+                logging.ERROR, logger="ffiec_data_connect.data_normalizer"
+            ):
                 result = DataNormalizer.normalize_response(
                     data, "RetrievePanelOfReporters", "REST"
                 )
@@ -704,9 +766,7 @@ class TestValidateObject4DigitZIP:
         }
         try:
             errors_list: list = []
-            DataNormalizer._validate_object(
-                {"ZIP": "2886"}, "test", errors_list
-            )
+            DataNormalizer._validate_object({"ZIP": "2886"}, "test", errors_list)
             assert any("missing leading zero" in e for e in errors_list)
         finally:
             DataNormalizer.VALIDATION_RULES = original_rules
@@ -718,12 +778,12 @@ class TestGetNormalizationStatsException:
     def test_exception_during_comparison_adds_error_key(self):
         """Exception during comparison should set error key in stats (lines 527-529)."""
         with patch.object(
-            DataNormalizer, '_count_object_changes', side_effect=RuntimeError("comparison fail")
+            DataNormalizer,
+            "_count_object_changes",
+            side_effect=RuntimeError("comparison fail"),
         ):
             stats = DataNormalizer.get_normalization_stats(
-                {"ID_RSSD": 480228},
-                {"ID_RSSD": "480228"},
-                "Test"
+                {"ID_RSSD": 480228}, {"ID_RSSD": "480228"}, "Test"
             )
         assert "error" in stats
         assert "comparison fail" in stats["error"]
@@ -736,12 +796,14 @@ class TestValidateNormalizedDataErrorAccumulation:
         """Exception during validation should be caught and logged (lines 447-448)."""
         # Create data that will cause _validate_object to raise
         with patch.object(
-            DataNormalizer, '_validate_object', side_effect=RuntimeError("validate boom")
+            DataNormalizer,
+            "_validate_object",
+            side_effect=RuntimeError("validate boom"),
         ):
-            with caplog.at_level(logging.ERROR, logger="ffiec_data_connect.data_normalizer"):
-                DataNormalizer._validate_normalized_data(
-                    [{"ID_RSSD": "123"}], "Test"
-                )
+            with caplog.at_level(
+                logging.ERROR, logger="ffiec_data_connect.data_normalizer"
+            ):
+                DataNormalizer._validate_normalized_data([{"ID_RSSD": "123"}], "Test")
         assert any("Validation failed" in r.message for r in caplog.records)
 
     def test_multiple_validation_errors_logged(self, caplog):
@@ -751,7 +813,9 @@ class TestValidateNormalizedDataErrorAccumulation:
             {"ID_RSSD": 12345, "ZIP": 1234},
             {"ID_RSSD": 99999, "ZIP": 567},
         ]
-        with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.data_normalizer"):
+        with caplog.at_level(
+            logging.WARNING, logger="ffiec_data_connect.data_normalizer"
+        ):
             DataNormalizer._validate_normalized_data(data, "Test")
         # Should log warnings about multiple issues
         warnings = [r for r in caplog.records if r.levelno >= logging.WARNING]
@@ -765,10 +829,12 @@ class TestValidatePydanticCompatibilityException:
 
     def test_exception_sets_error_and_incompatible(self):
         """Exception during validation should set error and compatible=False (lines 286-288)."""
+
         # Pass data that will cause an exception in the validation loop
         # We can mock the isinstance check to raise
         class BadList:
             """A list-like object that raises on iteration."""
+
             def __iter__(self):
                 raise RuntimeError("iteration boom")
 

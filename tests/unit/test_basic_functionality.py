@@ -22,7 +22,6 @@ from ffiec_data_connect import (
 )
 from ffiec_data_connect.exceptions import SOAPDeprecationError
 
-
 # Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
 _patch_get_conn = patch.object(
     AsyncCompatibleClient, "_get_connection", return_value=Mock()

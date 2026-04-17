@@ -28,7 +28,7 @@ class TestReportingPeriodsSorting:
             "2023-09-30",
             "2023-06-30",
             "2023-03-31",
-            "2022-12-31"
+            "2022-12-31",
         ]
 
         result = sort_reporting_periods_ascending(soap_dates_desc)
@@ -38,7 +38,7 @@ class TestReportingPeriodsSorting:
             "2023-03-31",
             "2023-06-30",
             "2023-09-30",
-            "2023-12-31"
+            "2023-12-31",
         ]
 
         assert result == expected, f"Expected {expected}, got {result}"
@@ -51,18 +51,12 @@ class TestReportingPeriodsSorting:
             "9/30/2023",
             "6/30/2023",
             "3/31/2023",
-            "12/31/2022"
+            "12/31/2022",
         ]
 
         result = sort_reporting_periods_ascending(rest_dates_desc)
 
-        expected = [
-            "12/31/2022",
-            "3/31/2023",
-            "6/30/2023",
-            "9/30/2023",
-            "12/31/2023"
-        ]
+        expected = ["12/31/2022", "3/31/2023", "6/30/2023", "9/30/2023", "12/31/2023"]
 
         assert result == expected, f"Expected {expected}, got {result}"
 
@@ -74,7 +68,7 @@ class TestReportingPeriodsSorting:
             "2023-03-31",
             "2023-06-30",
             "2023-09-30",
-            "2023-12-31"
+            "2023-12-31",
         ]
 
         result = sort_reporting_periods_ascending(soap_dates_asc)
@@ -90,7 +84,7 @@ class TestReportingPeriodsSorting:
             "3/31/2023",
             "6/30/2023",
             "9/30/2023",
-            "12/31/2023"
+            "12/31/2023",
         ]
 
         result = sort_reporting_periods_ascending(rest_dates_asc)
@@ -123,7 +117,7 @@ class TestReportingPeriodsSorting:
             "2001-09-30",
             "2023-12-31",
             "2022-03-31",
-            "2024-12-31"
+            "2024-12-31",
         ]
 
         result = sort_reporting_periods_ascending(mixed_years)
@@ -133,7 +127,7 @@ class TestReportingPeriodsSorting:
             "2022-03-31",
             "2023-12-31",
             "2024-12-31",
-            "2025-06-30"
+            "2025-06-30",
         ]
 
         assert result == expected, f"Expected {expected}, got {result}"
@@ -145,18 +139,12 @@ class TestReportingPeriodsSorting:
             "9/30/2001",
             "12/31/2023",
             "3/31/2022",
-            "12/31/2024"
+            "12/31/2024",
         ]
 
         result = sort_reporting_periods_ascending(mixed_years)
 
-        expected = [
-            "9/30/2001",
-            "3/31/2022",
-            "12/31/2023",
-            "12/31/2024",
-            "6/30/2025"
-        ]
+        expected = ["9/30/2001", "3/31/2022", "12/31/2023", "12/31/2024", "6/30/2025"]
 
         assert result == expected, f"Expected {expected}, got {result}"
 
@@ -183,7 +171,7 @@ class TestReportingPeriodsSorting:
             "2022-03-31",
             "2023-06-30",
             "2024-09-30",
-            "2023-03-31"
+            "2023-03-31",
         ]
 
         result = sort_reporting_periods_ascending(unsorted_dates)
@@ -193,8 +181,9 @@ class TestReportingPeriodsSorting:
 
         # Check that each date is <= the next date
         for i in range(len(parsed_dates) - 1):
-            assert parsed_dates[i] <= parsed_dates[i + 1], \
-                f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
+            assert (
+                parsed_dates[i] <= parsed_dates[i + 1]
+            ), f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
 
     def test_chronological_order_verification_rest(self):
         """Verify that sorted REST dates are in proper chronological order."""
@@ -203,7 +192,7 @@ class TestReportingPeriodsSorting:
             "3/31/2022",
             "6/30/2023",
             "9/30/2024",
-            "3/31/2023"
+            "3/31/2023",
         ]
 
         result = sort_reporting_periods_ascending(unsorted_dates)
@@ -213,14 +202,15 @@ class TestReportingPeriodsSorting:
 
         # Check that each date is <= the next date
         for i in range(len(parsed_dates) - 1):
-            assert parsed_dates[i] <= parsed_dates[i + 1], \
-                f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
+            assert (
+                parsed_dates[i] <= parsed_dates[i + 1]
+            ), f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
 
 
 class TestCollectReportingPeriodsIntegration:
     """Integration tests for collect_reporting_periods with sorting."""
 
-    @patch('ffiec_data_connect.methods_enhanced.collect_reporting_periods_enhanced')
+    @patch("ffiec_data_connect.methods_enhanced.collect_reporting_periods_enhanced")
     def test_rest_api_path_uses_sorting(self, mock_enhanced):
         """Test that REST API path also applies sorting."""
         from ffiec_data_connect.credentials import OAuth2Credentials
@@ -231,19 +221,17 @@ class TestCollectReportingPeriodsIntegration:
             "12/31/2023",  # Descending order (newest first)
             "9/30/2023",
             "3/31/2023",
-            "12/31/2022"   # Oldest last
+            "12/31/2022",  # Oldest last
         ]
 
         # Create OAuth2 credentials to trigger REST path
         oauth_creds = Mock()
-        oauth_creds.__class__.__name__ = 'OAuth2Credentials'
+        oauth_creds.__class__.__name__ = "OAuth2Credentials"
 
         # Call collect_reporting_periods - should route to REST path
-        with patch('ffiec_data_connect.methods.isinstance', return_value=True):
+        with patch("ffiec_data_connect.methods.isinstance", return_value=True):
             result = collect_reporting_periods(
-                oauth_creds,
-                series="call",
-                output_type="list"
+                oauth_creds, series="call", output_type="list"
             )
 
         # The enhanced method was called, which handles its own sorting

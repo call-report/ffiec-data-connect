@@ -1,15 +1,16 @@
 """Tests for ffiec_data_connect.exceptions — constructor and string behaviour."""
 
 import pytest
+
 from ffiec_data_connect.exceptions import (
+    ConnectionError,
+    CredentialError,
     FFIECError,
     NoDataError,
-    CredentialError,
-    ConnectionError,
     RateLimitError,
-    XMLParsingError,
     SessionError,
     SOAPDeprecationError,
+    XMLParsingError,
 )
 
 

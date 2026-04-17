@@ -13,8 +13,16 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from requests import Session
 
-from ffiec_data_connect.credentials import CredentialType, OAuth2Credentials, WebserviceCredentials
-from ffiec_data_connect.exceptions import ConnectionError, CredentialError, SOAPDeprecationError
+from ffiec_data_connect.credentials import (
+    CredentialType,
+    OAuth2Credentials,
+    WebserviceCredentials,
+)
+from ffiec_data_connect.exceptions import (
+    ConnectionError,
+    CredentialError,
+    SOAPDeprecationError,
+)
 from ffiec_data_connect.ffiec_connection import FFIECConnection
 
 
@@ -65,7 +73,10 @@ class TestWebserviceCredentialsSOAPDeprecationMessage:
         with pytest.raises(SOAPDeprecationError) as exc_info:
             WebserviceCredentials("user", "pass")
 
-        assert exc_info.value.rest_equivalent == "OAuth2Credentials(username, bearer_token)"
+        assert (
+            exc_info.value.rest_equivalent
+            == "OAuth2Credentials(username, bearer_token)"
+        )
 
     def test_deprecation_error_soap_method_name(self):
         """Test that the deprecation error identifies the deprecated method."""
@@ -125,7 +136,9 @@ class TestCredentialImmutability:
         def try_create_credentials():
             try:
                 WebserviceCredentials("user", "pass")
-                errors.append("Instantiation succeeded - should have raised SOAPDeprecationError")
+                errors.append(
+                    "Instantiation succeeded - should have raised SOAPDeprecationError"
+                )
             except SOAPDeprecationError:
                 pass  # Expected
             except Exception as e:
@@ -283,8 +296,16 @@ class TestOAuth2CredentialsJWTExpiryAutoDetection:
         import base64
         import json
 
-        header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).decode().rstrip("=")
-        payload = base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode()).decode().rstrip("=")
+        header = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+            .decode()
+            .rstrip("=")
+        )
+        payload = (
+            base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode())
+            .decode()
+            .rstrip("=")
+        )
         test_token = f"{header}.{payload}."
 
         creds = OAuth2Credentials(
@@ -307,6 +328,7 @@ class TestOAuth2CredentialsCoverage:
     def _disable_legacy_errors(self):
         """Disable legacy errors so specific exception types are raised."""
         from ffiec_data_connect.config import Config
+
         Config.set_legacy_errors(False)
         yield
 
@@ -332,8 +354,16 @@ class TestOAuth2CredentialsCoverage:
         import json
 
         # JWT without exp claim -> token_expires will be None
-        header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).decode().rstrip("=")
-        payload = base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode()).decode().rstrip("=")
+        header = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+            .decode()
+            .rstrip("=")
+        )
+        payload = (
+            base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode())
+            .decode()
+            .rstrip("=")
+        )
         no_exp_token = f"{header}.{payload}."
 
         creds = OAuth2Credentials(
@@ -417,7 +447,9 @@ class TestOAuth2CredentialsCoverage:
     def test_extract_jwt_expiry_invalid_base64(self):
         """_extract_jwt_expiry with invalid base64 payload returns None (lines 263-265)."""
         # A token where the payload section is not valid base64
-        result = OAuth2Credentials._extract_jwt_expiry("eyJhbGciOiJub25lIn0.!!!invalid-base64!!!.")
+        result = OAuth2Credentials._extract_jwt_expiry(
+            "eyJhbGciOiJub25lIn0.!!!invalid-base64!!!."
+        )
         assert result is None
 
     def test_extract_jwt_expiry_overflow_exp(self):
@@ -425,9 +457,17 @@ class TestOAuth2CredentialsCoverage:
         import base64
         import json
 
-        header = base64.urlsafe_b64encode(json.dumps({"alg": "none"}).encode()).decode().rstrip("=")
+        header = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "none"}).encode())
+            .decode()
+            .rstrip("=")
+        )
         # Use an absurdly large exp that causes OverflowError in datetime.fromtimestamp
-        payload = base64.urlsafe_b64encode(json.dumps({"exp": 999999999999999999}).encode()).decode().rstrip("=")
+        payload = (
+            base64.urlsafe_b64encode(json.dumps({"exp": 999999999999999999}).encode())
+            .decode()
+            .rstrip("=")
+        )
         overflow_token = f"{header}.{payload}."
 
         result = OAuth2Credentials._extract_jwt_expiry(overflow_token)
@@ -462,6 +502,7 @@ class TestOAuth2CredentialsMissingCoverage:
     @pytest.fixture(autouse=True)
     def _disable_legacy_errors(self):
         from ffiec_data_connect.config import Config
+
         Config.set_legacy_errors(False)
         yield
 
@@ -519,11 +560,17 @@ class TestOAuth2CredentialsMissingCoverage:
 
         # Create a payload whose base64 encoding is NOT a multiple of 4
         payload = {"sub": "a", "exp": 1783442253}
-        payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+        payload_b64 = (
+            base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+        )
         # Verify it actually needs padding
         assert len(payload_b64) % 4 != 0
 
-        header_b64 = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).decode().rstrip("=")
+        header_b64 = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+            .decode()
+            .rstrip("=")
+        )
         token = f"{header_b64}.{payload_b64}."
 
         result = OAuth2Credentials._extract_jwt_expiry(token)
@@ -563,8 +610,17 @@ class TestOAuth2StrNoTokenExpires:
         # JWT with no exp claim
         import base64
         import json
-        header = base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).rstrip(b"=").decode()
-        payload = base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode()).rstrip(b"=").decode()
+
+        header = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+            .rstrip(b"=")
+            .decode()
+        )
+        payload = (
+            base64.urlsafe_b64encode(json.dumps({"sub": "test"}).encode())
+            .rstrip(b"=")
+            .decode()
+        )
         token = f"{header}.{payload}."
 
         creds = OAuth2Credentials(username="user", bearer_token=token)

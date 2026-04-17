@@ -23,7 +23,6 @@ from ffiec_data_connect.credentials import WebserviceCredentials
 from ffiec_data_connect.exceptions import SOAPDeprecationError
 from ffiec_data_connect.ffiec_connection import FFIECConnection, ProxyProtocol
 
-
 # Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
 _patch_get_conn = patch.object(
     AsyncCompatibleClient, "_get_connection", return_value=Mock()

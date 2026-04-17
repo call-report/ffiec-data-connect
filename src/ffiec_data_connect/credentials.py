@@ -107,7 +107,7 @@ class OAuth2Credentials:
             warnings.warn(
                 "Bearer token passed directly. For security, consider storing it in the "
                 "FFIEC_BEARER_TOKEN environment variable:\n"
-                '  export FFIEC_BEARER_TOKEN=\'eyJ...\'\n'
+                "  export FFIEC_BEARER_TOKEN='eyJ...'\n"
                 "  creds = OAuth2Credentials(username=..., bearer_token=os.environ['FFIEC_BEARER_TOKEN'])",
                 stacklevel=2,
             )
@@ -219,9 +219,7 @@ class OAuth2Credentials:
 
         # Check if token is expired
         if self.is_expired:
-            logger.warning(
-                "OAuth2 token is expired or expires within 24 hours."
-            )
+            logger.warning("OAuth2 token is expired or expires within 24 hours.")
             return False
 
         # No live REST call is made here — we only check token shape and expiry.

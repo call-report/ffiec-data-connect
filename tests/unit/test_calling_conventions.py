@@ -26,9 +26,10 @@ from ffiec_data_connect.methods import (
     collect_ubpr_reporting_periods,
 )
 
-
 # Test JWT: {"alg":"none","typ":"JWT"}.{"sub":"test","exp":1783442253}
-TEST_JWT = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+TEST_JWT = (
+    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+)
 
 
 @pytest.fixture(autouse=True)
@@ -148,7 +149,9 @@ def _method_ids():
 class TestNewStyleCredsFirst:
     """Pattern 1: collect_*(creds, ...) — preferred, no warnings."""
 
-    @pytest.mark.parametrize("func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids())
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
     def test_creds_first_no_warning(self, func, patch_target, kwargs):
         """Calling with creds as first arg should produce no DeprecationWarning."""
         creds = _make_creds()
@@ -158,7 +161,9 @@ class TestNewStyleCredsFirst:
             if "create_protocol_adapter" in patch_target:
                 mock_adapter = Mock()
                 mock_adapter.retrieve_facsimile.return_value = b"<xbrl/>"
-                mock_adapter.retrieve_ubpr_reporting_periods.return_value = ["12/31/2025"]
+                mock_adapter.retrieve_ubpr_reporting_periods.return_value = [
+                    "12/31/2025"
+                ]
                 mock_adapter.retrieve_ubpr_xbrl_facsimile.return_value = b"<xbrl/>"
                 mock_target.return_value = mock_adapter
             else:
@@ -172,19 +177,22 @@ class TestNewStyleCredsFirst:
                     pass  # Some mocks may not return valid data
 
                 deprecation_warnings = [
-                    x for x in w
+                    x
+                    for x in w
                     if issubclass(x.category, DeprecationWarning)
                     and "session=None" in str(x.message)
                 ]
-                assert len(deprecation_warnings) == 0, (
-                    f"{func.__name__}: unexpected DeprecationWarning about session"
-                )
+                assert (
+                    len(deprecation_warnings) == 0
+                ), f"{func.__name__}: unexpected DeprecationWarning about session"
 
 
 class TestOldStyleNoneSession:
     """Pattern 2: collect_*(None, creds, ...) — deprecated, warns."""
 
-    @pytest.mark.parametrize("func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids())
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
     def test_none_session_warns(self, func, patch_target, kwargs):
         """Calling with None as first arg should emit DeprecationWarning."""
         creds = _make_creds()
@@ -193,7 +201,9 @@ class TestOldStyleNoneSession:
             if "create_protocol_adapter" in patch_target:
                 mock_adapter = Mock()
                 mock_adapter.retrieve_facsimile.return_value = b"<xbrl/>"
-                mock_adapter.retrieve_ubpr_reporting_periods.return_value = ["12/31/2025"]
+                mock_adapter.retrieve_ubpr_reporting_periods.return_value = [
+                    "12/31/2025"
+                ]
                 mock_adapter.retrieve_ubpr_xbrl_facsimile.return_value = b"<xbrl/>"
                 mock_target.return_value = mock_adapter
             else:
@@ -207,19 +217,22 @@ class TestOldStyleNoneSession:
                     pass
 
                 deprecation_warnings = [
-                    x for x in w
+                    x
+                    for x in w
                     if issubclass(x.category, DeprecationWarning)
                     and "session=None" in str(x.message)
                 ]
-                assert len(deprecation_warnings) == 1, (
-                    f"{func.__name__}: expected 1 DeprecationWarning about session, got {len(deprecation_warnings)}"
-                )
+                assert (
+                    len(deprecation_warnings) == 1
+                ), f"{func.__name__}: expected 1 DeprecationWarning about session, got {len(deprecation_warnings)}"
 
 
 class TestOldStyleConnSession:
     """Pattern 3: collect_*(conn, creds, ...) — raises SOAPDeprecationError."""
 
-    @pytest.mark.parametrize("func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids())
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
     def test_conn_session_raises(self, func, patch_target, kwargs):
         """Calling with a non-None session should raise SOAPDeprecationError."""
         creds = _make_creds()
@@ -231,7 +244,9 @@ class TestOldStyleConnSession:
 class TestOldStyleSoapCreds:
     """SOAP credentials should raise SOAPDeprecationError in all patterns."""
 
-    @pytest.mark.parametrize("func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids())
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
     def test_soap_creds_none_session_raises(self, func, patch_target, kwargs):
         """None + WebserviceCredentials → SOAPDeprecationError."""
         soap_creds = Mock(spec=WebserviceCredentials)
@@ -240,7 +255,9 @@ class TestOldStyleSoapCreds:
             with pytest.raises(SOAPDeprecationError):
                 func(None, soap_creds, **kwargs)
 
-    @pytest.mark.parametrize("func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids())
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
     def test_soap_creds_as_first_arg_raises(self, func, patch_target, kwargs):
         """WebserviceCredentials as first arg → SOAPDeprecationError."""
         soap_creds = Mock(spec=WebserviceCredentials)
@@ -259,6 +276,7 @@ class TestBearerTokenWarning:
     def test_hardcoded_token_warns(self):
         """Creating OAuth2Credentials with literal token warns about env var."""
         import os
+
         with patch.dict(os.environ, {}, clear=True):
             with pytest.warns(UserWarning, match="FFIEC_BEARER_TOKEN"):
                 OAuth2Credentials(username="user", bearer_token=TEST_JWT)
@@ -273,7 +291,8 @@ class TestBearerTokenWarning:
                 OAuth2Credentials(username="user", bearer_token=TEST_JWT)
 
                 user_warnings = [
-                    x for x in w
+                    x
+                    for x in w
                     if issubclass(x.category, UserWarning)
                     and "FFIEC_BEARER_TOKEN" in str(x.message)
                 ]

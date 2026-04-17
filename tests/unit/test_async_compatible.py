@@ -19,7 +19,6 @@ from ffiec_data_connect.credentials import WebserviceCredentials
 from ffiec_data_connect.exceptions import RateLimitError, SOAPDeprecationError
 from ffiec_data_connect.ffiec_connection import FFIECConnection
 
-
 # Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
 _patch_get_conn = patch.object(
     AsyncCompatibleClient, "_get_connection", return_value=Mock()
@@ -365,7 +364,9 @@ class TestAsyncMethods:
     @pytest.mark.asyncio
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_collect_batch_async_with_progress(self, mock_collect_data, _mock_conn):
+    async def test_collect_batch_async_with_progress(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test async batch with progress callback."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -388,7 +389,9 @@ class TestAsyncMethods:
     @pytest.mark.asyncio
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_collect_batch_async_with_async_progress(self, mock_collect_data, _mock_conn):
+    async def test_collect_batch_async_with_async_progress(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test async batch with async progress callback."""
         mock_collect_data.return_value = [{"test": "data"}]
 
@@ -737,6 +740,7 @@ class TestCollectTimeSeries:
     @patch("ffiec_data_connect.methods.collect_data")
     def test_error_dict_when_future_raises(self, mock_collect_data, _mock_conn):
         """When future.result() raises, should return error dict (lines 279-280)."""
+
         def side_effect(conn, creds, period, rssd_id, *args):
             if period == "2023-09-30":
                 raise Exception("Period unavailable")
@@ -818,6 +822,7 @@ class TestAsyncTimeSeriesError:
     @patch("ffiec_data_connect.methods.collect_data")
     async def test_error_in_async_time_series(self, mock_collect_data, _mock_conn):
         """Errors in collect_time_series_async should produce error dicts (lines 414-415)."""
+
         def side_effect(conn, creds, period, rssd_id, *args):
             if period == "2023-06-30":
                 raise Exception("Server error")
@@ -930,6 +935,7 @@ class TestProgressCallbackOnErrorInParallel:
     @patch("ffiec_data_connect.methods.collect_data")
     def test_progress_callback_called_on_error(self, mock_collect_data, _mock_conn):
         """When a future raises, progress_callback should be called with error dict (line 231)."""
+
         def side_effect(conn, creds, period, rssd_id, *args):
             if rssd_id == "111":
                 raise Exception("Connection refused")
@@ -946,7 +952,9 @@ class TestProgressCallbackOnErrorInParallel:
             progress_calls.append((rssd_id, result))
 
         results = client.collect_data_parallel(
-            "2023-12-31", ["111", "222"], progress_callback=progress_cb,
+            "2023-12-31",
+            ["111", "222"],
+            progress_callback=progress_cb,
         )
 
         # Both RSDs should trigger progress callbacks
@@ -991,7 +999,9 @@ class TestRateLimiterInBatchAsync:
     @pytest.mark.asyncio
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_rate_limiter_called_in_batch_async(self, mock_collect_data, _mock_conn):
+    async def test_rate_limiter_called_in_batch_async(
+        self, mock_collect_data, _mock_conn
+    ):
         """Rate limiter should be called for each RSSD in collect_batch_async (line 349)."""
         mock_collect_data.return_value = [{"data": "ok"}]
 
@@ -1029,6 +1039,7 @@ class TestExecutorShutdownOwnedReal:
 
         # Verify the executor is shut down by trying to submit (should raise)
         import concurrent.futures
+
         with pytest.raises(RuntimeError):
             executor.submit(lambda: None)
 

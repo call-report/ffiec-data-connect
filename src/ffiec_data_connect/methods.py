@@ -351,7 +351,7 @@ def _resolve_session_and_creds(
             soap_method="session parameter (SOAP)",
             rest_equivalent="Pass credentials as the first argument (no session needed)",
             code_example=(
-                '  # REST API does not use a session object\n'
+                "  # REST API does not use a session object\n"
                 '  collect_reporting_periods(creds, series="call")'
             ),
         )
@@ -700,7 +700,12 @@ def collect_filers_submission_date_time(
     from .methods_enhanced import collect_filers_submission_date_time_enhanced
 
     return collect_filers_submission_date_time_enhanced(
-        None, resolved_creds, since_date, reporting_period, output_type, date_output_format,  # type: ignore[arg-type]
+        None,
+        resolved_creds,
+        since_date,  # type: ignore[arg-type]
+        reporting_period,  # type: ignore[arg-type]
+        output_type,
+        date_output_format,
     )
 
 
@@ -846,20 +851,32 @@ def collect_ubpr_facsimile_data(
             use_rest_nulls = True
 
         if output_type == "list":
-            return xbrl_processor._process_xml(raw_data, "string_original", use_rest_nulls)
+            return xbrl_processor._process_xml(
+                raw_data, "string_original", use_rest_nulls
+            )
         elif output_type == "pandas":
-            processed_data = xbrl_processor._process_xml(raw_data, "string_original", use_rest_nulls)
+            processed_data = xbrl_processor._process_xml(
+                raw_data, "string_original", use_rest_nulls
+            )
             df = pd.DataFrame(processed_data)
 
             if use_rest_nulls:
                 if "int_data" in df.columns:
-                    df["int_data"] = df["int_data"].replace({pd.NA: None}).astype("Int64")
+                    df["int_data"] = (
+                        df["int_data"].replace({pd.NA: None}).astype("Int64")
+                    )
                 if "float_data" in df.columns:
-                    df["float_data"] = df["float_data"].replace({pd.NA: np.nan}).astype("float64")
+                    df["float_data"] = (
+                        df["float_data"].replace({pd.NA: np.nan}).astype("float64")
+                    )
                 if "bool_data" in df.columns:
-                    df["bool_data"] = df["bool_data"].replace({pd.NA: None}).astype("boolean")
+                    df["bool_data"] = (
+                        df["bool_data"].replace({pd.NA: None}).astype("boolean")
+                    )
             else:
-                if "int_data" in df.columns:  # pragma: no branch — XBRL always has these
+                if (
+                    "int_data" in df.columns
+                ):  # pragma: no branch — XBRL always has these
                     df["int_data"] = df["int_data"].astype("Int64")
                 if "float_data" in df.columns:  # pragma: no branch
                     df["float_data"] = df["float_data"].astype("float64")

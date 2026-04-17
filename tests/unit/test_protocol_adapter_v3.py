@@ -7,7 +7,7 @@ factory function, and SOAP deprecation stub.
 """
 
 import time
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
 import httpx
 import pytest
@@ -24,8 +24,8 @@ from ffiec_data_connect.exceptions import (
     ValidationError,
 )
 from ffiec_data_connect.protocol_adapter import (
-    RESTAdapter,
     RateLimiter,
+    RESTAdapter,
     SOAPAdapter,
     create_protocol_adapter,
 )
@@ -40,7 +40,9 @@ def _disable_legacy_errors():
 
 
 # Test JWT: {"alg":"none","typ":"JWT"}.{"sub":"test","exp":1783442253} (far future)
-TEST_JWT = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+TEST_JWT = (
+    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+)
 
 
 def _make_creds() -> OAuth2Credentials:
@@ -261,7 +263,9 @@ class TestRESTAdapterValidateResponse:
         )
 
         with pytest.raises(ValidationError):
-            adapter._validate_response({"bad": "data"}, mock_model_class, "TestEndpoint")
+            adapter._validate_response(
+                {"bad": "data"}, mock_model_class, "TestEndpoint"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -481,7 +485,9 @@ class TestSOAPAdapter:
             SOAPAdapter()
 
         assert "SOAP" in str(exc_info.value)
-        assert "shut down" in str(exc_info.value).lower() or "DISCONTINUED" in str(exc_info.value)
+        assert "shut down" in str(exc_info.value).lower() or "DISCONTINUED" in str(
+            exc_info.value
+        )
 
     def test_init_with_args_raises_soap_deprecation_error(self):
         """SOAPAdapter instantiation with any args should raise SOAPDeprecationError."""
@@ -506,7 +512,9 @@ class TestRESTAdapterInitCredentialCheck:
 
     def test_non_oauth2_credentials_raises_credential_error(self):
         """Passing non-OAuth2Credentials to RESTAdapter raises CredentialError (line 201)."""
-        with pytest.raises(CredentialError, match="RESTAdapter requires OAuth2Credentials"):
+        with pytest.raises(
+            CredentialError, match="RESTAdapter requires OAuth2Credentials"
+        ):
             RESTAdapter(Mock())  # Mock without spec=OAuth2Credentials
 
 
@@ -538,7 +546,11 @@ class TestRESTAdapterMakeRequest:
 
         # Verify headers include params and additional_headers
         call_kwargs = adapter.client.get.call_args
-        headers = call_kwargs[1]["headers"] if "headers" in call_kwargs[1] else call_kwargs[0][1]
+        headers = (
+            call_kwargs[1]["headers"]
+            if "headers" in call_kwargs[1]
+            else call_kwargs[0][1]
+        )
         assert headers.get("dataSeries") == "Call"
         assert headers.get("X-Custom") == "value"
 
@@ -695,10 +707,13 @@ class TestRESTAdapterRetrievePanelOfReporters:
 
         result = adapter.retrieve_panel_of_reporters("12/31/2023")
 
-        adapter._make_request.assert_called_once_with("RetrievePanelOfReporters", {
-            "reportingPeriodEndDate": "12/31/2023",
-            "dataSeries": "Call",
-        })
+        adapter._make_request.assert_called_once_with(
+            "RetrievePanelOfReporters",
+            {
+                "reportingPeriodEndDate": "12/31/2023",
+                "dataSeries": "Call",
+            },
+        )
         mock_normalize.assert_called_once_with(
             raw_data, "RetrievePanelOfReporters", "REST"
         )
@@ -722,11 +737,14 @@ class TestRESTAdapterRetrieveFilersSinceDate:
 
         result = adapter.retrieve_filers_since_date("12/31/2023", "01/01/2023")
 
-        adapter._make_request.assert_called_once_with("RetrieveFilersSinceDate", {
-            "reportingPeriodEndDate": "12/31/2023",
-            "lastUpdateDateTime": "01/01/2023",
-            "dataSeries": "Call",
-        })
+        adapter._make_request.assert_called_once_with(
+            "RetrieveFilersSinceDate",
+            {
+                "reportingPeriodEndDate": "12/31/2023",
+                "lastUpdateDateTime": "01/01/2023",
+                "dataSeries": "Call",
+            },
+        )
         mock_normalize.assert_called_once_with(
             raw_data, "RetrieveFilersSinceDate", "REST"
         )
@@ -879,10 +897,15 @@ class TestRESTAdapterInitExpiredToken:
         """RESTAdapter with expired token should log a warning on init."""
         creds = _make_creds()
         # Mock is_expired to return True
-        with patch.object(type(creds), 'is_expired', new_callable=PropertyMock, return_value=True):
+        with patch.object(
+            type(creds), "is_expired", new_callable=PropertyMock, return_value=True
+        ):
             with patch("httpx.Client"):
                 import logging
-                with caplog.at_level(logging.WARNING, logger="ffiec_data_connect.protocol_adapter"):
+
+                with caplog.at_level(
+                    logging.WARNING, logger="ffiec_data_connect.protocol_adapter"
+                ):
                     adapter = RESTAdapter(creds)
         assert any("expired" in r.message.lower() for r in caplog.records)
 
@@ -927,7 +950,12 @@ class TestRESTAdapterMakeRequestErrors:
         """_make_request with expired credentials should raise CredentialError."""
         adapter = _make_rest_adapter()
         adapter.credentials = _make_creds()
-        with patch.object(type(adapter.credentials), 'is_expired', new_callable=PropertyMock, return_value=True):
+        with patch.object(
+            type(adapter.credentials),
+            "is_expired",
+            new_callable=PropertyMock,
+            return_value=True,
+        ):
             with pytest.raises(CredentialError, match="expired"):
                 adapter._make_request("TestEndpoint")
 
@@ -969,7 +997,10 @@ class TestHandleResponseDebugLogging:
         adapter.client.get.return_value = mock_response
 
         import logging
-        with caplog.at_level(logging.DEBUG, logger="ffiec_data_connect.protocol_adapter"):
+
+        with caplog.at_level(
+            logging.DEBUG, logger="ffiec_data_connect.protocol_adapter"
+        ):
             with pytest.raises(ValidationError):
                 adapter._make_request("TestEndpoint")
 
@@ -1004,7 +1035,9 @@ class TestRetrieveFacsimileUBPR:
 
         result = adapter.retrieve_facsimile(480228, "12/31/2023", "ubpr")
 
-        adapter.retrieve_ubpr_xbrl_facsimile.assert_called_once_with(480228, "12/31/2023")
+        adapter.retrieve_ubpr_xbrl_facsimile.assert_called_once_with(
+            480228, "12/31/2023"
+        )
         assert result == b"<xbrl>ubpr</xbrl>"
 
 
@@ -1131,7 +1164,7 @@ class TestRetrieveFilersSubmissionDatetimeNoSinceDate:
         adapter = _make_rest_adapter()
         adapter._make_request = Mock(return_value=[])
 
-        with patch.object(adapter, '_validate_response', return_value=[]):
+        with patch.object(adapter, "_validate_response", return_value=[]):
             adapter.retrieve_filers_submission_datetime("03/31/2023", since_date=None)
 
         call_args = adapter._make_request.call_args
@@ -1143,7 +1176,7 @@ class TestRetrieveFilersSubmissionDatetimeNoSinceDate:
         adapter = _make_rest_adapter()
         adapter._make_request = Mock(return_value=[])
 
-        with patch.object(adapter, '_validate_response', return_value=[]):
+        with patch.object(adapter, "_validate_response", return_value=[]):
             adapter.retrieve_filers_submission_datetime("06/30/2023", since_date=None)
 
         params = adapter._make_request.call_args[0][1]
@@ -1154,7 +1187,7 @@ class TestRetrieveFilersSubmissionDatetimeNoSinceDate:
         adapter = _make_rest_adapter()
         adapter._make_request = Mock(return_value=[])
 
-        with patch.object(adapter, '_validate_response', return_value=[]):
+        with patch.object(adapter, "_validate_response", return_value=[]):
             adapter.retrieve_filers_submission_datetime("09/30/2023", since_date=None)
 
         params = adapter._make_request.call_args[0][1]
@@ -1165,7 +1198,7 @@ class TestRetrieveFilersSubmissionDatetimeNoSinceDate:
         adapter = _make_rest_adapter()
         adapter._make_request = Mock(return_value=[])
 
-        with patch.object(adapter, '_validate_response', return_value=[]):
+        with patch.object(adapter, "_validate_response", return_value=[]):
             adapter.retrieve_filers_submission_datetime("12/31/2023", since_date=None)
 
         params = adapter._make_request.call_args[0][1]
@@ -1176,7 +1209,7 @@ class TestRetrieveFilersSubmissionDatetimeNoSinceDate:
         adapter = _make_rest_adapter()
         adapter._make_request = Mock(return_value=[])
 
-        with patch.object(adapter, '_validate_response', return_value=[]):
+        with patch.object(adapter, "_validate_response", return_value=[]):
             adapter.retrieve_filers_submission_datetime("bad-date", since_date=None)
 
         params = adapter._make_request.call_args[0][1]
@@ -1343,12 +1376,16 @@ class TestHandleResponse403NoTokenExpires:
         with pytest.raises(CredentialError) as exc_info:
             adapter._handle_response(mock_response, "Test")
         # Should NOT mention "expired" since we don't know the expiry
-        assert "expired" not in str(exc_info.value).lower() or "verify" in str(exc_info.value).lower()
+        assert (
+            "expired" not in str(exc_info.value).lower()
+            or "verify" in str(exc_info.value).lower()
+        )
 
 
 class TestRateLimiterFiltersExpiredCalls:
     """When pre-existing call_history has entries older than 1 hour, the filter at the top of
-    wait_if_needed() drops them before the hourly-limit check. Confirms the filter works."""
+    wait_if_needed() drops them before the hourly-limit check. Confirms the filter works.
+    """
 
     @patch("ffiec_data_connect.protocol_adapter.time")
     def test_expired_history_is_filtered_before_limit_check(self, mock_time):

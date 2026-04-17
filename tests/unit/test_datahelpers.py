@@ -1,6 +1,7 @@
 """Tests for ffiec_data_connect.datahelpers._normalize_output_from_reporter_panel"""
 
 import pytest
+
 from ffiec_data_connect.datahelpers import _normalize_output_from_reporter_panel
 
 

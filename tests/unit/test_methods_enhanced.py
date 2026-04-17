@@ -7,14 +7,14 @@ correctly without live API calls.
 """
 
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
 
 from ffiec_data_connect.config import Config
-from ffiec_data_connect.exceptions import ConnectionError, ValidationError
 from ffiec_data_connect.credentials import OAuth2Credentials
+from ffiec_data_connect.exceptions import ConnectionError, ValidationError
 from ffiec_data_connect.methods_enhanced import (
     _format_datetime_for_output,
     _normalize_pydantic_to_soap_format,
@@ -25,7 +25,9 @@ from ffiec_data_connect.methods_enhanced import (
 )
 
 # Test JWT: {"alg":"none","typ":"JWT"}.{"sub":"test","exp":1783442253} (far future)
-TEST_JWT = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+TEST_JWT = (
+    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
+)
 
 
 @pytest.fixture(autouse=True)
@@ -603,6 +605,7 @@ class TestFormatDatetimeForOutput:
 # Additional coverage tests for methods_enhanced.py
 # ---------------------------------------------------------------------------
 
+
 class TestCollectReportingPeriodsEnhancedExtended:
     """Additional tests for collect_reporting_periods_enhanced coverage."""
 
@@ -687,8 +690,13 @@ class TestCollectFilersOnReportingPeriodEnhancedValidation:
             )
 
     @patch("ffiec_data_connect.methods_enhanced.create_protocol_adapter")
-    @patch("ffiec_data_connect.methods_enhanced._convert_any_date_to_ffiec_format", return_value=None)
-    def test_unconvertible_period_raises_validation_error(self, mock_convert, mock_create_adapter):
+    @patch(
+        "ffiec_data_connect.methods_enhanced._convert_any_date_to_ffiec_format",
+        return_value=None,
+    )
+    def test_unconvertible_period_raises_validation_error(
+        self, mock_convert, mock_create_adapter
+    ):
         """Period that passes validation but fails conversion should raise (line 223)."""
         creds = _make_creds()
         with pytest.raises(ValidationError, match="reporting_period"):
@@ -917,7 +925,9 @@ class TestSchemaValidationWarning:
 
     @patch("ffiec_data_connect.methods_enhanced.create_protocol_adapter")
     @patch("ffiec_data_connect.methods_enhanced.DataNormalizer")
-    def test_incompatible_schema_logs_warning(self, mock_normalizer_cls, mock_create_adapter):
+    def test_incompatible_schema_logs_warning(
+        self, mock_normalizer_cls, mock_create_adapter
+    ):
         """When validate_pydantic_compatibility returns compatible=False, logger.warning fires (line 146)."""
         mock_adapter = Mock()
         mock_adapter.retrieve_reporting_periods.return_value = ["12/31/2023"]
@@ -1031,7 +1041,9 @@ class TestCollectFilersSubmissionDateTimeEnhancedDatetimeInputs:
     """Cover datetime conversion in collect_filers_submission_date_time_enhanced (lines 412, 417, 422)."""
 
     @patch("ffiec_data_connect.methods_enhanced.create_protocol_adapter")
-    def test_datetime_reporting_period_and_since_date_happy_path(self, mock_create_adapter):
+    def test_datetime_reporting_period_and_since_date_happy_path(
+        self, mock_create_adapter
+    ):
         """datetime objects for both reporting_period and since_date succeed (lines 412, 417)."""
         mock_adapter = Mock()
         mock_adapter.retrieve_filers_submission_datetime.return_value = [

@@ -24,9 +24,10 @@ class TestSoapCacheStubs:
             result = get_cache_stats()
 
     def test_get_cache_stats_returns_expected_dict(self):
+        import warnings
+
         from ffiec_data_connect.soap_cache import get_cache_stats
 
-        import warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             result = get_cache_stats()

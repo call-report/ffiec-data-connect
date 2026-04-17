@@ -154,10 +154,14 @@ class TestPolarsDirectConversion:
 
                     # Verify actual values are correct and properly typed
                     int_row = df_polars.filter(pl.col("data_type") == "int").row(0)
-                    assert int_row[5] == 1500000  # int_data column (index 5 after adding id_rssd)
+                    assert (
+                        int_row[5] == 1500000
+                    )  # int_data column (index 5 after adding id_rssd)
 
                     float_row = df_polars.filter(pl.col("data_type") == "float").row(0)
-                    assert abs(float_row[6] - 1.25) < 0.001  # float_data column (index 6)
+                    assert (
+                        abs(float_row[6] - 1.25) < 0.001
+                    )  # float_data column (index 6)
 
                     bool_row = df_polars.filter(pl.col("data_type") == "bool").row(0)
                     assert bool_row[7] is True  # bool_data column (index 7)
@@ -250,7 +254,9 @@ class TestPolarsDirectConversion:
 
                     # Verify nulls are handled correctly
                     row = df_polars.row(0)
-                    assert row[5] == 1000  # int_data is not null (index 5 after adding id_rssd)
+                    assert (
+                        row[5] == 1000
+                    )  # int_data is not null (index 5 after adding id_rssd)
                     assert row[6] is None  # float_data is null (index 6)
                     assert row[7] is None  # bool_data is null (index 7)
                     assert row[8] is None  # str_data is null (index 8)

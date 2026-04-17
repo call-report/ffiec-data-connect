@@ -20,7 +20,6 @@ from ffiec_data_connect import methods
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 from ffiec_data_connect.credentials import WebserviceCredentials
 
-
 # Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
 _patch_get_conn = patch.object(
     AsyncCompatibleClient, "_get_connection", return_value=Mock()
@@ -396,7 +395,9 @@ class TestAsyncFrameworkIntegration(AsyncIntegrationTestBase):
 
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_django_channels_like_integration(self, mock_collect_data, _mock_conn):
+    async def test_django_channels_like_integration(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test Django Channels-like WebSocket integration pattern."""
         mock_collect_data.return_value = [{"real_time_data": "test"}]
 
@@ -523,7 +524,9 @@ class TestAsyncErrorHandling(AsyncIntegrationTestBase):
 
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_async_graceful_shutdown_with_errors(self, mock_collect_data, _mock_conn):
+    async def test_async_graceful_shutdown_with_errors(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test graceful shutdown even when operations are failing."""
 
         # Create a mix of successful and failing operations
@@ -578,7 +581,9 @@ class TestAsyncPerformancePatterns(AsyncIntegrationTestBase):
 
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_async_vs_sync_performance_comparison(self, mock_collect_data, _mock_conn):
+    async def test_async_vs_sync_performance_comparison(
+        self, mock_collect_data, _mock_conn
+    ):
         """Compare async vs sync performance for parallel operations."""
 
         # Mock operation with consistent delay
@@ -618,7 +623,9 @@ class TestAsyncPerformancePatterns(AsyncIntegrationTestBase):
 
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_async_memory_efficiency_under_load(self, mock_collect_data, _mock_conn):
+    async def test_async_memory_efficiency_under_load(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test memory efficiency of async operations under load."""
         mock_collect_data.return_value = [{"data": "x" * 100}]  # Small data payload
 
@@ -655,7 +662,9 @@ class TestAsyncPerformancePatterns(AsyncIntegrationTestBase):
 
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
-    async def test_async_connection_reuse_efficiency(self, mock_collect_data, _mock_conn):
+    async def test_async_connection_reuse_efficiency(
+        self, mock_collect_data, _mock_conn
+    ):
         """Test that async operations efficiently reuse connections."""
         mock_collect_data.return_value = [{"test": "data"}]
 

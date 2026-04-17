@@ -854,10 +854,10 @@ class SOAPAdapter:
             soap_method="SOAPAdapter",
             rest_equivalent="RESTAdapter(OAuth2Credentials(...))",
             code_example=(
-                '  from ffiec_data_connect import OAuth2Credentials, create_protocol_adapter\n'
-                '\n'
+                "  from ffiec_data_connect import OAuth2Credentials, create_protocol_adapter\n"
+                "\n"
                 '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
-                '  adapter = create_protocol_adapter(creds)'
+                "  adapter = create_protocol_adapter(creds)"
             ),
         )
 
@@ -987,11 +987,11 @@ def create_protocol_adapter(
             soap_method="create_protocol_adapter (SOAP)",
             rest_equivalent="create_protocol_adapter(OAuth2Credentials(...))",
             code_example=(
-                '  from ffiec_data_connect import OAuth2Credentials\n'
-                '  from ffiec_data_connect.protocol_adapter import create_protocol_adapter\n'
-                '\n'
+                "  from ffiec_data_connect import OAuth2Credentials\n"
+                "  from ffiec_data_connect.protocol_adapter import create_protocol_adapter\n"
+                "\n"
                 '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
-                '  adapter = create_protocol_adapter(creds)'
+                "  adapter = create_protocol_adapter(creds)"
             ),
         )
 
