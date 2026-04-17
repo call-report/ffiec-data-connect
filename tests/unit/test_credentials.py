@@ -11,7 +11,6 @@ from datetime import datetime
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from requests import Session
 
 from ffiec_data_connect.credentials import (
     CredentialType,

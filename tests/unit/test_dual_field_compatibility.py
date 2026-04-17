@@ -9,7 +9,6 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
-import requests
 
 from ffiec_data_connect.credentials import OAuth2Credentials, WebserviceCredentials
 from ffiec_data_connect.datahelpers import _normalize_output_from_reporter_panel
