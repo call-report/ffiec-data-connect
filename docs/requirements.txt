@@ -3,6 +3,7 @@ sphinx>=5.0.0
 sphinx-rtd-theme>=1.0.0
 sphinx-autodoc-typehints>=1.19.0
 myst-parser>=0.18.0
+sphinxcontrib-openapi>=0.7.0
 
 # Dependencies needed for autodoc (must match pyproject.toml)
 httpx>=0.24.0
