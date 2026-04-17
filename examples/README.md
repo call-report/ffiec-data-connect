@@ -15,7 +15,7 @@ Each notebook solves one specific problem. For a full tour of every API method, 
 
 ## Before You Start
 
-1. **Install**: `pip install ffiec-data-connect` (Python 3.10+)
+1. **Install**: `pip install ffiec-data-connect` (Python 3.11+)
 2. **Get a token**: Register at [https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx](https://cdr.ffiec.gov/public/PWS/PublicLogin.aspx) and generate a 90-day JWT bearer token from the Account Details tab
 3. **Supply it** to the notebooks in whichever way is most convenient (see below)
 
@@ -58,7 +58,7 @@ For fully scripted notebooks (no UI at all), call `creds = get_credentials()` in
 
 Every notebook (including [`ffiec_data_connect_rest_demo.ipynb`](../ffiec_data_connect_rest_demo.ipynb)) now starts with a **Step 0** cell that:
 
-- Verifies Python >= 3.10 and that all required dependencies are importable (fails fast with a clear message if anything is missing).
+- Verifies Python >= 3.11 and that all required dependencies are importable (fails fast with a clear message if anything is missing).
 - Warns on missing optional deps (`matplotlib`, `polars`, `pyarrow`) that some notebooks use for plotting or alternate output formats.
 - Prints the resolved library version and path so you can confirm which copy of `ffiec_data_connect` you're actually running.
 - Defines `get_credentials()` (see "Supplying credentials" above).

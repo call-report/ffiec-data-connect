@@ -22,7 +22,7 @@ The ``ffiec-data-connect`` test suite uses `pytest
 
 The unit test suite achieves **100% statement coverage** and ~99.7% branch
 coverage of the ``ffiec_data_connect`` package. Continuous integration runs
-the suite on Python 3.10, 3.11, 3.12, and 3.13.
+the suite on Python 3.11, 3.12, 3.13, and 3.14.
 
 See the ``TESTS.md`` file in the repository root for a complete, per-test
 catalog with descriptions.
@@ -337,7 +337,7 @@ Continuous Integration
 ======================
 
 GitHub Actions runs the test suite on every push and pull request. The
-matrix covers Python 3.10, 3.11, 3.12, and 3.13 on Linux.
+matrix covers Python 3.11, 3.12, 3.13, and 3.14 on Linux.
 
 - **Pull request workflow** — runs unit tests, coverage, lint, and
   type-checking across the full Python matrix. Integration tests are not

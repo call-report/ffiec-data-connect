@@ -53,7 +53,7 @@ This dual field name support applies to:
 
 ### Requirements
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - pip package manager
 
 > **Note**: This library requires modern Python versions. For best compatibility, use Python 3.11+ on macOS/Linux. Windows users may experience SSL certificate issues and should consider using Google Colab, WSL, or a Linux environment.

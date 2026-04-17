@@ -37,6 +37,7 @@ Generate a JWT bearer token from the FFIEC portal, drop the `FFIECConnection()` 
 
 ### Dependency changes
 
+- **Python 3.11 is now the minimum version** — up from 3.10. This matches pandas 3.0's own requirement; there is no way to support pandas 3.0 and Python 3.10 together. Python 3.10 reaches end-of-life on 2026-10-04.
 - **pandas 3.0 is now the baseline** — `pandas>=3.0.0,<4.0.0` (up from `>=1.3.0,<3.0.0`). If you're on pandas 2.x or earlier, upgrade before installing. The full 652-test unit suite and 24-test live integration suite pass against pandas 3.0.2 with zero deprecation warnings from our code.
 - `zeep` and `requests` removed from dependencies. If your project imported them transitively through this library, add them to your own `pyproject.toml`.
 - Upper bounds relaxed across the board to allow modern major versions:

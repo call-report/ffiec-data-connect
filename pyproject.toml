@@ -10,17 +10,17 @@ authors = [
 ]
 description = "Secure, thread-safe Python wrapper for FFIEC REST API with async support"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Office/Business :: Financial",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Database",
@@ -194,7 +194,7 @@ src_paths = ["src", "tests"]
 
 # MyPy type checking
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false

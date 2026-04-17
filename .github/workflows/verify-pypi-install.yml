@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
       fail-fast: false
 
     steps:
@@ -222,7 +222,7 @@ jobs:
         if [[ "${{ needs.verify-install.result }}" == "success" ]]; then
           echo "✅ **Installation Verification**: PASSED" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Package successfully installed and verified across all Python versions (3.10-3.13):" >> $GITHUB_STEP_SUMMARY
+          echo "Package successfully installed and verified across all Python versions (3.11-3.14):" >> $GITHUB_STEP_SUMMARY
           echo "- Version verification ✅" >> $GITHUB_STEP_SUMMARY
           echo "- Core imports ✅" >> $GITHUB_STEP_SUMMARY
           echo "- Basic functionality ✅" >> $GITHUB_STEP_SUMMARY

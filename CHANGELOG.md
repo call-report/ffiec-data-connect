@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New preferred calling convention**: `collect_*(creds, ...)` without session parameter; the older `collect_*(None, creds, ...)` form still works but emits `DeprecationWarning`
 - **`SOAPDeprecationError`** with detailed migration guidance, code examples, and portal URL
 - **`MIGRATION.md` and `llms.txt` migration guides** for developers and AI coding assistants
-- **Python 3.14 officially supported** in the CI test matrix alongside 3.10–3.13
+- **Python 3.11 is the new minimum supported version** (up from 3.10, matching pandas 3.0's requirement). Python 3.10 is EOL on 2026-10-04.
+- **Python 3.14 officially supported** in the CI test matrix alongside 3.11–3.13
 - **100% statement test coverage**: 652 unit + 26 integration tests
 
 ### Bug Fixes
