@@ -9,7 +9,7 @@ shut down on February 28, 2026.
 """
 
 # Version
-__version__ = "3.0.0"
+__version__ = "3.0.0rc1"
 
 # New async-compatible client
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter

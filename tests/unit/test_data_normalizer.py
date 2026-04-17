@@ -875,3 +875,36 @@ class TestGetNormalizationStatsDictBranch:
         assert stats["transformations_applied"] >= 2
         assert len(stats["fields_normalized"]) >= 2
         assert stats["validation_passed"] is True
+
+
+class TestValidateObjectFDICCertNumberFallthrough:
+    """Cover 478->454: field is in VALIDATION_RULES but isn't ZIP or ID_RSSD — falls through loop."""
+
+    def test_fdic_cert_number_non_string_falls_through_elif_chain(self):
+        """FDICCertNumber is in VALIDATION_RULES with a pattern. A non-string value skips the
+        first `if pattern and isinstance(value, str)` branch, then reaches the ZIP elif (False)
+        and the ID_RSSD elif (False), exiting the outer if back to the loop head. No error appended.
+        """
+        errors: list = []
+        DataNormalizer._validate_object({"FDICCertNumber": 12345}, "test", errors)
+        # No error about FDICCertNumber — this field has no non-string error path in _validate_object,
+        # and the pattern-check path is skipped because value isn't a string.
+        assert not any("FDICCertNumber" in e for e in errors)
+
+
+class TestGetNormalizationStatsNeitherListNorDict:
+    """Cover 520->528: data_before/after are neither both lists nor both dicts."""
+
+    def test_mixed_types_skips_count_branches(self):
+        """When `before` and `after` don't match either the list/list or dict/dict branches
+        (e.g., both strings), the elif at line 520 evaluates False and control jumps past both
+        count-branches to the validation step at line 528. No count_object_changes happens, but
+        stats are still returned without raising."""
+        before = "not-a-list-or-dict"
+        after = "also-not-a-list-or-dict"
+        stats = DataNormalizer.get_normalization_stats(before, after, "Test")
+        # Stats should still return a structured dict even for non-comparable types.
+        assert isinstance(stats, dict)
+        assert stats["endpoint"] == "Test"
+        # No transformations were counted because neither branch matched.
+        assert stats["transformations_applied"] == 0

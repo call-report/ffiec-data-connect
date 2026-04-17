@@ -1345,27 +1345,30 @@ class TestHandleResponse403NoTokenExpires:
         assert "expired" not in str(exc_info.value).lower() or "verify" in str(exc_info.value).lower()
 
 
-class TestRateLimiterHourlyNoWaitNeeded:
-    """Cover branch 915->923: hourly limit reached but oldest call is old enough."""
+class TestRateLimiterFiltersExpiredCalls:
+    """When pre-existing call_history has entries older than 1 hour, the filter at the top of
+    wait_if_needed() drops them before the hourly-limit check. Confirms the filter works."""
 
     @patch("ffiec_data_connect.protocol_adapter.time")
-    def test_hourly_limit_no_wait(self, mock_time):
-        """When 2500 calls exist but oldest is >1 hour ago, wait_time <= 0."""
+    def test_expired_history_is_filtered_before_limit_check(self, mock_time):
+        """Entries at or below `now - 3600` must be filtered out, so the hourly block doesn't trigger."""
         limiter = RateLimiter(calls_per_hour=2500, calls_per_second=100.0)
 
         now = 10000.0
         mock_time.time.return_value = now
 
-        # Fill history with 2500 calls, oldest at now - 3601 (just over 1 hour ago)
-        limiter.call_history = [now - 3601 + i for i in range(2500)]
+        # Fill history with 2500 calls all at now - 3601 (just over 1 hour ago). After the filter,
+        # call_history should be empty and the hourly-limit branch never enters.
+        limiter.call_history = [now - 3601 + i * 1e-6 for i in range(2500)]
         limiter.last_call = now - 10.0
 
         limiter.wait_if_needed()
 
-        # Should NOT have called sleep for hourly limit (wait_time <= 0)
-        # May have been called for per-second limit though
+        # The filter should have pruned the expired entries, so no long hourly sleep was issued.
         hourly_sleeps = [c for c in mock_time.sleep.call_args_list if c[0][0] > 10]
         assert len(hourly_sleeps) == 0
+        # The newly-appended call is the only survivor (plus whatever the filter kept within the window).
+        assert all(ts > now - 3600 for ts in limiter.call_history)
 
 
 class TestXBRLRowSkipNone:

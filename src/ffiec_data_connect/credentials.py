@@ -6,7 +6,9 @@ Credentials may be input via environment variables, or passing them as arguments
 
 """
 
+import logging
 import os
+import warnings
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, Optional
@@ -18,6 +20,8 @@ from ffiec_data_connect.exceptions import (
     SOAPDeprecationError,
     raise_exception,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CredentialType(Enum):
@@ -218,11 +222,21 @@ class OAuth2Credentials:
 
         # Check if token is expired
         if self.is_expired:
-            print("Warning: OAuth2 token is expired or expires within 24 hours.")
+            logger.warning(
+                "OAuth2 token is expired or expires within 24 hours."
+            )
             return False
 
-        # TODO: Implement actual REST API test call when adapter is ready
-        print("OAuth2 credentials appear valid (full validation pending REST adapter).")
+        # No live REST call is made here — we only check token shape and expiry.
+        # Warn callers so they don't mistake a True return for a real credential test.
+        warnings.warn(
+            "test_credentials() performs only local validation (token shape + expiry); "
+            "it does not make a live API call. A True return does not guarantee the "
+            "FFIEC server will accept the token. Make a real request (e.g. "
+            "collect_reporting_periods) to verify end-to-end.",
+            UserWarning,
+            stacklevel=2,
+        )
         return True
 
     def __str__(self) -> str:

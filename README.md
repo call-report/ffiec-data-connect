@@ -299,7 +299,7 @@ This library is provided by Civic Forge Solutions LLC under the Mozilla Public L
 
 ## Commercial Support
 
-`ffiec-data-connect` is free and open-source under MPL 2.0 — you can use it commercially, modify it, and distribute it without any payment or license key. Organizations that want priority support, SLAs, migration assistance, indemnification, or custom development can purchase an optional commercial support agreement from Civic Forge Solutions LLC.
+`ffiec-data-connect` is free and open-source under MPL 2.0 — you can use it commercially, modify it, and distribute it without any payment or license key. Organizations that want priority support with guaranteed response times, migration assistance, or custom development can purchase an optional commercial support agreement from Civic Forge Solutions LLC.
 
 The commercial offering does not gate any features of the library; it is strictly a support and services agreement for teams that need a formal vendor relationship (common in regulated finance). See [COMMERCIAL.md](COMMERCIAL.md) for what's included, who it's for, and how to get in touch. For inquiries, contact michael@civicforge.solutions.
 

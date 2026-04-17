@@ -261,5 +261,24 @@ class TestXBRLProcessorOuterUnicodeDecodeError:
         Config.reset()
 
 
+class TestXBRLProcessorDateFormatFallthrough:
+    """Cover branch 202->205: date_format doesn't match any of the three known values."""
+
+    def test_unknown_date_format_leaves_quarter_as_raw_string(self):
+        """An unrecognized date_format falls through the elif chain without transforming `quarter`.
+
+        The three known formats are 'string_original', 'string_yyyymmdd', and 'python_format'.
+        Anything else must bypass transformation, leaving the ISO date string intact.
+        """
+        items = [{
+            "@contextRef": "PeriodContext_1234567_2023-12-31",
+            "@unitRef": "USD",
+            "#text": "1000",
+        }]
+        result = _process_xbrl_item("cc:RCON2170", items, "unrecognized_format")
+        # Quarter remains as the original raw YYYY-MM-DD string since no branch transformed it.
+        assert result[0]["quarter"] == "2023-12-31"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

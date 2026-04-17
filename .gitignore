@@ -2,14 +2,29 @@
 .vscode/
 .idea/
 
+# AI assistants / developer tooling (per-user state — never commit)
+.claude/
+.cursor/
+.continue/
+.aider*
+
+# Virtual environments
+.venv/
+venv/
+env/
+
 # Python bytecode and cache
 *.pyc
 *__pycache__*
 .mypy_cache/
 .ruff_cache/
 
+# uv lockfile — libraries should not ship lockfiles (applications do)
+uv.lock
+
 # OS files
 .DS_Store
+Thumbs.db
 
 # Testing and coverage
 .pytest_cache/

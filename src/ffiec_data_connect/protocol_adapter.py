@@ -912,7 +912,12 @@ class RateLimiter:
                 oldest_call = self.call_history[0]
                 wait_time = oldest_call + 3600 - now
 
-                if wait_time > 0:
+                # The False branch here is unreachable in practice: the filter above keeps only
+                # timestamps strictly greater than `hour_ago = now - 3600`, so the surviving
+                # oldest_call must satisfy `oldest_call > now - 3600`, which forces
+                # `wait_time = oldest_call + 3600 - now > 0`. The `if` remains as defense against
+                # future refactors that might relax the filter's strict inequality.
+                if wait_time > 0:  # pragma: no branch
                     logger.warning(
                         f"Hourly rate limit reached. Waiting {wait_time:.1f} seconds"
                     )

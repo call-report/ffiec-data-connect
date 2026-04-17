@@ -26,20 +26,12 @@ A commercial agreement with Civic Forge Solutions LLC can include any of the fol
 - **FFIEC API integration assistance** — help designing, reviewing, or troubleshooting data pipelines that consume Call Report, UBPR, or related regulatory data
 - **Migration support** — hands-on help with the SOAP-to-REST transition, major version upgrades, or moving off of legacy internal tooling
 - **Custom feature development** scoped to your use case, prioritized ahead of the public roadmap
-- **Indemnification** against third-party IP claims, subject to the terms of the commercial agreement
 - **Optional direct access to maintainers** for code review, architecture consultation, or design discussions
 
-Every engagement is scoped individually — you only pay for the pieces you actually need.
-
-## Who Should Consider This
-
-Commercial support tends to make sense for banks and credit unions integrating regulatory data into internal systems, FinTech companies building products on top of FFIEC data, regulatory analytics and risk firms, consultancies that deliver FFIEC-based analysis to clients, and any organization with compliance, procurement, or audit requirements that call for formally supported software. If your vendor management process asks "who do we call when it breaks?", this is the answer to that question.
-
-If you are an individual researcher, academic, hobbyist, or a small team that is comfortable with community support via GitHub issues, you almost certainly do not need a commercial license — just use the library under MPL 2.0 and open an issue if you hit a problem.
 
 ## What It Costs
 
-Pricing is based on organization size, expected support volume, the scope of services you need, and whether the engagement includes custom development or ongoing consulting time. There is no public price list because a one-person FinTech prototype and a multinational bank have very different needs. Contact us and we will put together a quote that reflects your actual situation.
+Pricing is based on organization size, expected support volume, the scope of services you need, and whether the engagement includes custom development or ongoing consulting time. There is no public price list because different organizations have very different needs. Contact us and we will put together a quote that reflects your actual situation.
 
 ## Getting in Touch
 
@@ -47,7 +39,7 @@ For commercial licensing, support inquiries, or to request a quote, email:
 
 **michael@civicforge.solutions**
 
-Please include a brief description of your organization and what you are trying to accomplish. Initial inquiries are typically acknowledged within two business days.
+Please include a brief description of your organization and what you are trying to accomplish.
 
 ## The Open-Source Library Is Not Going Anywhere
 
