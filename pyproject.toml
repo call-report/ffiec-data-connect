@@ -74,15 +74,11 @@ dev = [
     "twine>=4.0.0",
 ]
 docs = [
+    # Narrative docs moved to https://call.report/library. This build now
+    # renders only a redirect landing page; autodoc, openapi, myst, RST
+    # linting, and doc-build pytest dependencies are no longer needed.
     "sphinx>=5.0.0",
     "sphinx-rtd-theme>=1.0.0",
-    "sphinx-autodoc-typehints>=1.19.0",
-    "myst-parser>=0.18.0",
-    "sphinxcontrib-openapi>=0.7.0",
-    "doc8>=1.1.0",  # RST linting
-    "rstcheck[sphinx]>=6.0.0",  # RST syntax checking
-    "pytest>=7.0.0",  # Required for documentation build tests
-    "pytest-asyncio>=0.21.0",  # Required by conftest.py pytest_plugins
 ]
 notebook = [
     "jupyter>=1.0.0",
@@ -94,11 +90,11 @@ all = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/call-report/ffiec-data-connect"
-"Documentation" = "https://ffiec-data-connect.readthedocs.io/"
+"Homepage" = "https://call.report/library/ffiec-data-connect"
+"Documentation" = "https://call.report/library/ffiec-data-connect"
 "Repository" = "https://github.com/call-report/ffiec-data-connect"
 "Bug Tracker" = "https://github.com/call-report/ffiec-data-connect/issues"
-"Changelog" = "https://github.com/call-report/ffiec-data-connect/blob/main/CHANGELOG.md"
+"Changelog" = "https://call.report/library/ffiec-data-connect/release-history"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
