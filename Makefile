@@ -1,4 +1,4 @@
-.PHONY: format lint type-check test test-fast coverage build clean check-all install-dev docs docs-test docs-lint help
+.PHONY: format lint type-check test test-fast coverage build clean check-all install-dev docs help
 
 # Quality checks (run in order)
 format:
@@ -57,22 +57,17 @@ publish:
 	python -m twine upload dist/*
 
 # Documentation targets
+# Note: narrative docs moved to https://call.report/library/ffiec-data-connect.
+# The only Sphinx output remaining is a redirect landing at
+# ffiec-data-connect.readthedocs.io. `make docs` builds that landing locally.
+# The previous docs-test / docs-lint / docs-linkcheck targets were retired
+# when their dependencies (pytest-asyncio in [docs], doc8, rstcheck) were
+# dropped from pyproject.toml.
 docs:
 	cd docs && python -m sphinx -b html source build/html
 
-docs-test:
-	python -m pytest tests/unit/test_documentation_build.py -v
-
 docs-clean:
 	rm -rf docs/build/
-
-docs-linkcheck:
-	cd docs && python -m sphinx -b linkcheck source build/linkcheck
-
-docs-lint:
-	@echo "🔍 Linting RST files..."
-	doc8 docs/source/ --max-line-length 100
-	rstcheck --recursive docs/source/
 
 # Cleanup
 clean:
@@ -100,11 +95,8 @@ help:
 	@echo "  coverage-html  - Generate HTML coverage report for core modules"
 	@echo ""
 	@echo "Documentation:"
-	@echo "  docs           - Build HTML documentation"
-	@echo "  docs-test      - Test documentation build process"
-	@echo "  docs-lint      - Lint RST files with doc8 and rstcheck"
+	@echo "  docs           - Build local HTML preview of the RTD redirect landing"
 	@echo "  docs-clean     - Remove documentation build files"
-	@echo "  docs-linkcheck - Check external links in documentation"
 	@echo ""
 	@echo "Build & Deploy:"
 	@echo "  build          - Build distribution packages"

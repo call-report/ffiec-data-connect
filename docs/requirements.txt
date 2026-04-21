@@ -1,15 +1,7 @@
-# ReadTheDocs build requirements
+# ReadTheDocs build requirements — the retired narrative docs are gone;
+# the only thing RTD still builds is docs/source/index.rst, a one-page
+# redirect landing that preserves the ffiec-data-connect.readthedocs.io
+# URL. See docs/source/conf.py (extensions = []). These two packages
+# mirror pyproject.toml [project.optional-dependencies.docs].
 sphinx>=5.0.0
 sphinx-rtd-theme>=1.0.0
-sphinx-autodoc-typehints>=1.19.0
-myst-parser>=0.18.0
-sphinxcontrib-openapi>=0.7.0
-
-# Dependencies needed for autodoc (must match pyproject.toml)
-httpx>=0.24.0
-pandas>=3.0.0
-numpy>=1.20.0
-lxml>=4.6.0
-xmltodict>=0.12.0
-defusedxml>=0.7.0
-pydantic>=2.0.0
