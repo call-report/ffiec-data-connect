@@ -236,7 +236,7 @@ data = collect_data(
 
 For more examples, see:
 - **Jupyter Notebooks**: Included with the package for hands-on learning
-- **Documentation Examples**: Complete code snippets in the [full documentation](https://ffiec-data-connect.readthedocs.io/)
+- **Documentation Examples**: Complete code snippets in the [full documentation](https://call.report/library/ffiec-data-connect)
 
 ## Common Issues and Troubleshooting
 
@@ -305,7 +305,7 @@ The commercial offering does not gate any features of the library; it is strictl
 
 ## Additional Resources
 
-- **Full Documentation**: https://ffiec-data-connect.readthedocs.io/
-- **Examples**: Jupyter notebooks included with package
-- **Version History**: See CHANGELOG.md
-- **REST API Reference**: Comprehensive OpenAPI specification in documentation
+- **Full Documentation**: https://call.report/library/ffiec-data-connect
+- **Examples**: Jupyter notebooks included with package; also walked through at https://call.report/library/ffiec-data-connect/quickstart
+- **Version History**: https://call.report/library/ffiec-data-connect/release-history (also CHANGELOG.md in this repo)
+- **REST API Reference**: https://call.report/library/ffiec-data-connect/rest-api — narrative plus interactive OpenAPI viewer at https://call.report/api/
