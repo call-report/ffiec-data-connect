@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0rc3] - 2026-04-21
+
+**Metadata-only pre-release.** No code, test, or public API changes from rc2.
+
+### Changed
+
+- `README.md`: replaced two stale `ffiec-data-connect.readthedocs.io` links
+  with the current documentation home at
+  https://call.report/library/ffiec-data-connect. README contents are
+  bundled into the PyPI long description, so the rc2 project page
+  rendered links that pointed at the retired RTD site.
+
+### Notes
+
+- Installable from PyPI (pre-release channel) with
+  `pip install --pre ffiec-data-connect` or `ffiec-data-connect==3.0.0rc3`.
+- `[project.urls]` already pointed at call.report in rc2; this
+  release corrects the long-description text to match.
+- All rc2-installed code continues to work unchanged under rc3.
+
+## [3.0.0rc2] - 2026-04-20 — Superseded by rc3
+
+First installable 3.0 pre-release.
+
+### Changed
+
+- `[project.urls]` in `pyproject.toml` repointed from GitHub / RTD to
+  https://call.report/library/ffiec-data-connect for `Homepage` and
+  `Documentation`, and to
+  https://call.report/library/ffiec-data-connect/release-history for
+  `Changelog`. `Repository` and `Bug Tracker` remain on GitHub.
+- `docs/`: Sphinx narrative RSTs removed; `docs/source/index.rst` now
+  renders a single redirect landing so the
+  `ffiec-data-connect.readthedocs.io` URL remains a live redirect into
+  call.report.
+- `docs/source/conf.py`: `extensions = []` — autodoc / napoleon /
+  sphinxcontrib-openapi no longer needed with one static page.
+- `pyproject.toml [project.optional-dependencies.docs]`: trimmed from
+  9 deps to 2 (`sphinx`, `sphinx-rtd-theme`). Removed
+  sphinx-autodoc-typehints, myst-parser, sphinxcontrib-openapi, doc8,
+  rstcheck, and doc-build pytest deps.
+
+### Known issue (fixed in rc3)
+
+- `README.md` still contained two `ffiec-data-connect.readthedocs.io`
+  references which render on the PyPI project page long description.
+  Fixed in rc3 — PyPI enforces filename reservation, so the fix
+  required a new version number.
+
 ## [3.0.0] - 2026-04-09
 
 ### Breaking Changes
