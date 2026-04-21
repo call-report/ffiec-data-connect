@@ -1,63 +1,59 @@
-.. FFIEC Webservice Python Connector documentation master file, created by
-   sphinx-quickstart on Tue Jul 26 15:54:06 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+ffiec-data-connect documentation has moved
+==========================================
 
-Welcome to FFIEC Webservice Python Connector's documentation!
-=============================================================
+The narrative documentation for ``ffiec-data-connect`` now lives at
+`call.report <https://call.report/library/ffiec-data-connect>`_.
 
-Repo: https://github.com/call-report/ffiec-data-connect
+This page remains at its original URL so older bookmarks and search results
+keep working, but everything below has been rewritten, reorganized, and is
+actively maintained there.
 
-* **This package and documentation is not affiliated with the Federal Financial Institution Examination Council (FFIEC) or any other US Government Agency.**
-* **Please review the license and disclaimer before using this package.**
+Start here
+----------
 
-The FFIEC Webservice Python Connector (`ffiec_data_connect`) was created to facilitate the use of the FFIEC REST API.
+- `Install <https://call.report/library/ffiec-data-connect/install>`_ — ``pip install --pre ffiec-data-connect``.
+- `Authentication <https://call.report/library/ffiec-data-connect/auth>`_ — JWT bearer tokens from the FFIEC CDR portal.
+- `Quickstart <https://call.report/library/ffiec-data-connect/quickstart>`_ — first data pull in under two minutes.
 
-Although limited documentation is provided for the Webservice by the FFIEC, practical use of the Webservice via Python requires a considerable amount of boilerplate code - and knowledge of esoteric terms and concepts inherent to bank regulatory data.
+Reference
+---------
 
-With these challenges in mind, this package provides a Python wrapper for the FFIEC REST API using OAuth2Credentials (bearer tokens). The package automatically handles authentication, data normalization, and type handling, providing a unified interface for data collection.
+- `Library overview <https://call.report/library/ffiec-data-connect>`_ — catalog of the full reference.
+- `collect_* functions <https://call.report/library/ffiec-data-connect/functions>`_ — the seven module-level data-retrieval functions.
+- `Credentials <https://call.report/library/ffiec-data-connect/credentials>`_ — ``OAuth2Credentials``.
+- `Client and adapters <https://call.report/library/ffiec-data-connect/client>`_ — ``AsyncCompatibleClient``, ``RateLimiter``, ``RESTAdapter``.
+- `Exceptions <https://call.report/library/ffiec-data-connect/exceptions>`_ — ``FFIECError`` and its subclasses.
+- `REST API reference <https://call.report/library/ffiec-data-connect/rest-api>`_ — the underlying HTTP surface, with an interactive OpenAPI viewer at `/api/ <https://call.report/api/>`_.
 
-Data returned from the APIs may be returned as:
+Workflows
+---------
 
-* Native Python data structures (`list`)
-* Pandas DataFrames or Series
-* Polars DataFrames (with direct XBRL conversion for maximum precision)
+- `Output formats <https://call.report/library/ffiec-data-connect/output-formats>`_ — list / pandas / polars; null handling.
+- `Bulk download <https://call.report/library/ffiec-data-connect/bulk-download>`_ — pulling many institutions.
+- `Async and rate limits <https://call.report/library/ffiec-data-connect/async-and-rate-limits>`_ — the 2,500/hr ceiling.
+- `Incremental updates <https://call.report/library/ffiec-data-connect/incremental-updates>`_ — detect refilings.
+- `Peer analysis <https://call.report/library/ffiec-data-connect/peer-analysis>`_ — UBPR peer comparisons.
 
-Getting Started with Interactive Tutorials
-===========================================
+Operations
+----------
 
-The best way to learn the library is through our comprehensive Jupyter notebook tutorial:
+- `Troubleshooting <https://call.report/library/ffiec-data-connect/troubleshooting>`_ — errors by frequency.
+- `Migration from v2 <https://call.report/library/ffiec-data-connect/migration-from-v2>`_ — SOAP removal and the new calling convention.
 
-* **``ffiec_data_connect_rest_demo.ipynb``** - Complete REST API walkthrough with executable examples
+Contributing
+------------
 
-This notebook includes:
+- `Development setup <https://call.report/library/ffiec-data-connect/development>`_ — running from source.
+- `Testing <https://call.report/library/ffiec-data-connect/testing>`_ — test layout and conventions.
 
-* Step-by-step setup instructions with real credentials
-* Executable code examples using actual banking data
-* Troubleshooting guides for common issues
-* Performance optimization techniques
+Archive
+-------
 
-The notebook is included with the package installation and provides hands-on experience with the REST API.
+- `Release history <https://call.report/library/ffiec-data-connect/release-history>`_ — version-by-version changes, 0.1.0 through 3.0.0rc2.
 
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+Source
+------
 
-   account_setup
-   development_setup
-   testing
-   modules
-   rest_api_reference
-   data_type_handling
-   examples
-   troubleshooting
-   versionhistory
-   licensedisclaimer
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+- GitHub: `call-report/ffiec-data-connect <https://github.com/call-report/ffiec-data-connect>`_
+- PyPI: `ffiec-data-connect <https://pypi.org/project/ffiec-data-connect/>`_
+- Upstream ``CHANGELOG.md``: `github.com/call-report/ffiec-data-connect/blob/main/CHANGELOG.md <https://github.com/call-report/ffiec-data-connect/blob/main/CHANGELOG.md>`_

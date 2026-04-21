@@ -4,18 +4,10 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath("../../src"))
-sys.path.insert(0, os.path.abspath("../../src/ffiec_data_connect"))
-
+# Narrative docs have moved to https://call.report/library. This Sphinx build
+# now renders only a single landing page (docs/source/index.rst) that
+# redirects visitors to call.report while preserving the indexed RTD URL.
+# Autodoc, napoleon, openapi, and myst extensions are no longer needed.
 
 # -- Project information -----------------------------------------------------
 
@@ -28,15 +20,7 @@ release = "3.0.0rc2"
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-extensions = [
-    "sphinx.ext.napoleon",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.viewcode",
-    "sphinxcontrib.openapi",
-]
+extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
