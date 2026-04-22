@@ -40,6 +40,7 @@ from .exceptions import (
     RateLimitError,
     SOAPDeprecationError,
     ValidationError,
+    raise_exception,
 )
 from .models import (
     InstitutionsResponse,
@@ -50,6 +51,18 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
+
+# UTF-8 byte-order mark. The FFIEC UBPR XBRL endpoint emits raw
+# ``application/xml`` bytes with this prefix; the Call Report XBRL endpoint
+# (base64-in-JSON) does not. We strip the BOM so callers always see the same
+# shape — clean UTF-8 XML starting with the ``<?xml`` prolog — regardless of
+# which endpoint produced the bytes.
+_UTF8_BOM = b"\xef\xbb\xbf"
+
+
+def _strip_utf8_bom(data: bytes) -> bytes:
+    """Return ``data`` with a leading UTF-8 BOM removed, if present."""
+    return data.removeprefix(_UTF8_BOM)
 
 
 class ProtocolAdapter(ABC):
@@ -75,7 +88,11 @@ class ProtocolAdapter(ABC):
 
     @abstractmethod
     def retrieve_facsimile(
-        self, rssd_id: Union[str, int], reporting_period: str, series: str
+        self,
+        rssd_id: Union[str, int],
+        reporting_period: str,
+        series: str,
+        facsimile_format: str = "XBRL",
     ) -> bytes:
         """
         Retrieve facsimile data for an institution.
@@ -84,9 +101,10 @@ class ProtocolAdapter(ABC):
             rssd_id: Institution RSSD ID
             reporting_period: Reporting period (MM/dd/yyyy)
             series: Report series
+            facsimile_format: ``"XBRL"`` or ``"PDF"``.
 
         Returns:
-            Raw facsimile data (XBRL bytes)
+            Raw facsimile data bytes (XBRL XML or PDF).
         """
         pass
 
@@ -473,7 +491,11 @@ class RESTAdapter(ProtocolAdapter):
             raise
 
     def retrieve_facsimile(
-        self, rssd_id: Union[str, int], reporting_period: str, series: str
+        self,
+        rssd_id: Union[str, int],
+        reporting_period: str,
+        series: str,
+        facsimile_format: str = "XBRL",
     ) -> bytes:
         """
         Retrieve facsimile data via REST API.
@@ -481,11 +503,45 @@ class RESTAdapter(ProtocolAdapter):
         Args:
             rssd_id: Institution RSSD ID
             reporting_period: Reporting period (MM/dd/yyyy)
-            series: Report series
+            series: Report series (``"call"`` or ``"ubpr"``).
+            facsimile_format: ``"XBRL"`` (default) or ``"PDF"``. UBPR data
+                is only available as XBRL; passing ``"PDF"`` when
+                ``series == "ubpr"`` raises :class:`ValidationError` locally
+                — the UBPR endpoint has no PDF variant per the FFIEC spec.
 
         Returns:
-            Raw XBRL data bytes
+            Raw bytes — XBRL XML or a PDF file depending on
+            ``facsimile_format``. For XBRL output, any leading UTF-8 BOM
+            emitted by the FFIEC server is stripped so callers always see a
+            clean ``<?xml`` prolog.
+
+        Raises:
+            ValidationError: If ``facsimile_format`` is not ``"XBRL"``/``"PDF"``,
+                or if the caller requested ``"PDF"`` for UBPR series.
         """
+        # Local format validation — reject unknown or empty values before any
+        # network call, and reject the UBPR+PDF combo (UBPR endpoint is
+        # XBRL-only per the FFIEC spec). This guard matters for callers using
+        # the adapter directly — the `collect_data` wrapper has its own guard.
+        normalized_format = (facsimile_format or "").upper()
+        if normalized_format not in ("XBRL", "PDF"):
+            raise_exception(
+                ValidationError,
+                f"Invalid facsimile_format: {facsimile_format!r}",
+                field="facsimile_format",
+                value=str(facsimile_format),
+                expected="'XBRL' or 'PDF'",
+            )
+        if series.lower() == "ubpr" and normalized_format != "XBRL":
+            raise_exception(
+                ValidationError,
+                "UBPR facsimile is only available as XBRL",
+                field="facsimile_format",
+                value=facsimile_format,
+                expected="'XBRL' when series='ubpr' "
+                "(the FFIEC UBPR endpoint has no PDF variant)",
+            )
+
         try:
             # UBPR data requires different endpoint - route to specialized method
             if series.lower() == "ubpr":
@@ -502,7 +558,7 @@ class RESTAdapter(ProtocolAdapter):
                     "fiIdType": "ID_RSSD",  # Note: lowercase 'd' in fiId per PDF
                     "fiId": str(rssd_id),
                     "reportingPeriodEndDate": reporting_period,
-                    "facsimileFormat": "XBRL",
+                    "facsimileFormat": normalized_format,
                 }
             )
 
@@ -520,34 +576,54 @@ class RESTAdapter(ProtocolAdapter):
             if response.status_code == 200:
                 logger.info(f"Successfully retrieved facsimile for RSSD {rssd_id}")
 
-                # Check if response is JSON (contains base64-encoded XBRL)
+                # FFIEC returns the facsimile (XBRL or PDF) as a base64 string
+                # inside a JSON envelope. Decode here; only XBRL gets the
+                # BOM-stripping pass (PDF bytes start with %PDF and must not
+                # be altered even in the unlikely case of a false-positive
+                # BOM prefix).
+                is_xbrl = normalized_format == "XBRL"
+                normalize = _strip_utf8_bom if is_xbrl else (lambda b: b)
+
                 content_type = response.headers.get("content-type", "")
                 if "json" in content_type.lower():
-                    try:
-                        # Response is a JSON string containing base64-encoded XBRL
-                        json_data = response.json()
-                        if isinstance(json_data, str):
-                            # Decode base64 to get actual XBRL bytes
-                            import base64
+                    import base64
+                    import binascii
+                    import json as _json
 
-                            decoded_xbrl = base64.b64decode(json_data)
-                            logger.debug(
-                                f"Successfully decoded base64 XBRL data: {len(decoded_xbrl)} bytes"
-                            )
-                            return decoded_xbrl
-                        else:
-                            logger.warning(
-                                f"Unexpected JSON response format: {type(json_data)}"
-                            )
-                            return response.content
-                    except Exception as e:
-                        logger.warning(
-                            f"Failed to decode JSON/base64 response: {e}, returning raw content"
+                    try:
+                        json_data = response.json()
+                    except (ValueError, _json.JSONDecodeError) as e:
+                        # Malformed JSON on a 200 response is a real protocol
+                        # break — surface it rather than silently returning
+                        # the raw body, which historically masked bugs.
+                        raise ConnectionError(
+                            f"FFIEC RetrieveFacsimile returned HTTP 200 with "
+                            f"malformed JSON body: {e}"
+                        ) from e
+
+                    if not isinstance(json_data, str):
+                        raise ConnectionError(
+                            f"FFIEC RetrieveFacsimile returned HTTP 200 with "
+                            f"unexpected JSON shape (expected a base64 string, "
+                            f"got {type(json_data).__name__})"
                         )
-                        return response.content
+
+                    try:
+                        decoded = base64.b64decode(json_data)
+                    except (binascii.Error, ValueError) as e:
+                        raise ConnectionError(
+                            f"FFIEC RetrieveFacsimile returned a JSON string "
+                            f"that is not valid base64: {e}"
+                        ) from e
+
+                    logger.debug(
+                        f"Successfully decoded base64 {normalized_format} data: "
+                        f"{len(decoded)} bytes"
+                    )
+                    return normalize(decoded)
                 else:
-                    # Non-JSON response, return as-is
-                    return response.content
+                    # Non-JSON response (raw application/xml or application/pdf)
+                    return normalize(response.content)
             elif response.status_code == 404:
                 raise NoDataError(
                     f"No data found for RSSD {rssd_id} for period {reporting_period}"
@@ -796,34 +872,46 @@ class RESTAdapter(ProtocolAdapter):
             if response.status_code == 200:
                 logger.info(f"Successfully retrieved UBPR facsimile for RSSD {rssd_id}")
 
-                # Check if response is JSON (contains base64-encoded XBRL)
                 content_type = response.headers.get("content-type", "")
                 if "json" in content_type.lower():
-                    try:
-                        # Response is a JSON string containing base64-encoded XBRL
-                        json_data = response.json()
-                        if isinstance(json_data, str):
-                            # Decode base64 to get actual XBRL bytes
-                            import base64
+                    import base64
+                    import binascii
+                    import json as _json
 
-                            decoded_xbrl = base64.b64decode(json_data)
-                            logger.debug(
-                                f"Successfully decoded base64 UBPR XBRL data: {len(decoded_xbrl)} bytes"
-                            )
-                            return decoded_xbrl
-                        else:
-                            logger.warning(
-                                f"Unexpected JSON response format for UBPR: {type(json_data)}"
-                            )
-                            return response.content
-                    except Exception as e:
-                        logger.warning(
-                            f"Failed to decode UBPR JSON/base64 response: {e}, returning raw content"
+                    try:
+                        # Response is a JSON string containing base64-encoded XBRL.
+                        json_data = response.json()
+                    except (ValueError, _json.JSONDecodeError) as e:
+                        raise ConnectionError(
+                            f"FFIEC RetrieveUBPRXBRLFacsimile returned HTTP 200 "
+                            f"with malformed JSON body: {e}"
+                        ) from e
+
+                    if not isinstance(json_data, str):
+                        raise ConnectionError(
+                            f"FFIEC RetrieveUBPRXBRLFacsimile returned HTTP 200 "
+                            f"with unexpected JSON shape (expected a base64 "
+                            f"string, got {type(json_data).__name__})"
                         )
-                        return response.content
+
+                    try:
+                        decoded_xbrl = base64.b64decode(json_data)
+                    except (binascii.Error, ValueError) as e:
+                        raise ConnectionError(
+                            f"FFIEC RetrieveUBPRXBRLFacsimile returned a JSON "
+                            f"string that is not valid base64: {e}"
+                        ) from e
+
+                    logger.debug(
+                        f"Successfully decoded base64 UBPR XBRL data: "
+                        f"{len(decoded_xbrl)} bytes"
+                    )
+                    return _strip_utf8_bom(decoded_xbrl)
                 else:
-                    # Non-JSON response, return as-is
-                    return response.content
+                    # Non-JSON response (typical for UBPR — application/xml with
+                    # a leading UTF-8 BOM). Strip the BOM so callers always see
+                    # a clean "<?xml" prolog.
+                    return _strip_utf8_bom(response.content)
             elif response.status_code == 404:
                 raise NoDataError(
                     f"No UBPR data found for RSSD {rssd_id} for period {reporting_period}"

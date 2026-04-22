@@ -1,6 +1,19 @@
 # Test Catalog
 
-**652 unit tests, 26 integration tests** | 100% statement coverage, ~99.7% total
+**711 unit tests, 39 integration tests** | 100% statement coverage, ~99.7% total
+
+> **3.0.0rc4 note:** most of this catalog was written through rc3. rc4 added
+> ~45 tests covering (a) deprecation paths — `token_expires`, `session=`
+> kwarg, `output_type="bytes"`, `test_credentials(session=…)`; (b) new
+> output types `xbrl` / `pdf` on the facsimile endpoints; (c)
+> `force_null_types` parity on all 7 methods; (d) `RESTAdapter.retrieve_facsimile`
+> guards (facsimile_format validation, UBPR+PDF rejection, JSON-shape and
+> base64 failures now raise `ConnectionError` instead of silently returning
+> bytes); and (e) backfill of live `polars` output on every `collect_*` method.
+> Full per-test entries for those additions are deferred — `pytest --collect-only
+> tests/` is the authoritative listing. Some entries below reflect pre-rc4
+> test names / semantics that have changed; grep the test source before
+> relying on a specific entry.
 
 ## Running Tests
 

@@ -4,11 +4,9 @@ Comprehensive unit tests for methods.py with memory leak focus.
 Tests FFIEC webservice method wrappers, validation, data processing, and memory management.
 """
 
-import gc
 import tracemalloc
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Union
-from unittest.mock import MagicMock, Mock, call, patch
+from datetime import datetime
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -16,11 +14,9 @@ import pytest
 from ffiec_data_connect.credentials import WebserviceCredentials
 from ffiec_data_connect.exceptions import (
     ConnectionError,
-    NoDataError,
     SOAPDeprecationError,
     ValidationError,
 )
-from ffiec_data_connect.ffiec_connection import FFIECConnection
 from ffiec_data_connect.methods import (
     _convert_any_date_to_ffiec_format,
     _convert_quarter_to_date,
@@ -132,9 +128,10 @@ class TestValidators:
     """Test input validation functions."""
 
     def test_output_type_validator(self):
-        """Test output type validation."""
-        assert _output_type_validator("list") is True
-        assert _output_type_validator("pandas") is True
+        """Test output type validation (returns the normalized output_type string)."""
+        assert _output_type_validator("list") == "list"
+        assert _output_type_validator("pandas") == "pandas"
+        assert _output_type_validator("polars") == "polars"
 
         with pytest.raises((ValidationError, ValueError)):
             _output_type_validator("invalid")
@@ -814,40 +811,13 @@ class TestCollectDataRESTBranches:
                 output_type="list",
             )
 
-    @patch("ffiec_data_connect.protocol_adapter.create_protocol_adapter")
-    def test_rest_default_output_returns_normalized_data(self, mock_create_adapter):
-        """When output_type is not list/pandas/polars, return normalized_data (line 618)."""
-        from ffiec_data_connect.credentials import OAuth2Credentials
-
-        creds = Mock(spec=OAuth2Credentials)
-        sample_xbrl = b"""<?xml version="1.0" encoding="UTF-8"?>
-<xbrl xmlns:cc="http://www.ffiec.gov/call">
-    <context id="ctx_480228_2025-12-31">
-        <entity><identifier>480228</identifier></entity>
-        <period><instant>2025-12-31</instant></period>
-    </context>
-    <cc:RCON0010 contextRef="ctx_480228_2025-12-31" unitRef="USD" decimals="0">5000000</cc:RCON0010>
-</xbrl>"""
-
-        mock_adapter = Mock()
-        mock_adapter.retrieve_facsimile.return_value = sample_xbrl
-        mock_create_adapter.return_value = mock_adapter
-
-        # Use "bytes" output_type which passes validation, to hit line 618
-        # Actually "bytes" is in valid_types, but there's no explicit bytes branch in collect_data REST path
-        # Line 618 is the fallback `return normalized_data` after the if/elif chain
-        # We need an output_type that passes validation but isn't list/pandas/polars
-        # "bytes" is valid. Let's check what happens with "bytes".
-        result = collect_data(
-            creds,
-            reporting_period="12/31/2025",
-            rssd_id="480228",
-            series="call",
-            output_type="bytes",
-        )
-        # "bytes" is valid but there's no explicit "bytes" branch in collect_data REST,
-        # so it falls through to line 618 return normalized_data
-        assert result is not None
+    # Note: an earlier test exercised the "bytes fallthrough" in collect_data —
+    # output_type="bytes" passed the permissive legacy validator but had no
+    # matching branch, so the function fell through to the list-returning path.
+    # That silent misbehavior was fixed in 3.0.0rc4: bytes is deprecated, and
+    # on collect_data it emits a DeprecationWarning and raises ValidationError.
+    # See TestOutputTypeBytesDeprecated in test_calling_conventions.py for the
+    # current contract.
 
 
 class TestCollectFilersOAuth2Delegation:

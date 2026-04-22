@@ -5,6 +5,95 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0rc4] - 2026-04-22
+
+Deprecations, an output-format refactor, and several consistency fixes.
+
+### Added
+
+- **`output_type="xbrl"`** on `collect_data` and `collect_ubpr_facsimile_data`
+  — returns raw XBRL XML bytes (UTF-8, starting with `<?xml`). The library
+  normalizes the BOM that the FFIEC UBPR endpoint emits so every response
+  arrives in a consistent shape.
+- **`output_type="pdf"`** on `collect_data` (Call Report series only)
+  — returns raw PDF file bytes. Supports the audit-friendly "archive a
+  human-readable snapshot per quarter" use case. UBPR endpoint has no PDF
+  variant per the FFIEC spec, so `series="ubpr"` with `output_type="pdf"`
+  raises `ValidationError`.
+- **`force_null_types` parameter on all 7 `collect_*` methods** (was
+  previously only on `collect_data` and `collect_ubpr_facsimile_data`).
+  Accepted as a documented no-op on methods that return plain lists (no
+  typed columns to apply null semantics to) — added for API symmetry so
+  callers don't hit `TypeError` when switching between methods.
+- **`RESTAdapter.retrieve_facsimile(..., facsimile_format=...)`** now
+  accepts `"XBRL"` (default) or `"PDF"`. Previously the `facsimileFormat`
+  header was hard-coded to `"XBRL"`.
+
+### Deprecated
+
+- **`OAuth2Credentials(token_expires=...)`** — deprecated no-op. Expiration
+  is always decoded from the JWT's `exp` claim (authoritative). Any value
+  passed here is discarded after a `DeprecationWarning`.
+
+  ```python
+  # Before
+  creds = OAuth2Credentials(
+      username="user", bearer_token="eyJ...",
+      token_expires=datetime.now() + timedelta(days=90),  # guess!
+  )
+
+  # After — JWT exp is authoritative
+  creds = OAuth2Credentials(username="user", bearer_token="eyJ...")
+  ```
+
+- **`session=` keyword argument on `collect_*()` methods** — the documented
+  2.x calling convention `collect_reporting_periods(session=None, creds=creds, ...)`
+  had started raising `TypeError` in rc1–rc3 after the first parameter
+  was renamed internally. It now works again with a `DeprecationWarning`.
+  Preferred form:
+
+  ```python
+  collect_reporting_periods(creds, series="call")
+  ```
+
+- **`output_type="bytes"`** — deprecated alias for `"xbrl"`. Where the one
+  method that historically honored it (`collect_ubpr_facsimile_data`) is
+  called, the value is translated to `"xbrl"` transparently and a
+  `DeprecationWarning` is emitted. On every other method it was already
+  misbehaving (returning `None` on `collect_data`, returning a list on
+  the other 5) and now raises `ValidationError` after the warning.
+
+- **`session=` keyword argument on `OAuth2Credentials.test_credentials()`**
+  — the parameter was a SOAP-era stub and has never been used in the REST
+  code path. Passing any value now emits a `DeprecationWarning`; it will
+  be removed in a future release.
+
+### Fixed
+
+- `collect_reporting_periods(session=None, creds=creds, ...)` and the
+  equivalent calls on all 7 public `collect_*` methods no longer raise
+  `TypeError: got an unexpected keyword argument 'session'`.
+- `output_type="bytes"` no longer silently misbehaves: `collect_data`
+  previously returned `None` (no matching branch) and the 5 list-returning
+  methods returned a list. All now either translate to `"xbrl"` (on the
+  one supported method) or raise `ValidationError` with a pointer to the
+  replacement (`xbrl` / `pdf`).
+- UBPR XBRL bytes returned from `retrieve_ubpr_xbrl_facsimile` previously
+  carried a leading UTF-8 BOM (`\xef\xbb\xbf`); Call Report XBRL did not.
+  The adapter now strips the BOM uniformly so every XBRL response starts
+  directly with `<?xml`.
+
+### Internal
+
+- Extracted `_validate_force_null_types()` helper at module top; the
+  duplicated 9-line validation block in `collect_data` and
+  `collect_ubpr_facsimile_data` is now a single call.
+- `_output_type_validator()` takes a `supports: set[str]` keyword and
+  returns the normalized output_type (rewriting `"bytes"` → `"xbrl"`
+  where back-compat is preserved). Every `collect_*` method now declares
+  its supported output types explicitly at its own call site, making
+  the contract local and checkable.
+
 ## [3.0.0rc3] - 2026-04-21
 
 **Metadata-only pre-release.** No code, test, or public API changes from rc2.

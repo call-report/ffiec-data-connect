@@ -91,7 +91,7 @@ creds = OAuth2Credentials(
     username="your_username",
     bearer_token="eyJhbGci...",  # JWT token (NOT your password!)
 )
-# Note: token_expires is auto-detected from the JWT token
+# (token_expires is auto-detected from the JWT's exp claim; passing it is deprecated)
 
 # Check if token is expired
 if creds.is_expired:
@@ -193,6 +193,41 @@ data = collect_data(..., force_null_types="numpy")
 - **numpy nulls** (`np.nan`) convert integers to floats (displays as `100.0`)
 - **pandas nulls** (`pd.NA`) preserve integer types (displays as `100`)
 
+### Output Formats
+
+Every `collect_*` method accepts an `output_type` parameter. The `"list"`,
+`"pandas"`, and `"polars"` shapes work on all 7 endpoints. Two raw-bytes
+shapes are available on the facsimile endpoints for archival and
+inspection use cases:
+
+| `output_type` | Returns                                        | Available on                                            |
+|---------------|------------------------------------------------|---------------------------------------------------------|
+| `"list"`      | Python `list`                                  | all 7                                                   |
+| `"pandas"`    | `pd.DataFrame` / `pd.Series`                   | all 7                                                   |
+| `"polars"`    | `pl.DataFrame` (install with `[polars]` extra) | all 7                                                   |
+| `"xbrl"`      | raw UTF-8 XBRL XML `bytes` (starts with `<?xml`) | `collect_data` + `collect_ubpr_facsimile_data`          |
+| `"pdf"`       | raw PDF `bytes` (starts with `%PDF`)           | `collect_data` only — UBPR endpoint is XBRL-only        |
+
+```python
+# Save a Call Report as an archive-friendly PDF
+pdf_bytes = collect_data(
+    creds, reporting_period="12/31/2024", rssd_id="480228",
+    series="call", output_type="pdf",
+)
+with open("call_report_480228_2024Q4.pdf", "wb") as f:
+    f.write(pdf_bytes)
+
+# Or grab the raw XBRL for downstream XML processing
+xbrl_bytes = collect_data(
+    creds, reporting_period="12/31/2024", rssd_id="480228",
+    series="call", output_type="xbrl",
+)
+xml_text = xbrl_bytes.decode("utf-8")
+```
+
+> **Note:** `output_type="bytes"` is deprecated in 3.0.0rc4 (use `"xbrl"`
+> instead) and will be removed in a future release.
+
 ## Rate Limiting
 
 The REST API has a rate limit of ~2500 requests/hour.
@@ -222,7 +257,7 @@ creds = OAuth2Credentials(
     username="your_username",
     bearer_token="eyJhbGci...",  # 90-day JWT token
 )
-# Note: token_expires is auto-detected from the JWT token
+# (token_expires is auto-detected from the JWT's exp claim; passing it is deprecated)
 
 # Get data
 data = collect_data(

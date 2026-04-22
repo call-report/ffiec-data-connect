@@ -11,17 +11,15 @@ import threading
 import time
 import tracemalloc
 import weakref
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import psutil
 import pytest
 
-from ffiec_data_connect import methods
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 from ffiec_data_connect.credentials import WebserviceCredentials
 from ffiec_data_connect.exceptions import SOAPDeprecationError
-from ffiec_data_connect.ffiec_connection import FFIECConnection, ProxyProtocol
+from ffiec_data_connect.ffiec_connection import FFIECConnection
 
 # Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
 _patch_get_conn = patch.object(
@@ -391,7 +389,7 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
                 # Collect data for multiple banks
                 rssd_ids = [f"1234{i}" for i in range(10)]
                 round_results = client.collect_data_parallel(
-                    f"2023-0{round_num+1}-31", rssd_ids
+                    f"2023-0{round_num + 1}-31", rssd_ids
                 )
                 results.append(round_results)
 
@@ -539,7 +537,6 @@ class TestMemoryPressureScenarios(MemoryTestBase):
 
                 # Create FFIEC objects using mocks
                 creds = Mock(spec=WebserviceCredentials)
-                conn = Mock(spec=FFIECConnection)
                 client = AsyncCompatibleClient(creds)
 
                 # Use and cleanup immediately

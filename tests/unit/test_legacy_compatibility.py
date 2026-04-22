@@ -9,12 +9,10 @@ and other non-SOAP-related exceptions.
 """
 
 import os
-from unittest.mock import patch
 
 import pytest
 
 from ffiec_data_connect import (
-    CredentialError,
     ValidationError,
     WebserviceCredentials,
     disable_legacy_mode,

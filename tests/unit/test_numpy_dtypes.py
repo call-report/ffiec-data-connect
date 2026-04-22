@@ -14,7 +14,6 @@ import pytest
 
 from ffiec_data_connect import methods, xbrl_processor
 from ffiec_data_connect.credentials import OAuth2Credentials
-from ffiec_data_connect.ffiec_connection import FFIECConnection
 
 # Sample XBRL bytes returned by the mock adapter
 SAMPLE_XBRL_BYTES = b"<xml>test</xml>"
@@ -133,9 +132,8 @@ class TestNumpyDtypeFlow:
         with patch("ffiec_data_connect.xbrl_processor._process_xml") as mock_process:
             mock_process.return_value = test_data
 
-            # Mock credentials and session
+            # Mock credentials
             mock_creds = Mock(spec=OAuth2Credentials)
-            mock_session = Mock(spec=FFIECConnection)
 
             # Mock the REST adapter via create_protocol_adapter
             with patch(
@@ -236,14 +234,10 @@ class TestNumpyDtypeFlow:
 
     def test_end_to_end_dtype_pipeline(self):
         """Test complete pipeline: XBRL → pandas → polars maintains dtypes."""
-        # This would be an integration test using real XBRL data
-        # For now, we'll use mocked data that simulates the complete flow
-
-        mock_xbrl_data = b"""<?xml version="1.0"?>
-        <xbrl>
-            <cc:RCON2170 contextRef="c_480228_2023-12-31" unitRef="USD">1500000000</cc:RCON2170>
-            <cc:RIAD4340 contextRef="c_480228_2023-12-31" unitRef="PURE">1.25</cc:RIAD4340>
-        </xbrl>"""
+        # This would be an integration test using real XBRL data.
+        # (A `mock_xbrl_data` constant was previously defined here and never
+        # consumed — removed in rc4 to clear F841. The real pipeline test
+        # belongs in tests/integration/ once implemented.)
 
         # This test would need real XBRL processing, but demonstrates the concept
         # In a full implementation, we would:

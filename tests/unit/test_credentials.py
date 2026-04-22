@@ -6,9 +6,8 @@ Tests credential handling, security features, and thread safety.
 
 import os
 import threading
-import time
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -18,11 +17,9 @@ from ffiec_data_connect.credentials import (
     WebserviceCredentials,
 )
 from ffiec_data_connect.exceptions import (
-    ConnectionError,
     CredentialError,
     SOAPDeprecationError,
 )
-from ffiec_data_connect.ffiec_connection import FFIECConnection
 
 
 class TestWebserviceCredentialsInitialization:
@@ -161,7 +158,7 @@ class TestCredentialValidation:
     def test_validation_blocked_by_deprecation(self):
         """Test that credential validation is blocked because init raises SOAPDeprecationError."""
         with pytest.raises(SOAPDeprecationError):
-            creds = WebserviceCredentials("validuser", "validpass")
+            WebserviceCredentials("validuser", "validpass")
 
     def test_validation_blocked_for_bad_credentials(self):
         """Test that even bad credentials raise SOAPDeprecationError before validation."""
@@ -274,18 +271,24 @@ class TestOAuth2CredentialsJWTExpiryAutoDetection:
         assert creds.token_expires is not None
         assert creds.token_expires == datetime.fromtimestamp(1783442253)
 
-    def test_explicit_token_expires_takes_precedence(self):
-        """When token_expires is explicitly provided, it takes precedence over JWT exp."""
+    def test_explicit_token_expires_is_ignored(self):
+        """The deprecated token_expires arg is a no-op: the JWT exp claim always wins."""
+        import warnings
+
         test_token = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
         explicit_expires = datetime(2030, 1, 1)
 
-        creds = OAuth2Credentials(
-            username="testuser",
-            bearer_token=test_token,
-            token_expires=explicit_expires,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            creds = OAuth2Credentials(
+                username="testuser",
+                bearer_token=test_token,
+                token_expires=explicit_expires,
+            )
 
-        assert creds.token_expires == explicit_expires
+        # The JWT's exp claim (1783442253) wins — the explicit arg is discarded.
+        assert creds.token_expires == datetime.fromtimestamp(1783442253)
+        assert creds.token_expires != explicit_expires
 
     def test_jwt_without_exp_claim_returns_none(self):
         """A JWT without an exp claim results in token_expires being None."""
@@ -529,20 +532,30 @@ class TestOAuth2CredentialsMissingCoverage:
         assert creds.test_credentials() is False
 
     def test_str_token_expires_within_24h_shows_expired(self):
-        """__str__ shows 'EXPIRED' when token_expires is set but within 24 hours (line 219->226).
-
-        token_expires is set (truthy) and is_expired is True because it falls
-        within the 24-hour warning window.
-        """
+        """__str__ shows 'EXPIRED' when the JWT exp falls within 24 hours."""
+        import base64
+        import json
         from datetime import timedelta
 
-        # Token that expires in 12 hours -> is_expired returns True (within 24h)
+        # Build a JWT with exp 12 hours in the future -> inside the 24h warning window.
         expires_soon = datetime.now() + timedelta(hours=12)
-        creds = OAuth2Credentials(
-            username="testuser",
-            bearer_token=self.VALID_TOKEN,
-            token_expires=expires_soon,
+        header = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+            .rstrip(b"=")
+            .decode()
         )
+        payload = (
+            base64.urlsafe_b64encode(
+                json.dumps(
+                    {"sub": "test", "exp": int(expires_soon.timestamp())}
+                ).encode()
+            )
+            .rstrip(b"=")
+            .decode()
+        )
+        token = f"{header}.{payload}."
+
+        creds = OAuth2Credentials(username="testuser", bearer_token=token)
 
         assert creds.is_expired is True
         result = str(creds)

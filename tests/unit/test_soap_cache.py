@@ -21,7 +21,7 @@ class TestSoapCacheStubs:
         from ffiec_data_connect.soap_cache import get_cache_stats
 
         with pytest.warns(DeprecationWarning):
-            result = get_cache_stats()
+            get_cache_stats()
 
     def test_get_cache_stats_returns_expected_dict(self):
         import warnings
@@ -41,11 +41,13 @@ class TestSoapCacheStubs:
         }
 
     def test_old_imports_raise_import_error(self):
+        # The imports below are the subject of the test — ruff F401 would flag
+        # them as "unused" but removing them breaks the assertion.
         with pytest.raises(ImportError):
-            from ffiec_data_connect.soap_cache import SOAPClientConfig
+            from ffiec_data_connect.soap_cache import SOAPClientCache  # noqa: F401
 
         with pytest.raises(ImportError):
-            from ffiec_data_connect.soap_cache import SOAPClientCache
+            from ffiec_data_connect.soap_cache import SOAPClientConfig  # noqa: F401
 
         with pytest.raises(ImportError):
-            from ffiec_data_connect.soap_cache import get_soap_client
+            from ffiec_data_connect.soap_cache import get_soap_client  # noqa: F401

@@ -13,8 +13,6 @@ import pytest
 
 from ffiec_data_connect import methods
 from ffiec_data_connect.credentials import OAuth2Credentials
-from ffiec_data_connect.exceptions import ValidationError
-from ffiec_data_connect.ffiec_connection import FFIECConnection
 
 # Sample XBRL bytes returned by the mock adapter
 SAMPLE_XBRL_BYTES = b"<xml>test</xml>"
@@ -35,7 +33,6 @@ class TestPolarsDirectConversion:
     def test_polars_unavailable_error(self):
         """Test proper error when polars is not available."""
         mock_creds = Mock(spec=OAuth2Credentials)
-        mock_session = Mock(spec=FFIECConnection)
 
         # Mock polars as unavailable
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", False):
@@ -109,7 +106,6 @@ class TestPolarsDirectConversion:
         ]
 
         mock_creds = Mock(spec=OAuth2Credentials)
-        mock_session = Mock(spec=FFIECConnection)
 
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", True):
             with patch(
@@ -172,7 +168,6 @@ class TestPolarsDirectConversion:
     def test_empty_data_returns_correct_schema(self):
         """Test that empty data returns polars DataFrame with correct schema."""
         mock_creds = Mock(spec=OAuth2Credentials)
-        mock_session = Mock(spec=FFIECConnection)
 
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", True):
             with patch(
@@ -229,7 +224,6 @@ class TestPolarsDirectConversion:
         ]
 
         mock_creds = Mock(spec=OAuth2Credentials)
-        mock_session = Mock(spec=FFIECConnection)
 
         with patch("ffiec_data_connect.methods.POLARS_AVAILABLE", True):
             with patch(
