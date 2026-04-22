@@ -25,6 +25,15 @@ combinations, completion of a previously-stubbed feature
   caller passes an already-tz-aware `datetime` in, its tzinfo is preserved —
   we only label naive values. Shared via a new `_format_date_for_output()`
   helper in `methods_enhanced.py`.
+- **`collect_data`'s `quarter` column is also tz-aware under
+  `date_output_format="python_format"`.** The XBRL-processing code path in
+  `xbrl_processor.py` used a second, parallel date-conversion branch that
+  previously returned naive datetimes. Applying the same
+  `ZoneInfo("America/New_York")` label there keeps the two code paths
+  consistent, so callers can compare a `collect_data` quarter against a
+  `collect_filers_submission_date_time` timestamp (or a
+  `collect_reporting_periods` entry) without hitting
+  `TypeError: can't compare offset-naive and offset-aware datetimes`.
 - Shared `_require_polars_available()` helper consolidating the
   "polars extra not installed" check.
 

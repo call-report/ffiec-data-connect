@@ -5,12 +5,16 @@ Tests XML/XBRL processing including edge cases for full coverage.
 """
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 
 from ffiec_data_connect.config import Config
 from ffiec_data_connect.exceptions import XMLParsingError
 from ffiec_data_connect.xbrl_processor import _process_xbrl_item, _process_xml
+
+# Match the library's tz label for ``python_format`` quarter columns.
+_FFIEC_TZ = ZoneInfo("America/New_York")
 
 
 class TestXBRLProcessorCoverage:
@@ -57,7 +61,13 @@ class TestXBRLProcessorCoverage:
         assert result[0]["quarter"] == "20251231"
 
     def test_date_format_python_format(self):
-        """Date format 'python_format' produces datetime object (line 203)."""
+        """Date format 'python_format' produces a tz-aware datetime.
+
+        FFIEC publishes all timestamps in Washington, DC local time with no
+        tz marker; as of 3.0.0rc6 the quarter column carries
+        ``ZoneInfo('America/New_York')`` so it matches the label applied by
+        ``_format_date_for_output`` on the other methods.
+        """
         items = {
             "@contextRef": "ctx_480228_2025-12-31",
             "@unitRef": "USD",
@@ -66,7 +76,8 @@ class TestXBRLProcessorCoverage:
         result = _process_xbrl_item("cc:RCON0010", items, "python_format")
         assert len(result) == 1
         assert isinstance(result[0]["quarter"], datetime)
-        assert result[0]["quarter"] == datetime(2025, 12, 31)
+        assert result[0]["quarter"] == datetime(2025, 12, 31, tzinfo=_FFIEC_TZ)
+        assert result[0]["quarter"].tzinfo is not None
 
     def test_date_format_string_original(self):
         """Date format 'string_original' produces MM/DD/YYYY output."""

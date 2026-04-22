@@ -399,6 +399,37 @@ class TestDateOutputFormatEndToEnd:
         )
         assert result[0]["datetime"].tzinfo is not None
 
+    def test_xbrl_processor_quarter_column_is_tz_aware(self):
+        """``collect_data``'s ``quarter`` column goes through ``xbrl_processor``,
+        not ``_format_date_for_output``. rc6 makes that path tz-aware too, so
+        the two code paths agree and callers can freely mix results across
+        methods in comparisons / pandas time-series operations.
+        """
+        from ffiec_data_connect.xbrl_processor import _process_xml
+
+        sample_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<xbrl xmlns="http://www.xbrl.org/2003/instance"
+      xmlns:cc="http://www.ffiec.gov/call">
+    <cc:RCON0010 contextRef="PI_123456_2024-03-31_2024-03-31"
+                 unitRef="USD" decimals="0">1000000</cc:RCON0010>
+</xbrl>"""
+
+        # Winter quarter (Q1 2024) → EST
+        result_winter = _process_xml(sample_xml, "python_format")
+        assert len(result_winter) >= 1
+        q = result_winter[0]["quarter"]
+        assert isinstance(q, datetime)
+        assert q.tzinfo is not None
+        assert q == datetime(2024, 3, 31, tzinfo=_FFIEC_TZ)
+
+        # Summer quarter (Q3 2024) → EDT (test DST round-trip on this path)
+        summer_xml = sample_xml.replace(
+            b"2024-03-31_2024-03-31", b"2024-09-30_2024-09-30"
+        )
+        result_summer = _process_xml(summer_xml, "python_format")
+        q_summer = result_summer[0]["quarter"]
+        assert q_summer.utcoffset().total_seconds() == -4 * 3600
+
 
 # ---------------------------------------------------------------------------
 # E: the new error wording.
