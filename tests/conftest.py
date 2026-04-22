@@ -4,9 +4,8 @@ Pytest configuration and shared fixtures for FFIEC Data Connect tests.
 This module provides common test fixtures and configuration for the test suite.
 """
 
-import os
 import warnings
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -66,7 +65,6 @@ def legacy_mode_disabled():
 @pytest.fixture
 def mock_session():
     """Create a mock requests session for testing."""
-    from unittest.mock import Mock
 
     session = Mock()
     session.get.return_value.status_code = 200

@@ -9,7 +9,7 @@ Each notebook solves one specific problem. For a full tour of every API method, 
 | Notebook | Use case |
 |---|---|
 | [`01_quickstart.ipynb`](01_quickstart.ipynb) | First API call in under 2 minutes |
-| [`02_bulk_download_call_reports.ipynb`](02_bulk_download_call_reports.ipynb) | Download Call Reports for one bank across many quarters (time series) |
+| [`02_bulk_download_call_reports.ipynb`](02_bulk_download_call_reports.ipynb) | Time series for one bank across many quarters, plus an optional PDF-archive cell (`output_type='pdf'` for auditor-readable snapshots) |
 | [`03_peer_group_analysis.ipynb`](03_peer_group_analysis.ipynb) | Identify peer banks and pull comparable metrics |
 | [`04_incremental_updates.ipynb`](04_incremental_updates.ipynb) | Track new filings since a date (ETL / monitoring pattern) |
 

@@ -6,8 +6,7 @@ a live FFIEC API connection: response handling, validation, rate limiting,
 factory function, and SOAP deprecation stub.
 """
 
-import time
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, patch
 
 import httpx
 import pytest
@@ -621,8 +620,14 @@ class TestRESTAdapterRetrieveFacsimile:
 
         assert result == xbrl_data
 
-    def test_facsimile_json_non_string_returns_content(self):
-        """JSON response with non-string value returns response.content (lines 536-540)."""
+    def test_facsimile_json_non_string_raises(self):
+        """JSON response with non-string value raises ConnectionError (rc4).
+
+        Previously the adapter silently returned ``response.content`` when
+        the JSON envelope didn't match the expected ``str`` shape. A 200
+        response with the wrong shape is an API contract break, so surface
+        it rather than hand the caller a garbled body.
+        """
         adapter = _make_rest_adapter()
         adapter.rate_limiter = Mock()
 
@@ -635,9 +640,8 @@ class TestRESTAdapterRetrieveFacsimile:
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        result = adapter.retrieve_facsimile("480228", "12/31/2023", "call")
-
-        assert result == b"raw content"
+        with pytest.raises(ConnectionError, match="unexpected JSON shape"):
+            adapter.retrieve_facsimile("480228", "12/31/2023", "call")
 
     def test_facsimile_404_raises_no_data_error(self):
         """404 response raises NoDataError (lines 549-552)."""
@@ -807,8 +811,13 @@ class TestRESTAdapterRetrieveUBPRXBRLFacsimile:
 
         assert result == xbrl_data
 
-    def test_ubpr_facsimile_json_non_string_returns_content(self):
-        """JSON response with non-string value returns response.content (lines 812-816)."""
+    def test_ubpr_facsimile_json_non_string_raises(self):
+        """JSON response with non-string value raises ConnectionError (rc4).
+
+        See TestRESTAdapterRetrieveFacsimile.test_facsimile_json_non_string_raises
+        for the rationale — a 200 with the wrong JSON shape is a contract
+        break and must surface instead of silently handing back raw content.
+        """
         adapter = _make_rest_adapter()
         adapter.rate_limiter = Mock()
 
@@ -821,9 +830,8 @@ class TestRESTAdapterRetrieveUBPRXBRLFacsimile:
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        result = adapter.retrieve_ubpr_xbrl_facsimile("480228", "12/31/2023")
-
-        assert result == b"raw ubpr content"
+        with pytest.raises(ConnectionError, match="unexpected JSON shape"):
+            adapter.retrieve_ubpr_xbrl_facsimile("480228", "12/31/2023")
 
     def test_ubpr_facsimile_404_raises_no_data_error(self):
         """404 response raises NoDataError (lines 825-828)."""
@@ -906,7 +914,7 @@ class TestRESTAdapterInitExpiredToken:
                 with caplog.at_level(
                     logging.WARNING, logger="ffiec_data_connect.protocol_adapter"
                 ):
-                    adapter = RESTAdapter(creds)
+                    RESTAdapter(creds)
         assert any("expired" in r.message.lower() for r in caplog.records)
 
 
@@ -1069,8 +1077,12 @@ class TestRetrieveFacsimileResponses:
         result = adapter.retrieve_facsimile(480228, "12/31/2023", "call")
         assert result == xbrl_content
 
-    def test_json_non_string_response_returns_content(self):
-        """JSON response that is not a string should return raw content."""
+    def test_json_non_string_response_raises(self):
+        """JSON response with the wrong shape raises ConnectionError (rc4).
+
+        Prior behavior silently returned ``response.content``. A 200 with the
+        wrong JSON shape is an API contract break — surface it instead.
+        """
         adapter = _make_rest_adapter()
         adapter.credentials = _make_creds()
         adapter.rate_limiter = Mock()
@@ -1084,11 +1096,11 @@ class TestRetrieveFacsimileResponses:
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        result = adapter.retrieve_facsimile(480228, "12/31/2023", "call")
-        assert result == b"raw content"
+        with pytest.raises(ConnectionError, match="unexpected JSON shape"):
+            adapter.retrieve_facsimile(480228, "12/31/2023", "call")
 
     def test_non_json_response_returns_content(self):
-        """Non-JSON response should return raw bytes."""
+        """Non-JSON response (e.g. application/xml) should return raw bytes."""
         adapter = _make_rest_adapter()
         adapter.credentials = _make_creds()
         adapter.rate_limiter = Mock()
@@ -1104,8 +1116,16 @@ class TestRetrieveFacsimileResponses:
         result = adapter.retrieve_facsimile(480228, "12/31/2023", "call")
         assert result == b"<xbrl>raw bytes</xbrl>"
 
-    def test_json_base64_decode_failure_returns_content(self):
-        """If base64 decode fails, should return raw content."""
+    def test_json_malformed_raises(self):
+        """Malformed JSON body on a 200 response raises ConnectionError (rc4).
+
+        Previously any Exception (including real bugs like AttributeError)
+        was swallowed with a warning and raw bytes returned. Now only
+        genuine JSON-parse failures are caught — and they surface as
+        ConnectionError with the cause chained.
+        """
+        import json as _json
+
         adapter = _make_rest_adapter()
         adapter.credentials = _make_creds()
         adapter.rate_limiter = Mock()
@@ -1113,14 +1133,14 @@ class TestRetrieveFacsimileResponses:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {"content-type": "application/json"}
-        mock_response.json.side_effect = Exception("parse error")
+        mock_response.json.side_effect = _json.JSONDecodeError("nope", "", 0)
         mock_response.content = b"raw fallback"
 
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        result = adapter.retrieve_facsimile(480228, "12/31/2023", "call")
-        assert result == b"raw fallback"
+        with pytest.raises(ConnectionError, match="malformed JSON"):
+            adapter.retrieve_facsimile(480228, "12/31/2023", "call")
 
 
 # ---------------------------------------------------------------------------
@@ -1274,8 +1294,8 @@ class TestRetrieveUBPRFacsimileResponses:
         result = adapter.retrieve_ubpr_xbrl_facsimile(480228, "12/31/2023")
         assert result == xbrl_content
 
-    def test_json_non_string_response_returns_content(self):
-        """JSON response that is not a string should return raw content."""
+    def test_json_non_string_response_raises(self):
+        """JSON response with the wrong shape raises ConnectionError (rc4)."""
         adapter = _make_rest_adapter()
         adapter.credentials = _make_creds()
         adapter.rate_limiter = Mock()
@@ -1289,11 +1309,11 @@ class TestRetrieveUBPRFacsimileResponses:
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        result = adapter.retrieve_ubpr_xbrl_facsimile(480228, "12/31/2023")
-        assert result == b"raw ubpr content"
+        with pytest.raises(ConnectionError, match="unexpected JSON shape"):
+            adapter.retrieve_ubpr_xbrl_facsimile(480228, "12/31/2023")
 
     def test_non_json_response_returns_content(self):
-        """Non-JSON response should return raw bytes."""
+        """Non-JSON response (e.g. application/xml) should return raw bytes."""
         adapter = _make_rest_adapter()
         adapter.credentials = _make_creds()
         adapter.rate_limiter = Mock()
@@ -1309,8 +1329,14 @@ class TestRetrieveUBPRFacsimileResponses:
         result = adapter.retrieve_ubpr_xbrl_facsimile(480228, "12/31/2023")
         assert result == b"<xbrl>raw ubpr</xbrl>"
 
-    def test_json_decode_failure_returns_content(self):
-        """If JSON/base64 decode fails, should return raw content."""
+    def test_json_malformed_raises(self):
+        """Malformed JSON body raises ConnectionError (rc4).
+
+        Prior behavior swallowed *any* exception (including real bugs) and
+        returned raw bytes with a log warning.
+        """
+        import json as _json
+
         adapter = _make_rest_adapter()
         adapter.credentials = _make_creds()
         adapter.rate_limiter = Mock()
@@ -1318,14 +1344,14 @@ class TestRetrieveUBPRFacsimileResponses:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {"content-type": "application/json"}
-        mock_response.json.side_effect = Exception("json fail")
+        mock_response.json.side_effect = _json.JSONDecodeError("bad", "", 0)
         mock_response.content = b"ubpr fallback"
 
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        result = adapter.retrieve_ubpr_xbrl_facsimile(480228, "12/31/2023")
-        assert result == b"ubpr fallback"
+        with pytest.raises(ConnectionError, match="malformed JSON"):
+            adapter.retrieve_ubpr_xbrl_facsimile(480228, "12/31/2023")
 
 
 # ---------------------------------------------------------------------------
@@ -1428,3 +1454,90 @@ class TestXBRLRowSkipNone:
         result = _process_xml(xbrl_data, "string_original", False)
         # Should process without error, skipping any None rows
         assert isinstance(result, list)
+
+
+# ---------------------------------------------------------------------------
+# rc4: facsimile_format validation and UBPR-PDF guard on the adapter
+# ---------------------------------------------------------------------------
+
+
+class TestRESTAdapterFacsimileFormatValidation:
+    """rc4: RESTAdapter.retrieve_facsimile must validate facsimile_format locally.
+
+    The adapter is a public API (exported from the package top-level and
+    referenced from the bytes-deprecation message as a lower-level escape
+    hatch), so it must guard against:
+
+    - unknown format strings being sent to the FFIEC server as a header
+    - the UBPR-endpoint + PDF combination (UBPR is XBRL-only per spec); the
+      high-level ``collect_data`` layer rejects this too, but adapter callers
+      bypass that guard.
+    """
+
+    def test_invalid_facsimile_format_raises_locally(self):
+        """A typo/unknown facsimile_format must raise before any network call."""
+        adapter = _make_rest_adapter()
+        adapter.rate_limiter = Mock()
+        adapter.client = Mock()  # will assert not-called below
+
+        with pytest.raises((ValidationError, ValueError)):
+            adapter.retrieve_facsimile(
+                "480228", "12/31/2024", "call", facsimile_format="XML"
+            )
+
+        # No HTTP call should have been made — rejection is local.
+        adapter.client.get.assert_not_called()
+
+    def test_empty_facsimile_format_raises(self):
+        """Empty string is not a valid format."""
+        adapter = _make_rest_adapter()
+        adapter.rate_limiter = Mock()
+        adapter.client = Mock()
+
+        with pytest.raises((ValidationError, ValueError)):
+            adapter.retrieve_facsimile(
+                "480228", "12/31/2024", "call", facsimile_format=""
+            )
+        adapter.client.get.assert_not_called()
+
+    def test_ubpr_with_pdf_raises_locally(self):
+        """series='ubpr' + facsimile_format='PDF' must raise before the UBPR route."""
+        adapter = _make_rest_adapter()
+        adapter.rate_limiter = Mock()
+        adapter.client = Mock()
+
+        with pytest.raises((ValidationError, ValueError)):
+            adapter.retrieve_facsimile(
+                "480228", "12/31/2024", "ubpr", facsimile_format="PDF"
+            )
+        adapter.client.get.assert_not_called()
+
+    def test_ubpr_with_xbrl_still_routes_to_ubpr_method(self):
+        """series='ubpr' + facsimile_format='XBRL' must still delegate to the UBPR method."""
+        adapter = _make_rest_adapter()
+        adapter.rate_limiter = Mock()
+        adapter.client = Mock()
+
+        with patch.object(
+            adapter, "retrieve_ubpr_xbrl_facsimile", return_value=b"<xbrl/>"
+        ) as mock_ubpr:
+            result = adapter.retrieve_facsimile(
+                "480228", "12/31/2024", "ubpr", facsimile_format="XBRL"
+            )
+
+        mock_ubpr.assert_called_once_with("480228", "12/31/2024")
+        assert result == b"<xbrl/>"
+
+    def test_default_facsimile_format_is_xbrl(self):
+        """Omitting facsimile_format should behave as XBRL (back-compat)."""
+        adapter = _make_rest_adapter()
+        adapter.rate_limiter = Mock()
+        adapter.client = Mock()
+
+        with patch.object(
+            adapter, "retrieve_ubpr_xbrl_facsimile", return_value=b"<xbrl/>"
+        ) as mock_ubpr:
+            result = adapter.retrieve_facsimile("480228", "12/31/2024", "ubpr")
+
+        mock_ubpr.assert_called_once()
+        assert result == b"<xbrl/>"

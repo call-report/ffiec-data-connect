@@ -30,7 +30,7 @@ Generate a JWT bearer token from the FFIEC portal, drop the `FFIECConnection()` 
 ### What's new
 
 - Cleaner calling convention: `collect_data(creds, ...)` is now preferred. The older session-first form `collect_data(None, creds, ...)` still works but emits a `DeprecationWarning`.
-- JWT expiry is auto-detected from the token payload. The `token_expires` parameter on `OAuth2Credentials` is now optional.
+- JWT expiry is auto-detected from the token payload. The `token_expires` parameter on `OAuth2Credentials` is **deprecated** in 3.0.0rc4 — passing it emits a `DeprecationWarning` and the supplied value is ignored (the JWT's `exp` claim is authoritative). The argument will be removed in a future release.
 - `SOAPDeprecationError` provides detailed migration guidance, code examples, and the FFIEC portal URL when legacy code paths are hit.
 - New `MIGRATION.md` and `llms.txt` guides for developers and AI coding assistants.
 - 100% statement test coverage: 652 unit tests + 26 integration tests.

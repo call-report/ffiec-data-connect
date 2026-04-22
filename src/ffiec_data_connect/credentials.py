@@ -23,6 +23,13 @@ from ffiec_data_connect.exceptions import (
 
 logger = logging.getLogger(__name__)
 
+# Sentinel used to detect when a caller explicitly passed token_expires
+# (distinct from None, which may be a legitimate "no expiry" value).
+_TOKEN_EXPIRES_UNSET: Any = object()
+
+# Same pattern for the deprecated `session` kwarg on test_credentials().
+_TEST_CREDS_SESSION_UNSET: Any = object()
+
 
 class CredentialType(Enum):
     """Enumerated values that represent the methods through which credentials are provided to the FFIEC webservice via the package.
@@ -45,30 +52,36 @@ class OAuth2Credentials:
 
     Key Features:
     - OAuth2 Bearer token authentication (90-day lifecycle)
-    - Token expiration tracking and validation
+    - Automatic token expiration extraction from the JWT ``exp`` claim
     - Immutable after initialization for security
     - Compatible with automatic protocol selection
 
     Args:
         username: FFIEC username (for UserID header)
-        bearer_token: OAuth2 bearer token (90-day lifecycle)
-        token_expires: Optional token expiration datetime
+        bearer_token: OAuth2 bearer token (90-day lifecycle). Its ``exp``
+            claim is decoded automatically to determine expiry — you do
+            not need to pass ``token_expires``.
+        token_expires: **Deprecated.** Optional override for the
+            auto-detected expiration. Present only for backward
+            compatibility; will be removed in a future release.
 
     Example::
 
-        # Create OAuth2 credentials for REST API
+        # Create OAuth2 credentials for REST API (expiry is auto-detected from JWT)
         creds = OAuth2Credentials(
             username="your_ffiec_username",
             bearer_token="your_90_day_bearer_token",
-            token_expires=datetime(2024, 3, 15)  # Optional
         )
 
         # Use with existing methods (automatic REST API selection)
-        periods = collect_reporting_periods(session, creds)
+        periods = collect_reporting_periods(creds)
     """
 
     def __init__(
-        self, username: str, bearer_token: str, token_expires: Optional[datetime] = None
+        self,
+        username: str,
+        bearer_token: str,
+        token_expires: Any = _TOKEN_EXPIRES_UNSET,
     ):
         """
         Initialize OAuth2 credentials for REST API access.
@@ -76,7 +89,8 @@ class OAuth2Credentials:
         Args:
             username: FFIEC username (for UserID header)
             bearer_token: OAuth2 bearer token (90-day lifecycle)
-            token_expires: Token expiration datetime (optional)
+            token_expires: **Deprecated.** If supplied, overrides the
+                expiration decoded from the JWT ``exp`` claim.
 
         Raises:
             CredentialError: If required credentials are missing or invalid
@@ -119,11 +133,20 @@ class OAuth2Credentials:
         self._username = username.strip()
         self._bearer_token = bearer_token.strip()
 
-        # Auto-detect expiry from JWT payload if not explicitly provided
-        if token_expires is not None:
-            self._token_expires = token_expires
-        else:
-            self._token_expires = self._extract_jwt_expiry(self._bearer_token)  # type: ignore[assignment]
+        # Emit a deprecation warning if the caller passed token_expires.
+        # The argument is a no-op — expiry is always taken from the JWT's exp claim.
+        if token_expires is not _TOKEN_EXPIRES_UNSET:
+            warnings.warn(
+                "The 'token_expires' argument is deprecated and has no effect. "
+                "OAuth2Credentials decodes the expiration from the JWT's 'exp' claim "
+                "automatically; any value you pass here is ignored. Remove this "
+                "argument from your call — it will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        # Always derive expiry from the JWT payload; ignore the deprecated override.
+        self._token_expires = self._extract_jwt_expiry(self._bearer_token)
 
         # Set credential type for compatibility (before marking initialized)
         self.credential_source = CredentialType.SET_FROM_INIT
@@ -203,19 +226,33 @@ class OAuth2Credentials:
             "Accept": "application/json",
         }
 
-    def test_credentials(self, session: Any = None) -> bool:
+    def test_credentials(self, session: Any = _TEST_CREDS_SESSION_UNSET) -> bool:
         """
-        Test OAuth2 credentials against REST API (placeholder).
+        Test OAuth2 credentials locally (token shape + expiry).
 
-        Note: This will be implemented when REST adapter is available.
-        For now, validates token format and expiration.
+        Does NOT make a live API call — see the `UserWarning` emitted on
+        success for the full caveat. For end-to-end verification, call
+        ``collect_reporting_periods`` instead.
 
         Args:
-            session: Optional requests session (for future compatibility)
+            session: **Deprecated** SOAP-era parameter; unused in the REST
+                code path. Passing any value (including ``None``) emits a
+                ``DeprecationWarning``. The argument will be removed in a
+                future release.
 
         Returns:
             True if credentials appear valid, False otherwise
         """
+        if session is not _TEST_CREDS_SESSION_UNSET:
+            warnings.warn(
+                "The 'session' argument to OAuth2Credentials.test_credentials() "
+                "is deprecated and has no effect. Remove it from your call — "
+                "the REST API does not use a session object. This argument "
+                "will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
         # Basic validation
         if not self._username or not self._bearer_token:
             return False

@@ -4,21 +4,16 @@ Basic unit tests for FFIEC Data Connect improvements.
 Tests security, thread safety, and async functionality.
 """
 
-import asyncio
-import os
-import threading
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 # Test imports
 from ffiec_data_connect import (
     AsyncCompatibleClient,
-    CredentialError,
     FFIECConnection,
     ValidationError,
     WebserviceCredentials,
-    __version__,
 )
 from ffiec_data_connect.exceptions import SOAPDeprecationError
 

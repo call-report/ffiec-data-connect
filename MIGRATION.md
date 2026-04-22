@@ -8,7 +8,7 @@ Starting with `ffiec-data-connect` v3.0.0:
 
 - **SOAP support has been removed.** `WebserviceCredentials` and `FFIECConnection` raise `SOAPDeprecationError` on instantiation. They remain importable for `isinstance` checks, but cannot be used.
 - **`zeep` and `requests` are no longer dependencies.** The REST API uses `httpx`. If your code imported these libraries transitively through `ffiec-data-connect`, you will need to add them to your own dependencies.
-- **JWT token expiry is now auto-detected.** `OAuth2Credentials` reads the `exp` claim from the JWT payload automatically. You no longer need to pass `token_expires`.
+- **JWT token expiry is now auto-detected.** `OAuth2Credentials` reads the `exp` claim from the JWT payload automatically. You no longer need to pass `token_expires`. As of 3.0.0rc4, passing `token_expires=...` still works but emits a `DeprecationWarning` and the value is ignored — the JWT's `exp` claim is authoritative.
 - **A bug in `datahelpers` was fixed.** When the `State` field was missing from reporter panel data, the library incorrectly set `city=None` instead of `state=None`. This is corrected in v3.0.0.
 - **Non-None `session` with OAuth2 credentials now raises.** Previously, passing a stale `FFIECConnection` object to a REST method was silently ignored. Now it raises `SOAPDeprecationError` to surface the mistake.
 
@@ -112,17 +112,43 @@ filers = collect_filers_on_reporting_period(creds, "12/31/2025")
 filer_ids = collect_filers_since_date(creds, "12/31/2025", "1/1/2025")
 submissions = collect_filers_submission_date_time(creds, "1/1/2025", "12/31/2025")
 
-# After (v3.0 — also works, deprecated)
+# After (v3.0 — also works, deprecated, positional form)
 periods = collect_reporting_periods(None, creds, series="call")
 data = collect_data(None, creds, "12/31/2025", "480228", "call", output_type="pandas")
 filers = collect_filers_on_reporting_period(None, creds, "12/31/2025")
 filer_ids = collect_filers_since_date(None, creds, "12/31/2025", "1/1/2025")
 submissions = collect_filers_submission_date_time(None, creds, "1/1/2025", "12/31/2025")
+
+# After (v3.0.0rc4 — keyword form also accepted, same DeprecationWarning)
+# This matches the calling convention shown in older docs/examples.
+periods = collect_reporting_periods(session=None, creds=creds, series="call")
 ```
 
-> **Note:** The `session` parameter is deprecated. Passing `None` as the first argument still works but emits a `DeprecationWarning`. The preferred calling convention is `collect_*(creds, ...)` with no session parameter at all.
+> **Note:** The `session` parameter is deprecated in all forms. Passing
+> `None` as the first positional argument OR as the `session=` keyword
+> still works but emits a `DeprecationWarning`. The preferred calling
+> convention is `collect_*(creds, ...)` with no session parameter at all.
 
 All other parameters (`series`, `output_type`, `date_output_format`, `force_null_types`, `rssd_id`, `reporting_period`) are unchanged. Output format is identical.
+
+### 5a. `output_type` changes (new in 3.0.0rc4)
+
+- `output_type="bytes"` is **deprecated**. Where it used to return raw
+  XBRL bytes (on `collect_ubpr_facsimile_data`), it now emits a
+  `DeprecationWarning` and is translated to `"xbrl"` for back-compat.
+  On every other method — where it previously misbehaved silently —
+  it now raises `ValidationError` after the warning.
+- Two new replacements: `output_type="xbrl"` (raw UTF-8 XBRL XML
+  bytes, available on `collect_data` and `collect_ubpr_facsimile_data`)
+  and `output_type="pdf"` (raw PDF bytes, `collect_data` only — the
+  UBPR endpoint is XBRL-only per the FFIEC spec).
+- `force_null_types` is now accepted on all 7 methods (previously only
+  `collect_data` and `collect_ubpr_facsimile_data`). On methods that
+  return a plain list, it's a documented no-op; the symmetry lets you
+  switch methods without hitting `TypeError`.
+- `OAuth2Credentials.test_credentials(session=...)` — the `session`
+  parameter was a SOAP-era stub and is now deprecated. Drop it from
+  your call.
 
 ### 6. Use new REST-only endpoints (optional)
 

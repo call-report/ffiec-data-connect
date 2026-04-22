@@ -10,14 +10,13 @@ import gc
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 from ffiec_data_connect.credentials import WebserviceCredentials
-from ffiec_data_connect.exceptions import RateLimitError, SOAPDeprecationError
-from ffiec_data_connect.ffiec_connection import FFIECConnection
+from ffiec_data_connect.exceptions import SOAPDeprecationError
 
 # Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
 _patch_get_conn = patch.object(
@@ -781,7 +780,7 @@ class TestAsyncCallbackHandling:
             progress_calls.append((rssd_id, result))
 
         rssd_ids = ["123456"]
-        results = await client.collect_batch_async(
+        await client.collect_batch_async(
             "2023-12-31", rssd_ids, progress_callback=sync_callback
         )
 
@@ -805,7 +804,7 @@ class TestAsyncCallbackHandling:
             progress_calls.append((rssd_id, result))
 
         rssd_ids = ["123456"]
-        results = await client.collect_batch_async(
+        await client.collect_batch_async(
             "2023-12-31", rssd_ids, progress_callback=async_callback
         )
 
@@ -951,7 +950,7 @@ class TestProgressCallbackOnErrorInParallel:
         def progress_cb(rssd_id, result):
             progress_calls.append((rssd_id, result))
 
-        results = client.collect_data_parallel(
+        client.collect_data_parallel(
             "2023-12-31",
             ["111", "222"],
             progress_callback=progress_cb,
@@ -1038,7 +1037,6 @@ class TestExecutorShutdownOwnedReal:
         client.close()
 
         # Verify the executor is shut down by trying to submit (should raise)
-        import concurrent.futures
 
         with pytest.raises(RuntimeError):
             executor.submit(lambda: None)

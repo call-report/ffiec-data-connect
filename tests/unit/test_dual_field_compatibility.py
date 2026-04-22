@@ -7,21 +7,12 @@ This test suite verifies that all functions returning RSSD data provide both
 
 from unittest.mock import Mock, patch
 
-import pandas as pd
 import pytest
 
-from ffiec_data_connect.credentials import OAuth2Credentials, WebserviceCredentials
+from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.datahelpers import _normalize_output_from_reporter_panel
-from ffiec_data_connect.ffiec_connection import FFIECConnection
 from ffiec_data_connect.methods import (
-    collect_filers_on_reporting_period,
     collect_filers_since_date,
-    collect_filers_submission_date_time,
-)
-from ffiec_data_connect.methods_enhanced import (
-    collect_filers_on_reporting_period_enhanced,
-    collect_filers_since_date_enhanced,
-    collect_filers_submission_date_time_enhanced,
 )
 from ffiec_data_connect.xbrl_processor import _process_xbrl_item
 
@@ -84,7 +75,6 @@ class TestDualFieldCompatibility:
         mock_enhanced_method.return_value = mock_polars_df
 
         # Create OAuth2 credentials to trigger enhanced method
-        from ffiec_data_connect.credentials import OAuth2Credentials
 
         creds = Mock(spec=OAuth2Credentials)
 

@@ -9,10 +9,8 @@ since the SOAP API was deprecated.
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-import pandas as pd
 import pytest
 
-from ffiec_data_connect.credentials import WebserviceCredentials
 from ffiec_data_connect.methods import collect_reporting_periods
 from ffiec_data_connect.utils import sort_reporting_periods_ascending
 
@@ -181,9 +179,9 @@ class TestReportingPeriodsSorting:
 
         # Check that each date is <= the next date
         for i in range(len(parsed_dates) - 1):
-            assert (
-                parsed_dates[i] <= parsed_dates[i + 1]
-            ), f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
+            assert parsed_dates[i] <= parsed_dates[i + 1], (
+                f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
+            )
 
     def test_chronological_order_verification_rest(self):
         """Verify that sorted REST dates are in proper chronological order."""
@@ -202,9 +200,9 @@ class TestReportingPeriodsSorting:
 
         # Check that each date is <= the next date
         for i in range(len(parsed_dates) - 1):
-            assert (
-                parsed_dates[i] <= parsed_dates[i + 1]
-            ), f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
+            assert parsed_dates[i] <= parsed_dates[i + 1], (
+                f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
+            )
 
 
 class TestCollectReportingPeriodsIntegration:
@@ -213,8 +211,6 @@ class TestCollectReportingPeriodsIntegration:
     @patch("ffiec_data_connect.methods_enhanced.collect_reporting_periods_enhanced")
     def test_rest_api_path_uses_sorting(self, mock_enhanced):
         """Test that REST API path also applies sorting."""
-        from ffiec_data_connect.credentials import OAuth2Credentials
-        from ffiec_data_connect.methods import collect_reporting_periods
 
         # Mock the enhanced method to return unsorted REST format dates
         mock_enhanced.return_value = [
@@ -230,9 +226,7 @@ class TestCollectReportingPeriodsIntegration:
 
         # Call collect_reporting_periods - should route to REST path
         with patch("ffiec_data_connect.methods.isinstance", return_value=True):
-            result = collect_reporting_periods(
-                oauth_creds, series="call", output_type="list"
-            )
+            collect_reporting_periods(oauth_creds, series="call", output_type="list")
 
         # The enhanced method was called, which handles its own sorting
         mock_enhanced.assert_called_once()

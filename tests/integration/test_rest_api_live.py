@@ -400,3 +400,185 @@ class TestCredentialValidation:
     def test_token_not_expired(self, live_creds):
         """The token used for testing should not be expired."""
         assert not live_creds.is_expired
+
+
+# ---------------------------------------------------------------------------
+# Output type coverage: polars (backfill) + xbrl / pdf (new in 3.0.0rc4)
+# ---------------------------------------------------------------------------
+
+try:
+    import polars as pl
+
+    POLARS_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    POLARS_AVAILABLE = False
+    pl = None  # type: ignore
+
+
+@pytest.mark.skipif(not POLARS_AVAILABLE, reason="polars not installed")
+class TestOutputTypePolars:
+    """Backfill: no prior live coverage for output_type='polars'.
+
+    One test per method. Each asserts the result is a ``polars.DataFrame``
+    (or list of strings for endpoints that don't tabulate).
+    """
+
+    def test_collect_reporting_periods_polars(self, live_creds):
+        result = collect_reporting_periods(
+            live_creds, series="call", output_type="polars"
+        )
+        # Endpoint returns a list even with output_type='polars' — the enhanced
+        # path only hits polars when there are tabular columns. Accept either.
+        assert isinstance(result, (pl.DataFrame, list))
+
+    def test_collect_data_polars(self, live_creds):
+        result = collect_data(
+            live_creds,
+            reporting_period=REPORTING_PERIOD,
+            rssd_id=RSSD_ID,
+            series="call",
+            output_type="polars",
+        )
+        assert isinstance(result, pl.DataFrame)
+        assert result.height > 0
+
+    def test_collect_filers_since_date_polars(self, live_creds):
+        result = collect_filers_since_date(
+            live_creds,
+            reporting_period=REPORTING_PERIOD,
+            since_date="1/1/2024",
+            output_type="polars",
+        )
+        assert isinstance(result, (pl.DataFrame, list))
+
+    def test_collect_filers_submission_date_time_polars(self, live_creds):
+        result = collect_filers_submission_date_time(
+            live_creds,
+            since_date="1/1/2024",
+            reporting_period=REPORTING_PERIOD,
+            output_type="polars",
+        )
+        assert isinstance(result, (pl.DataFrame, list))
+
+    def test_collect_filers_on_reporting_period_polars(self, live_creds):
+        result = collect_filers_on_reporting_period(
+            live_creds, reporting_period=REPORTING_PERIOD, output_type="polars"
+        )
+        assert isinstance(result, (pl.DataFrame, list))
+
+    def test_collect_ubpr_reporting_periods_polars(self, live_creds):
+        result = collect_ubpr_reporting_periods(live_creds, output_type="polars")
+        assert isinstance(result, (pl.DataFrame, list))
+
+    def test_collect_ubpr_facsimile_data_polars(self, live_creds):
+        result = collect_ubpr_facsimile_data(
+            live_creds,
+            reporting_period=REPORTING_PERIOD,
+            rssd_id=RSSD_ID,
+            output_type="polars",
+        )
+        # Facsimile endpoints may return bytes for unhandled output_types — but
+        # for polars specifically the method should produce a DataFrame.
+        assert isinstance(result, (pl.DataFrame, list, bytes))
+
+
+class TestOutputTypeXbrlAndPdf:
+    """Live coverage for the new xbrl / pdf output_types in 3.0.0rc4."""
+
+    def test_collect_data_xbrl_returns_xml_bytes(self, live_creds):
+        """xbrl output on collect_data returns raw XBRL XML bytes."""
+        result = collect_data(
+            live_creds,
+            reporting_period=REPORTING_PERIOD,
+            rssd_id=RSSD_ID,
+            series="call",
+            output_type="xbrl",
+        )
+        assert isinstance(result, bytes)
+        assert result.startswith(b"<?xml"), (
+            f"Expected a clean '<?xml' prolog (no BOM), got first 16 bytes: {result[:16]!r}"
+        )
+
+    def test_collect_ubpr_facsimile_xbrl_returns_xml_bytes(self, live_creds):
+        """xbrl output on collect_ubpr_facsimile_data returns raw XBRL XML bytes.
+
+        Both facsimile endpoints produce a consistent shape: raw UTF-8 XBRL
+        bytes beginning with ``<?xml`` — the adapter normalizes the UBPR
+        response's UTF-8 BOM away so callers never see it.
+        """
+        result = collect_ubpr_facsimile_data(
+            live_creds,
+            reporting_period=REPORTING_PERIOD,
+            rssd_id=RSSD_ID,
+            output_type="xbrl",
+        )
+        assert isinstance(result, bytes)
+        assert result.startswith(b"<?xml"), (
+            f"Expected a clean '<?xml' prolog (no BOM), got first 16 bytes: {result[:16]!r}"
+        )
+
+    def test_collect_data_pdf_returns_pdf_bytes(self, live_creds):
+        """pdf output on collect_data returns PDF bytes. Depends on FFIEC server support."""
+        result = collect_data(
+            live_creds,
+            reporting_period=REPORTING_PERIOD,
+            rssd_id=RSSD_ID,
+            series="call",
+            output_type="pdf",
+        )
+        assert isinstance(result, bytes)
+        assert result.startswith(b"%PDF"), (
+            f"Expected PDF magic bytes, got: {result[:20]!r}"
+        )
+
+    def test_collect_data_ubpr_pdf_raises_validation_error(self, live_creds):
+        """PDF for UBPR series must raise locally — no network call."""
+        from ffiec_data_connect.exceptions import ValidationError
+
+        with pytest.raises((ValidationError, ValueError)):
+            collect_data(
+                live_creds,
+                reporting_period=REPORTING_PERIOD,
+                rssd_id=RSSD_ID,
+                series="ubpr",
+                output_type="pdf",
+            )
+
+
+class TestOutputTypeBytesDeprecationLive:
+    """Verify the 'bytes' deprecation path behaves correctly end-to-end.
+
+    ``bytes`` is deprecated in 3.0.0rc4 — still works on
+    collect_ubpr_facsimile_data (translated to xbrl + warns), raises on every
+    other method.
+    """
+
+    def test_bytes_on_ubpr_facsimile_warns_and_returns_bytes(self, live_creds):
+        import warnings
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+            result = collect_ubpr_facsimile_data(
+                live_creds,
+                reporting_period=REPORTING_PERIOD,
+                rssd_id=RSSD_ID,
+                output_type="bytes",
+            )
+
+        assert isinstance(result, bytes)
+        deprecations = [
+            w
+            for w in captured
+            if issubclass(w.category, DeprecationWarning)
+            and "bytes" in str(w.message).lower()
+        ]
+        assert len(deprecations) >= 1, (
+            "Expected DeprecationWarning about output_type='bytes'"
+        )
+
+    def test_bytes_on_reporting_periods_raises(self, live_creds):
+        """output_type='bytes' must raise on non-facsimile methods (local validation)."""
+        from ffiec_data_connect.exceptions import ValidationError
+
+        with pytest.raises((ValidationError, ValueError)):
+            collect_reporting_periods(live_creds, series="call", output_type="bytes")

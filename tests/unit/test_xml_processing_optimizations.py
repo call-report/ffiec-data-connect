@@ -4,7 +4,7 @@ Test XML processing optimizations for memory efficiency.
 Tests that XML processing improvements work correctly and are more efficient.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest

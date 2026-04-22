@@ -723,8 +723,6 @@ class TestValidateObject4DigitZIP:
 
     def test_4digit_zip_string_produces_error(self):
         """A 4-digit numeric string ZIP should produce a 'missing leading zero' error (lines 471-472)."""
-        errors: list = []
-        obj = {"ZIP": "2886"}
         # This ZIP passes the pattern check ^\d{5}$ (it fails, len!=5)
         # but doesn't reach the elif. Actually it matches pattern check as
         # "2886" is a 4-char digit string that fails ^\d{5}$, so the
@@ -844,7 +842,6 @@ class TestValidatePydanticCompatibilityException:
 
         # Create data whose enumeration raises inside the try block
         class ExplodingDict(dict):
-
             def __getitem__(self, key):
                 if key == "ID_RSSD":
                     raise RuntimeError("kaboom")

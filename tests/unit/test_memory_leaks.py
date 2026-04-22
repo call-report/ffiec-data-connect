@@ -11,17 +11,15 @@ import threading
 import time
 import tracemalloc
 import weakref
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import psutil
 import pytest
 
-from ffiec_data_connect import methods
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 from ffiec_data_connect.credentials import WebserviceCredentials
 from ffiec_data_connect.exceptions import SOAPDeprecationError
-from ffiec_data_connect.ffiec_connection import FFIECConnection, ProxyProtocol
+from ffiec_data_connect.ffiec_connection import FFIECConnection
 
 # Helper: patch _get_connection so it returns a Mock instead of calling FFIECConnection()
 _patch_get_conn = patch.object(
@@ -132,9 +130,9 @@ class TestCredentialsMemoryLeaks(MemoryTestBase):
 
         # Most credential objects should be garbage collected (allow < 1% to remain due to GC timing)
         max_alive = max(1, total // 100)  # Allow up to 1% or at least 1
-        assert (
-            alive <= max_alive
-        ), f"{alive} out of {total} credential objects not garbage collected"
+        assert alive <= max_alive, (
+            f"{alive} out of {total} credential objects not garbage collected"
+        )
 
     def test_mock_credential_memory_after_gc(self):
         """Test that mock credentials release memory after garbage collection."""
@@ -166,9 +164,9 @@ class TestCredentialsMemoryLeaks(MemoryTestBase):
         memory_used = memory_with_objects - initial_memory
 
         # Should retain less than 10% of peak memory
-        assert (
-            memory_retained < memory_used * 0.1
-        ), f"Too much memory retained: {memory_retained} bytes"
+        assert memory_retained < memory_used * 0.1, (
+            f"Too much memory retained: {memory_retained} bytes"
+        )
 
 
 class TestFFIECConnectionMemoryLeaks(MemoryTestBase):
@@ -210,9 +208,9 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
 
         # Data collection should be memory efficient
         max_expected_growth = 100 * 5000  # 500KB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"Data collection memory inefficient: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Data collection memory inefficient: {growth} bytes"
+        )
 
     def test_connection_cache_memory_management(self):
         """Test memory management of connection caching."""
@@ -240,9 +238,9 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
 
         # Connection caching should cleanup properly
         max_expected_growth = 20 * 25000  # 500KB allowance (mock + executor overhead)
-        assert (
-            growth < max_expected_growth
-        ), f"Connection cache memory leak: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Connection cache memory leak: {growth} bytes"
+        )
 
     def test_rate_limiter_memory_stability(self):
         """Test rate limiter memory usage over time."""
@@ -258,9 +256,9 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
 
         # Rate limiter should use constant memory
         max_expected_growth = 10000  # 10KB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"Rate limiter memory growth: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Rate limiter memory growth: {growth} bytes"
+        )
 
     def test_client_garbage_collection(self):
         """Test that clients are properly garbage collected."""
@@ -277,9 +275,9 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
 
         # Most clients should be garbage collected after closing (allow up to 10% due to executor cleanup timing)
         max_alive = max(2, total // 10)  # Allow up to 10% or at least 2
-        assert (
-            alive <= max_alive
-        ), f"{alive} out of {total} clients not garbage collected"
+        assert alive <= max_alive, (
+            f"{alive} out of {total} clients not garbage collected"
+        )
 
     @_patch_get_conn
     @patch("ffiec_data_connect.methods.collect_data")
@@ -303,9 +301,9 @@ class TestAsyncCompatibleClientMemoryLeaks(MemoryTestBase):
 
         # Parallel processing should manage memory efficiently
         max_expected_growth = 50 * 8000  # 400KB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"Parallel processing memory inefficient: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Parallel processing memory inefficient: {growth} bytes"
+        )
 
 
 class TestMethodsMemoryLeaks(MemoryTestBase):
@@ -332,9 +330,9 @@ class TestMethodsMemoryLeaks(MemoryTestBase):
 
         # Validation functions should use minimal memory
         max_expected_growth = 50000  # 50KB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"Validation functions memory growth: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Validation functions memory growth: {growth} bytes"
+        )
 
     def test_date_utility_memory_efficiency(self):
         """Test memory efficiency of date utility functions."""
@@ -363,9 +361,9 @@ class TestMethodsMemoryLeaks(MemoryTestBase):
 
         # Date utilities should be memory efficient
         max_expected_growth = 500 * 500  # 250KB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"Date utilities memory inefficient: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Date utilities memory inefficient: {growth} bytes"
+        )
 
 
 class TestIntegrationMemoryLeaks(MemoryTestBase):
@@ -391,7 +389,7 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
                 # Collect data for multiple banks
                 rssd_ids = [f"1234{i}" for i in range(10)]
                 round_results = client.collect_data_parallel(
-                    f"2023-0{round_num+1}-31", rssd_ids
+                    f"2023-0{round_num + 1}-31", rssd_ids
                 )
                 results.append(round_results)
 
@@ -410,9 +408,9 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
         # Full workflow should be memory efficient
         # 5 rounds * (10 banks + 3 periods) * 1KB + overhead
         max_expected_growth = 5 * 13 * 2000 + 200000  # ~330KB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"Full workflow memory inefficient: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Full workflow memory inefficient: {growth} bytes"
+        )
 
     def test_long_running_session_memory(self):
         """Test memory behavior in long-running sessions."""
@@ -448,9 +446,9 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
         if len(memory_samples) >= 2:
             memory_growth_over_time = memory_samples[-1] - memory_samples[0]
             max_allowed_growth = 50 * 1024 * 1024  # 50MB
-            assert (
-                memory_growth_over_time < max_allowed_growth
-            ), f"Long-running session memory growth: {memory_growth_over_time} bytes"
+            assert memory_growth_over_time < max_allowed_growth, (
+                f"Long-running session memory growth: {memory_growth_over_time} bytes"
+            )
 
     @_patch_get_conn
     def test_exception_handling_memory_cleanup(self, _mock_conn):
@@ -480,9 +478,9 @@ class TestIntegrationMemoryLeaks(MemoryTestBase):
         max_expected_growth = (
             50 * 8000
         )  # 400KB allowance (exceptions have stack trace overhead + mock overhead)
-        assert (
-            growth < max_expected_growth
-        ), f"Exception handling leaked memory: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"Exception handling leaked memory: {growth} bytes"
+        )
 
 
 class TestMemoryPressureScenarios(MemoryTestBase):
@@ -521,9 +519,9 @@ class TestMemoryPressureScenarios(MemoryTestBase):
 
         # High volume creation should manage memory reasonably
         max_expected_growth = 1000 * 15000  # 15MB allowance (Mock objects are heavier)
-        assert (
-            growth < max_expected_growth
-        ), f"High volume creation memory issue: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"High volume creation memory issue: {growth} bytes"
+        )
 
     def test_memory_cleanup_under_gc_pressure(self):
         """Test memory cleanup behavior when garbage collector is under pressure."""
@@ -539,7 +537,6 @@ class TestMemoryPressureScenarios(MemoryTestBase):
 
                 # Create FFIEC objects using mocks
                 creds = Mock(spec=WebserviceCredentials)
-                conn = Mock(spec=FFIECConnection)
                 client = AsyncCompatibleClient(creds)
 
                 # Use and cleanup immediately
@@ -558,9 +555,9 @@ class TestMemoryPressureScenarios(MemoryTestBase):
 
         # Should handle GC pressure gracefully
         max_expected_growth = 100 * 15000  # 1.5MB allowance
-        assert (
-            growth < max_expected_growth
-        ), f"GC pressure handling issue: {growth} bytes"
+        assert growth < max_expected_growth, (
+            f"GC pressure handling issue: {growth} bytes"
+        )
 
 
 if __name__ == "__main__":

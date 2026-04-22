@@ -217,28 +217,89 @@ def _return_ffiec_reporting_date(indate: Union[datetime, str]) -> str:
                 )
 
 
-def _output_type_validator(output_type: str) -> bool:
-    """Internal function to validate the output_type
+def _validate_force_null_types(force_null_types: Optional[str]) -> None:
+    """Validate the ``force_null_types`` parameter across all collect_* methods.
 
-    Args:
-        output_type (str): the output_type to validate
+    Accepts None (default), ``"numpy"``, or ``"pandas"``. Any other value
+    raises :class:`ValidationError`.
 
-    Returns:
-        bool: True if valid
-
-    Raises:
-        ValidationError: If output_type is invalid
+    Note: for methods that return a plain Python ``list`` (e.g.
+    ``collect_reporting_periods``) this parameter is accepted for API
+    symmetry but has no observable effect — there are no typed columns to
+    apply null semantics to.
     """
-    valid_types = ["list", "pandas", "polars", "bytes"]
-    if output_type not in valid_types:
+    if force_null_types is not None and force_null_types not in ("numpy", "pandas"):
         raise_exception(
             ValidationError,
-            f"Invalid output_type: {output_type}",
+            f"Invalid force_null_types: {force_null_types}",
+            field="force_null_types",
+            value=force_null_types,
+            expected="None, 'numpy', or 'pandas'",
+        )
+
+
+def _output_type_validator(
+    output_type: str,
+    *,
+    supports: Optional[set] = None,
+    method_name: str = "this method",
+) -> str:
+    """Validate and normalize ``output_type`` against a per-method support set.
+
+    Args:
+        output_type: The requested output format.
+        supports: The set of formats this method supports. If ``None``, the
+            legacy permissive default is used (``{"list", "pandas", "polars"}``).
+            Methods that support raw bytes (XBRL / PDF) must opt in explicitly.
+        method_name: Used in the error message to guide the caller to the
+            right method when they pick an unsupported format.
+
+    Returns:
+        The (possibly-normalized) output_type. ``"bytes"`` is rewritten to
+        ``"xbrl"`` on methods that opt into back-compat; otherwise it falls
+        through to the rejection path.
+
+    Raises:
+        ValidationError: If ``output_type`` is not in ``supports``.
+
+    Also emits a ``DeprecationWarning`` when ``output_type="bytes"`` is
+    passed, regardless of whether the caller gets a translated value or an
+    error — the warning is the migration signal, not the rejection.
+    """
+    if supports is None:
+        supports = {"list", "pandas", "polars"}
+
+    # "bytes" is the rc4 deprecated alias. Warn whenever the caller tries it.
+    if output_type == "bytes":
+        import warnings as _warnings
+
+        _warnings.warn(
+            "output_type='bytes' is deprecated and will be removed in a future "
+            "release. Use output_type='xbrl' for raw XBRL XML bytes, or "
+            "output_type='pdf' (collect_data only — UBPR has no PDF) for a "
+            "PDF file. For lower-level access, call "
+            "RESTAdapter.retrieve_facsimile() directly.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        if "bytes" in supports:
+            # Back-compat: translate to xbrl for the one method that historically
+            # produced XBRL bytes via output_type='bytes'. Callers see a warning
+            # but their code keeps working.
+            output_type = "xbrl"
+            # Fall through into the normal validation below with output_type
+            # rewritten; "xbrl" must be in supports for this method.
+
+    if output_type not in supports:
+        visible_supports = sorted(s for s in supports if s != "bytes")
+        raise_exception(
+            ValidationError,
+            f"Invalid output_type for {method_name}: {output_type!r}",
             field="output_type",
             value=output_type,
-            expected=f"one of {valid_types}",
+            expected=f"one of {visible_supports}",
         )
-    return True
+    return output_type
 
 
 def _date_format_validator(date_format: str) -> bool:
@@ -292,20 +353,28 @@ def _credentials_validator(
     return True
 
 
+# Sentinel distinguishing "kwarg omitted" from "kwarg explicitly set to None".
+_SESSION_UNSET: Any = object()
+
+
 def _resolve_session_and_creds(
-    first_arg: Any,
+    first_arg: Any = _SESSION_UNSET,
     second_arg: Any = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> OAuth2Credentials:
     """Resolve overloaded calling conventions for all collect_* methods.
 
-    Supports three calling patterns:
-        collect_*(creds, ...)               — preferred (no session)
-        collect_*(None, creds, ...)         — deprecated (warns)
-        collect_*(connection, creds, ...)   — error (SOAP removed)
+    Supports four calling patterns:
+        collect_*(creds, ...)                        — preferred (no session)
+        collect_*(None, creds, ...)                  — deprecated (warns)
+        collect_*(session=None, creds=creds, ...)    — deprecated keyword form (warns)
+        collect_*(connection, creds, ...)            — error (SOAP removed)
 
     Args:
         first_arg: Either creds (new style) or session (old style)
         second_arg: creds when first_arg is session, otherwise None
+        session: Deprecated keyword alias for the old ``session`` parameter.
 
     Returns:
         The resolved OAuth2Credentials
@@ -315,23 +384,69 @@ def _resolve_session_and_creds(
     """
     import warnings
 
-    # New style: first arg IS the credentials
-    if isinstance(first_arg, OAuth2Credentials):
-        return first_arg
+    # Track whether the caller passed the deprecated `session=` keyword so
+    # we can warn only on paths where the call actually succeeds. A raise
+    # on the same call would make the "deprecated" warning misleading —
+    # the parameter isn't "still working for now," it's about to fail hard.
+    session_kwarg_passed = session is not _SESSION_UNSET
 
-    # Old style: first arg is session, second arg is creds
-    if first_arg is None:
+    # Promote the deprecated session= kwarg into the positional slot if
+    # the positional wasn't given. When BOTH are given, the positional
+    # wins silently (the kwarg is ignored). We warn below on success paths.
+    if session_kwarg_passed and first_arg is _SESSION_UNSET:
+        first_arg = session
+
+    def _warn_session_kwarg() -> None:
+        warnings.warn(
+            "The 'session' keyword argument is deprecated. "
+            "Pass credentials as the first positional argument instead:\n"
+            "  collect_reporting_periods(creds, series='call')\n"
+            "The session parameter will be removed in a future version.",
+            DeprecationWarning,
+            stacklevel=4,
+        )
+
+    def _warn_session_positional() -> None:
         warnings.warn(
             "Passing session=None as the first argument is deprecated. "
             "Pass credentials as the first argument instead:\n"
             "  collect_reporting_periods(creds, series='call')\n"
             "The session parameter will be removed in a future version.",
             DeprecationWarning,
-            stacklevel=3,
+            stacklevel=4,
         )
+
+    if first_arg is _SESSION_UNSET:
+        raise_exception(
+            ValidationError,
+            "Missing credentials argument",
+            field="creds",
+            value=None,
+            expected=(
+                "OAuth2Credentials as the first positional argument, e.g. "
+                "collect_reporting_periods(creds, series='call')"
+            ),
+        )
+
+    # New style: first arg IS the credentials.
+    if isinstance(first_arg, OAuth2Credentials):
+        if session_kwarg_passed:
+            _warn_session_kwarg()
+        return first_arg
+
+    # Old style: first arg is None (legacy "no session" sentinel); creds is
+    # in second_arg. Warn once — either about the kwarg form or the
+    # positional form — but only when the resolution succeeds.
+    if first_arg is None:
         if isinstance(second_arg, OAuth2Credentials):
+            if session_kwarg_passed:
+                _warn_session_kwarg()
+            else:
+                _warn_session_positional()
             return second_arg
         if isinstance(second_arg, credentials.WebserviceCredentials):
+            # About to raise SOAPDeprecationError — skip the
+            # "still-works-but-deprecated" warning.
             raise SOAPDeprecationError(
                 soap_method="WebserviceCredentials",
                 rest_equivalent="OAuth2Credentials(username, bearer_token)",
@@ -340,6 +455,7 @@ def _resolve_session_and_creds(
                     '  collect_reporting_periods(creds, series="call")'
                 ),
             )
+        # About to raise ValidationError — again, no "deprecated" warning.
         raise_exception(
             ValidationError,
             "Invalid credentials type",
@@ -348,7 +464,8 @@ def _resolve_session_and_creds(
             expected="OAuth2Credentials instance",
         )
 
-    # Non-None session — SOAP pattern
+    # Non-None session — SOAP-style call. About to raise; no deprecation
+    # warning (the SOAPDeprecationError message already explains fully).
     if isinstance(second_arg, OAuth2Credentials):
         raise SOAPDeprecationError(
             soap_method="session parameter (SOAP)",
@@ -418,11 +535,14 @@ def _validate_rssd_id(rssd_id: str) -> int:
 
 
 def collect_reporting_periods(
-    creds_or_session: Any,
+    creds_or_session: Any = _SESSION_UNSET,
     creds: Union[credentials.WebserviceCredentials, OAuth2Credentials, None] = None,
     series: str = "call",
     output_type: str = "list",
     date_output_format: str = "string_original",
+    force_null_types: Optional[str] = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> Union[List[str], List[datetime], pd.Series]:
     """Returns list of reporting periods available for access via the FFIEC webservice.
 
@@ -430,8 +550,12 @@ def collect_reporting_periods(
         creds_or_session: OAuth2Credentials (preferred), or None/session for backward compatibility
         creds: OAuth2Credentials when using old ``(session, creds, ...)`` calling convention
         series (str, optional): ``call`` or ``ubpr``
-        output_type (str): ``list`` or ``pandas``
+        output_type (str): ``"list"``, ``"pandas"``, or ``"polars"``
         date_output_format: ``string_original``, ``string_yyyymmdd``, or ``python_format``
+        force_null_types (str, optional): Accepted for API symmetry with
+            ``collect_data``; has no effect on this method because the
+            return value has no typed null columns. ``None`` (default),
+            ``"numpy"``, or ``"pandas"``.
 
     Returns:
         list or Pandas DataFrame: Reporting periods in ascending chronological order
@@ -441,10 +565,17 @@ def collect_reporting_periods(
         creds = OAuth2Credentials(username="...", bearer_token="eyJ...")
         periods = collect_reporting_periods(creds, series="call")
     """
-    resolved_creds = _resolve_session_and_creds(creds_or_session, creds)
+    resolved_creds = _resolve_session_and_creds(
+        creds_or_session, creds, session=session
+    )
 
-    _ = _output_type_validator(output_type)
+    output_type = _output_type_validator(
+        output_type,
+        supports={"list", "pandas", "polars"},
+        method_name="collect_reporting_periods",
+    )
     _ = _date_format_validator(date_output_format)
+    _validate_force_null_types(force_null_types)
 
     from .methods_enhanced import collect_reporting_periods_enhanced
 
@@ -454,7 +585,7 @@ def collect_reporting_periods(
 
 
 def collect_data(
-    creds_or_session: Any,
+    creds_or_session: Any = _SESSION_UNSET,
     creds: Union[credentials.WebserviceCredentials, OAuth2Credentials, None] = None,
     reporting_period: Union[str, datetime, None] = None,
     rssd_id: str = "",
@@ -462,6 +593,8 @@ def collect_data(
     output_type: str = "list",
     date_output_format: str = "string_original",
     force_null_types: Optional[str] = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> Any:
     """Return time series data from the FFIEC webservice for a given reporting period and RSSD ID.
 
@@ -471,9 +604,17 @@ def collect_data(
         reporting_period: Reporting period (``MM/DD/YYYY``, ``YYYY-MM-DD``, ``YYYYMMDD``, ``#QYYYY``, or datetime)
         rssd_id (str): The RSSD ID of the entity
         series (str): ``call`` or ``ubpr``
-        output_type (str): ``list``, ``pandas``, or ``polars``
+        output_type (str): One of ``"list"``, ``"pandas"``, ``"polars"``,
+            ``"xbrl"`` (raw UTF-8 XBRL bytes), or ``"pdf"`` (raw PDF bytes,
+            Call Report series only — UBPR endpoint has no PDF variant).
+            ``"xbrl"`` and ``"pdf"`` bypass normalization: the bytes are
+            returned exactly as the FFIEC server produced them (BOM stripped
+            for XBRL), with no dual ``rssd``/``id_rssd`` fields, no ZIP
+            leading-zero fix, no date coercion.
         date_output_format (str): ``string_original``, ``string_yyyymmdd``, or ``python_format``
-        force_null_types (str, optional): ``None``, ``"numpy"``, or ``"pandas"``
+        force_null_types (str, optional): ``None`` (default), ``"numpy"``,
+            or ``"pandas"``. Only affects DataFrame-producing outputs
+            (``pandas`` / ``polars``); ignored for ``list``/``xbrl``/``pdf``.
 
     Returns:
         list, pandas DataFrame, or polars DataFrame
@@ -483,19 +624,30 @@ def collect_data(
         creds = OAuth2Credentials(username="...", bearer_token="eyJ...")
         data = collect_data(creds, reporting_period="12/31/2025", rssd_id="480228", series="call")
     """
-    resolved_creds = _resolve_session_and_creds(creds_or_session, creds)
+    resolved_creds = _resolve_session_and_creds(
+        creds_or_session, creds, session=session
+    )
 
-    _ = _output_type_validator(output_type)
+    output_type = _output_type_validator(
+        output_type,
+        supports={"list", "pandas", "polars", "xbrl", "pdf"},
+        method_name="collect_data",
+    )
     _ = _date_format_validator(date_output_format)
+    _validate_force_null_types(force_null_types)
 
-    # Validate force_null_types parameter
-    if force_null_types is not None and force_null_types not in ["numpy", "pandas"]:
+    # UBPR endpoint is XBRL-only per the FFIEC REST spec. Reject pdf for ubpr
+    # before any network call so users get a fast, specific error.
+    if output_type == "pdf" and series.lower() == "ubpr":
         raise_exception(
             ValidationError,
-            f"Invalid force_null_types: {force_null_types}",
-            field="force_null_types",
-            value=force_null_types,
-            expected="None, 'numpy', or 'pandas'",
+            "UBPR data is not available as PDF",
+            field="output_type",
+            value="pdf",
+            expected=(
+                "'xbrl' (or 'list'/'pandas'/'polars') for UBPR series; "
+                "PDF is only available for Call Report data (series='call')"
+            ),
         )
 
     creds = resolved_creds
@@ -518,6 +670,18 @@ def collect_data(
             reporting_period_str = _convert_any_date_to_ffiec_format(
                 reporting_period  # type: ignore[arg-type]
             ) or str(reporting_period)
+
+            # For raw-bytes outputs, request the matching facsimile format from
+            # the REST endpoint and return the server's bytes verbatim.
+            if output_type in ("xbrl", "pdf"):
+                facsimile_format = "XBRL" if output_type == "xbrl" else "PDF"
+                return adapter.retrieve_facsimile(
+                    rssd_id,
+                    reporting_period_str,
+                    series,
+                    facsimile_format=facsimile_format,
+                )
+
             raw_data = adapter.retrieve_facsimile(rssd_id, reporting_period_str, series)
 
             # Process the raw data (assuming it's XBRL format)
@@ -639,11 +803,14 @@ def collect_data(
 
 
 def collect_filers_since_date(
-    creds_or_session: Any,
+    creds_or_session: Any = _SESSION_UNSET,
     creds: Union[credentials.WebserviceCredentials, OAuth2Credentials, None] = None,
     reporting_period: Union[str, datetime, None] = None,
     since_date: Union[str, datetime, None] = None,
     output_type: str = "list",
+    force_null_types: Optional[str] = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> Union[List[Any], pd.Series]:
     """Retrieves RSSD IDs of reporters who filed after a given date for a reporting period.
 
@@ -652,31 +819,49 @@ def collect_filers_since_date(
         creds: OAuth2Credentials when using old ``(session, creds, ...)`` calling convention
         reporting_period: The reporting period end date
         since_date: The date after which filers are retrieved
-        output_type (str, optional): ``"list"`` or ``"pandas"``
+        output_type (str, optional): ``"list"``, ``"pandas"``, or ``"polars"``
+        force_null_types (str, optional): Accepted for API symmetry with
+            ``collect_data``; has no effect on this method (returns a list
+            of RSSD IDs with no typed null columns). ``None`` (default),
+            ``"numpy"``, or ``"pandas"``.
 
     Example::
 
         creds = OAuth2Credentials(username="...", bearer_token="eyJ...")
         filers = collect_filers_since_date(creds, reporting_period="12/31/2025", since_date="1/1/2025")
     """
-    resolved_creds = _resolve_session_and_creds(creds_or_session, creds)
+    resolved_creds = _resolve_session_and_creds(
+        creds_or_session, creds, session=session
+    )
 
-    _ = _output_type_validator(output_type)
+    output_type = _output_type_validator(
+        output_type,
+        supports={"list", "pandas", "polars"},
+        method_name="collect_filers_since_date",
+    )
+    _validate_force_null_types(force_null_types)
 
     from .methods_enhanced import collect_filers_since_date_enhanced
 
     return collect_filers_since_date_enhanced(
-        None, resolved_creds, reporting_period, since_date, output_type  # type: ignore[arg-type]
+        None,
+        resolved_creds,
+        reporting_period,
+        since_date,
+        output_type,  # type: ignore[arg-type]
     )
 
 
 def collect_filers_submission_date_time(
-    creds_or_session: Any,
+    creds_or_session: Any = _SESSION_UNSET,
     creds: Union[credentials.WebserviceCredentials, OAuth2Credentials, None] = None,
     since_date: Union[str, datetime, None] = None,
     reporting_period: Union[str, datetime, None] = None,
     output_type: str = "list",
     date_output_format: str = "string_original",
+    force_null_types: Optional[str] = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> Union[List[Any], pd.DataFrame]:
     """Retrieves submission date/time info for reporters who filed for a reporting period.
 
@@ -685,8 +870,12 @@ def collect_filers_submission_date_time(
         creds: OAuth2Credentials when using old ``(session, creds, ...)`` calling convention
         since_date: Retrieve filers who submitted after this date
         reporting_period: The reporting period end date
-        output_type (str, optional): ``"list"`` or ``"pandas"``
+        output_type (str, optional): ``"list"``, ``"pandas"``, or ``"polars"``
         date_output_format: ``string_original``, ``string_yyyymmdd``, or ``python_format``
+        force_null_types (str, optional): Accepted for API symmetry with
+            ``collect_data``; the submission-timestamp payload has no
+            typed null columns, so the setting has no observable effect.
+            ``None`` (default), ``"numpy"``, or ``"pandas"``.
 
     Example::
 
@@ -695,10 +884,17 @@ def collect_filers_submission_date_time(
             creds, since_date="1/1/2025", reporting_period="12/31/2025"
         )
     """
-    resolved_creds = _resolve_session_and_creds(creds_or_session, creds)
+    resolved_creds = _resolve_session_and_creds(
+        creds_or_session, creds, session=session
+    )
 
-    _ = _output_type_validator(output_type)
+    output_type = _output_type_validator(
+        output_type,
+        supports={"list", "pandas", "polars"},
+        method_name="collect_filers_submission_date_time",
+    )
     _ = _date_format_validator(date_output_format)
+    _validate_force_null_types(force_null_types)
 
     from .methods_enhanced import collect_filers_submission_date_time_enhanced
 
@@ -713,10 +909,13 @@ def collect_filers_submission_date_time(
 
 
 def collect_filers_on_reporting_period(
-    creds_or_session: Any,
+    creds_or_session: Any = _SESSION_UNSET,
     creds: Union[credentials.WebserviceCredentials, OAuth2Credentials, None] = None,
     reporting_period: Union[str, datetime, None] = None,
     output_type: str = "list",
+    force_null_types: Optional[str] = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> Union[List[Any], pd.DataFrame]:
     """Retrieves the panel of reporters for a given reporting period.
 
@@ -724,29 +923,46 @@ def collect_filers_on_reporting_period(
         creds_or_session: OAuth2Credentials (preferred), or None/session for backward compatibility
         creds: OAuth2Credentials when using old ``(session, creds, ...)`` calling convention
         reporting_period: The reporting period end date
-        output_type (str, optional): ``"list"`` or ``"pandas"``
+        output_type (str, optional): ``"list"``, ``"pandas"``, or ``"polars"``
+        force_null_types (str, optional): Accepted for API symmetry with
+            ``collect_data``; the panel-of-reporters payload has no typed
+            null columns, so the setting has no observable effect. ``None``
+            (default), ``"numpy"``, or ``"pandas"``.
 
     Example::
 
         creds = OAuth2Credentials(username="...", bearer_token="eyJ...")
         filers = collect_filers_on_reporting_period(creds, reporting_period="12/31/2025")
     """
-    resolved_creds = _resolve_session_and_creds(creds_or_session, creds)
+    resolved_creds = _resolve_session_and_creds(
+        creds_or_session, creds, session=session
+    )
 
-    _ = _output_type_validator(output_type)
+    output_type = _output_type_validator(
+        output_type,
+        supports={"list", "pandas", "polars"},
+        method_name="collect_filers_on_reporting_period",
+    )
+    _validate_force_null_types(force_null_types)
 
     from .methods_enhanced import collect_filers_on_reporting_period_enhanced
 
     return collect_filers_on_reporting_period_enhanced(
-        None, resolved_creds, reporting_period, output_type  # type: ignore[arg-type]
+        None,
+        resolved_creds,
+        reporting_period,
+        output_type,  # type: ignore[arg-type]
     )
 
 
 def collect_ubpr_reporting_periods(
-    creds_or_session: Any,
+    creds_or_session: Any = _SESSION_UNSET,
     creds: Union[credentials.WebserviceCredentials, OAuth2Credentials, None] = None,
     output_type: str = "list",
     date_output_format: str = "string_original",
+    force_null_types: Optional[str] = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> Union[List[Any], pd.DataFrame]:
     """Retrieves UBPR reporting periods from FFIEC API.
 
@@ -755,16 +971,27 @@ def collect_ubpr_reporting_periods(
         creds: OAuth2Credentials when using old ``(session, creds, ...)`` calling convention
         output_type: ``"list"``, ``"pandas"``, or ``"polars"``
         date_output_format: ``string_original``, ``string_yyyymmdd``, or ``python_format``
+        force_null_types (str, optional): Accepted for API symmetry with
+            ``collect_data``; has no effect on this method (returns date
+            strings with no typed null columns). ``None`` (default),
+            ``"numpy"``, or ``"pandas"``.
 
     Example::
 
         creds = OAuth2Credentials(username="...", bearer_token="eyJ...")
         periods = collect_ubpr_reporting_periods(creds)
     """
-    resolved_creds = _resolve_session_and_creds(creds_or_session, creds)
+    resolved_creds = _resolve_session_and_creds(
+        creds_or_session, creds, session=session
+    )
 
-    _ = _output_type_validator(output_type)
+    output_type = _output_type_validator(
+        output_type,
+        supports={"list", "pandas", "polars"},
+        method_name="collect_ubpr_reporting_periods",
+    )
     _ = _date_format_validator(date_output_format)
+    _validate_force_null_types(force_null_types)
 
     from .protocol_adapter import create_protocol_adapter
 
@@ -780,12 +1007,14 @@ def collect_ubpr_reporting_periods(
 
 
 def collect_ubpr_facsimile_data(
-    creds_or_session: Any,
+    creds_or_session: Any = _SESSION_UNSET,
     creds: Union[credentials.WebserviceCredentials, OAuth2Credentials, None] = None,
     reporting_period: Union[str, datetime, None] = None,
     rssd_id: str = "",
     output_type: str = "list",
     force_null_types: Optional[str] = None,
+    *,
+    session: Any = _SESSION_UNSET,
 ) -> Union[bytes, List[Any], pd.DataFrame]:
     """Retrieves UBPR XBRL facsimile data for a specific institution.
 
@@ -794,26 +1023,33 @@ def collect_ubpr_facsimile_data(
         creds: OAuth2Credentials when using old ``(session, creds, ...)`` calling convention
         reporting_period: Reporting period date
         rssd_id: Institution RSSD ID
-        output_type: ``"list"``, ``"pandas"``, ``"polars"``, or ``"bytes"``
-        force_null_types (str, optional): ``None``, ``"numpy"``, or ``"pandas"``
+        output_type: One of ``"list"``, ``"pandas"``, ``"polars"``, or
+            ``"xbrl"`` (raw UTF-8 XBRL bytes — UBPR endpoint is
+            XBRL-only). ``"xbrl"`` bypasses normalization and returns
+            the bytes as the FFIEC server produced them (BOM stripped).
+            ``"bytes"`` is a deprecated alias for ``"xbrl"`` and emits a
+            ``DeprecationWarning``.
+        force_null_types (str, optional): ``None`` (default), ``"numpy"``,
+            or ``"pandas"``. Only affects DataFrame-producing outputs; ignored
+            for ``list`` and ``xbrl``.
 
     Example::
 
         creds = OAuth2Credentials(username="...", bearer_token="eyJ...")
         data = collect_ubpr_facsimile_data(creds, reporting_period="12/31/2025", rssd_id="480228")
     """
-    resolved_creds = _resolve_session_and_creds(creds_or_session, creds)
+    resolved_creds = _resolve_session_and_creds(
+        creds_or_session, creds, session=session
+    )
 
-    _ = _output_type_validator(output_type)
-
-    if force_null_types is not None and force_null_types not in ["numpy", "pandas"]:
-        raise_exception(
-            ValidationError,
-            f"Invalid force_null_types: {force_null_types}",
-            field="force_null_types",
-            value=force_null_types,
-            expected="None, 'numpy', or 'pandas'",
-        )
+    # "bytes" is deprecated but translated to "xbrl" here for back-compat —
+    # the validator emits a DeprecationWarning and returns "xbrl".
+    output_type = _output_type_validator(
+        output_type,
+        supports={"list", "pandas", "polars", "xbrl", "bytes"},
+        method_name="collect_ubpr_facsimile_data",
+    )
+    _validate_force_null_types(force_null_types)
 
     if not _is_valid_date_or_quarter(reporting_period):  # type: ignore[arg-type]
         raise_exception(
@@ -842,7 +1078,9 @@ def collect_ubpr_facsimile_data(
     adapter = create_protocol_adapter(resolved_creds, None)
     raw_data = adapter.retrieve_ubpr_xbrl_facsimile(rssd_id, ffiec_date)  # type: ignore[arg-type]
 
-    if output_type == "bytes":
+    # "xbrl" returns server bytes verbatim. ("bytes" was translated to "xbrl"
+    # by the validator above, with a DeprecationWarning emitted.)
+    if output_type == "xbrl":
         return raw_data
 
     if isinstance(raw_data, bytes):

@@ -7,16 +7,12 @@ asyncio event loop interaction, and real-world async usage scenarios.
 
 import asyncio
 import gc
-import threading
 import time
-import weakref
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Callable, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from typing import Callable, List
+from unittest.mock import Mock, patch
 
 import pytest
 
-from ffiec_data_connect import methods
 from ffiec_data_connect.async_compatible import AsyncCompatibleClient, RateLimiter
 from ffiec_data_connect.credentials import WebserviceCredentials
 
@@ -312,9 +308,7 @@ class TestAsyncConcurrencyPatterns(AsyncIntegrationTestBase):
         # Start many tasks but only 2 should run concurrently
         tasks = [limited_collect(f"12345{i}") for i in range(6)]
 
-        start_time = time.time()
         results = await asyncio.gather(*tasks)
-        total_time = time.time() - start_time
 
         assert len(results) == 6
         # With semaphore limiting to 2, should take longer than unlimited concurrency
@@ -639,12 +633,11 @@ class TestAsyncPerformancePatterns(AsyncIntegrationTestBase):
                 rssd_ids = [
                     f"batch{batch}_rsd{i}" for i in range(3)
                 ]  # 3 RSDs per batch instead of 10
-                task = client.collect_batch_async(f"2023-{batch+1:02d}-31", rssd_ids)
+                task = client.collect_batch_async(f"2023-{batch + 1:02d}-31", rssd_ids)
                 tasks.append(task)
             return tasks
 
         # Monitor memory during operations
-        import gc
 
         gc.collect()
 

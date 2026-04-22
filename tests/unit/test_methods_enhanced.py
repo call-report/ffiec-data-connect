@@ -7,7 +7,7 @@ correctly without live API calls.
 """
 
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
@@ -941,8 +941,6 @@ class TestSchemaValidationWarning:
         }
 
         creds = _make_creds()
-
-        import logging
 
         with patch("ffiec_data_connect.methods_enhanced.logger") as mock_logger:
             result = collect_reporting_periods_enhanced(
