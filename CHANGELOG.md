@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-04-22
+
+**First stable release of the 3.x line.** Ships with the same code as
+`3.0.0rc6`; there are no behavior differences. This entry exists so
+anyone landing on the latest version can see the full scope of 3.0.0
+in one place.
+
+Major themes vs. `2.0.5`:
+
+- **SOAP support removed.** The FFIEC SOAP webservice was shut down on
+  2026-02-28. `WebserviceCredentials`, `FFIECConnection`, `SOAPAdapter`,
+  and their friends are gone; attempting to instantiate them raises
+  `SOAPDeprecationError`. REST with `OAuth2Credentials` is the only
+  path.
+- **Simplified calling convention.** `collect_*(creds, ...)` — no
+  `session` argument. The v2-style `session=None, creds=creds` keyword
+  form still works (with `DeprecationWarning`) for incremental
+  migration.
+- **Python 3.11+ required** (was 3.10). Matches pandas 3.0's floor.
+- **pandas 3.0 baseline.** `pandas>=3.0.0,<4.0.0` (was `>=1.3.0,<3.0.0`).
+- **`output_type="xbrl"` / `"pdf"`** added on `collect_data` and
+  `collect_ubpr_facsimile_data` (where XBRL is the only FFIEC-supported
+  format) for raw-bytes passthrough.
+- **`date_output_format="python_format"` returns tz-aware datetimes**
+  labeled `America/New_York` — FFIEC publishes wall-clock DC time with
+  no tz marker, so the library attaches one for you. DST honored via
+  `zoneinfo`.
+- **Silent no-ops promoted to errors** — several v2 parameter
+  combinations that did nothing (`output_type="bytes"` on `collect_data`,
+  `output_type="polars"` without the extra installed, `date_output_format`
+  stubs on three list-returning methods) now raise `ValidationError`.
+- **100% REST parity with former SOAP output.** Dual field names
+  (`rssd` + `id_rssd`), leading-zero ZIPs preserved, consistent NumPy
+  dtypes end-to-end.
+- **Async support.** `AsyncCompatibleClient` + `RateLimiter` for
+  parallel collection at up to 5× throughput.
+- **`FFIECError` exception hierarchy** with structured context,
+  opt-in-able via `disable_legacy_mode()` or `FFIEC_USE_LEGACY_ERRORS=false`.
+  Legacy `ValueError` mode is the default for v2 back-compat and will
+  flip in a future release.
+
+The full per-RC history — `rc1` through `rc6` — remains below for anyone
+following along with development.
+
 ## [3.0.0rc6] - 2026-04-22
 
 Vestigial-argument audit: warnings on silently-ignored parameter
