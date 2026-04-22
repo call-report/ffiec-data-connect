@@ -495,9 +495,9 @@ class TestOutputTypeXbrlAndPdf:
             output_type="xbrl",
         )
         assert isinstance(result, bytes)
-        assert result.startswith(b"<?xml"), (
-            f"Expected a clean '<?xml' prolog (no BOM), got first 16 bytes: {result[:16]!r}"
-        )
+        assert result.startswith(
+            b"<?xml"
+        ), f"Expected a clean '<?xml' prolog (no BOM), got first 16 bytes: {result[:16]!r}"
 
     def test_collect_ubpr_facsimile_xbrl_returns_xml_bytes(self, live_creds):
         """xbrl output on collect_ubpr_facsimile_data returns raw XBRL XML bytes.
@@ -513,9 +513,9 @@ class TestOutputTypeXbrlAndPdf:
             output_type="xbrl",
         )
         assert isinstance(result, bytes)
-        assert result.startswith(b"<?xml"), (
-            f"Expected a clean '<?xml' prolog (no BOM), got first 16 bytes: {result[:16]!r}"
-        )
+        assert result.startswith(
+            b"<?xml"
+        ), f"Expected a clean '<?xml' prolog (no BOM), got first 16 bytes: {result[:16]!r}"
 
     def test_collect_data_pdf_returns_pdf_bytes(self, live_creds):
         """pdf output on collect_data returns PDF bytes. Depends on FFIEC server support."""
@@ -527,9 +527,9 @@ class TestOutputTypeXbrlAndPdf:
             output_type="pdf",
         )
         assert isinstance(result, bytes)
-        assert result.startswith(b"%PDF"), (
-            f"Expected PDF magic bytes, got: {result[:20]!r}"
-        )
+        assert result.startswith(
+            b"%PDF"
+        ), f"Expected PDF magic bytes, got: {result[:20]!r}"
 
     def test_collect_data_ubpr_pdf_raises_validation_error(self, live_creds):
         """PDF for UBPR series must raise locally — no network call."""
@@ -572,9 +572,9 @@ class TestOutputTypeBytesDeprecationLive:
             if issubclass(w.category, DeprecationWarning)
             and "bytes" in str(w.message).lower()
         ]
-        assert len(deprecations) >= 1, (
-            "Expected DeprecationWarning about output_type='bytes'"
-        )
+        assert (
+            len(deprecations) >= 1
+        ), "Expected DeprecationWarning about output_type='bytes'"
 
     def test_bytes_on_reporting_periods_raises(self, live_creds):
         """output_type='bytes' must raise on non-facsimile methods (local validation)."""

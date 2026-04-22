@@ -18,7 +18,6 @@ import pytest
 from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.exceptions import CredentialError
 
-
 # ---------------------------------------------------------------------------
 # JWT helpers: build unsigned JWTs with a specific exp claim.
 # ---------------------------------------------------------------------------
@@ -236,9 +235,9 @@ class TestTokenExpiresDeprecation:
             if issubclass(w.category, DeprecationWarning)
             and "token_expires" in str(w.message)
         ]
-        assert deprecations == [], (
-            "Omitting token_expires should not trigger the token_expires deprecation"
-        )
+        assert (
+            deprecations == []
+        ), "Omitting token_expires should not trigger the token_expires deprecation"
 
     def test_explicit_token_expires_is_ignored(self):
         """The deprecated arg is a no-op: the JWT exp claim always wins."""
@@ -293,9 +292,9 @@ class TestTestCredentialsSessionDeprecation:
             if issubclass(w.category, DeprecationWarning)
             and "session" in str(w.message).lower()
         ]
-        assert session_warnings == [], (
-            "Calling test_credentials() with no args should not warn about session"
-        )
+        assert (
+            session_warnings == []
+        ), "Calling test_credentials() with no args should not warn about session"
 
     def test_session_none_kwarg_warns(self):
         """Calling test_credentials(session=None) should emit DeprecationWarning."""

@@ -119,7 +119,9 @@ def _process_xml(
             )
 
             for row in items_to_process:
-                if row:  # Skip None/empty rows — defensive; _process_xbrl_item never returns falsy entries  # pragma: no branch
+                if (
+                    row
+                ):  # Skip None/empty rows — defensive; _process_xbrl_item never returns falsy entries  # pragma: no branch
                     data_type = row.get("data_type")
                     value = row.get("value")
 

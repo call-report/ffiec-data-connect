@@ -846,9 +846,9 @@ def collect_filers_since_date(
     return collect_filers_since_date_enhanced(
         None,
         resolved_creds,
-        reporting_period,
-        since_date,
-        output_type,  # type: ignore[arg-type]
+        reporting_period,  # type: ignore[arg-type]
+        since_date,  # type: ignore[arg-type]
+        output_type,
     )
 
 
@@ -950,8 +950,8 @@ def collect_filers_on_reporting_period(
     return collect_filers_on_reporting_period_enhanced(
         None,
         resolved_creds,
-        reporting_period,
-        output_type,  # type: ignore[arg-type]
+        reporting_period,  # type: ignore[arg-type]
+        output_type,
     )
 
 

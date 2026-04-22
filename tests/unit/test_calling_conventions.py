@@ -182,9 +182,9 @@ class TestNewStyleCredsFirst:
                     if issubclass(x.category, DeprecationWarning)
                     and "session=None" in str(x.message)
                 ]
-                assert len(deprecation_warnings) == 0, (
-                    f"{func.__name__}: unexpected DeprecationWarning about session"
-                )
+                assert (
+                    len(deprecation_warnings) == 0
+                ), f"{func.__name__}: unexpected DeprecationWarning about session"
 
 
 class TestOldStyleNoneSession:
@@ -222,9 +222,9 @@ class TestOldStyleNoneSession:
                     if issubclass(x.category, DeprecationWarning)
                     and "session=None" in str(x.message)
                 ]
-                assert len(deprecation_warnings) == 1, (
-                    f"{func.__name__}: expected 1 DeprecationWarning about session, got {len(deprecation_warnings)}"
-                )
+                assert (
+                    len(deprecation_warnings) == 1
+                ), f"{func.__name__}: expected 1 DeprecationWarning about session, got {len(deprecation_warnings)}"
 
 
 class TestOldStyleConnSession:
@@ -343,9 +343,9 @@ class TestSessionKeywordBackwardCompat:
                     if issubclass(x.category, DeprecationWarning)
                     and "session" in str(x.message).lower()
                 ]
-                assert len(deprecation_warnings) >= 1, (
-                    f"{func.__name__}: expected DeprecationWarning about session kwarg"
-                )
+                assert (
+                    len(deprecation_warnings) >= 1
+                ), f"{func.__name__}: expected DeprecationWarning about session kwarg"
 
     @pytest.mark.parametrize(
         "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
@@ -646,9 +646,9 @@ class TestOutputTypeBytesDeprecated:
             if issubclass(w.category, DeprecationWarning)
             and "bytes" in str(w.message).lower()
         ]
-        assert len(deprecations) >= 1, (
-            f"{func.__name__}: expected DeprecationWarning about output_type='bytes'"
-        )
+        assert (
+            len(deprecations) >= 1
+        ), f"{func.__name__}: expected DeprecationWarning about output_type='bytes'"
 
 
 if __name__ == "__main__":

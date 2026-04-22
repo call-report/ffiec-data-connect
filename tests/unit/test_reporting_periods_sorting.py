@@ -179,9 +179,9 @@ class TestReportingPeriodsSorting:
 
         # Check that each date is <= the next date
         for i in range(len(parsed_dates) - 1):
-            assert parsed_dates[i] <= parsed_dates[i + 1], (
-                f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
-            )
+            assert (
+                parsed_dates[i] <= parsed_dates[i + 1]
+            ), f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
 
     def test_chronological_order_verification_rest(self):
         """Verify that sorted REST dates are in proper chronological order."""
@@ -200,9 +200,9 @@ class TestReportingPeriodsSorting:
 
         # Check that each date is <= the next date
         for i in range(len(parsed_dates) - 1):
-            assert parsed_dates[i] <= parsed_dates[i + 1], (
-                f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
-            )
+            assert (
+                parsed_dates[i] <= parsed_dates[i + 1]
+            ), f"Dates not in chronological order: {parsed_dates[i]} > {parsed_dates[i + 1]}"
 
 
 class TestCollectReportingPeriodsIntegration:

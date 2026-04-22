@@ -332,7 +332,7 @@ def collect_filers_since_date_enhanced(
         # Create protocol adapter and call REST endpoint
         adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
         rssd_ids = adapter.retrieve_filers_since_date(
-            ffiec_reporting_period,
+            ffiec_reporting_period,  # type: ignore[arg-type]
             ffiec_since_date,  # type: ignore[arg-type]
         )
 
@@ -435,7 +435,7 @@ def collect_filers_submission_date_time_enhanced(
         # Create protocol adapter and call REST endpoint
         adapter = create_protocol_adapter(creds, session)  # type: ignore[arg-type]
         submissions = adapter.retrieve_filers_submission_datetime(
-            ffiec_reporting_period,
+            ffiec_reporting_period,  # type: ignore[arg-type]
             ffiec_since_date,  # type: ignore[arg-type]
         )
 
