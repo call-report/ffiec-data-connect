@@ -19,6 +19,7 @@ from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.data_normalizer import DataNormalizer
 from ffiec_data_connect.exceptions import (
     ConnectionError,
+    FFIECError,
     ValidationError,
     raise_exception,
 )
@@ -70,22 +71,90 @@ def _normalize_pydantic_to_soap_format(pydantic_obj: Any) -> Dict[str, Any]:
         return _normalize_output_from_reporter_panel(pydantic_obj)
 
 
-def _format_datetime_for_output(dt_str: str, date_output_format: str) -> str:
-    """Format datetime string according to requested output format
+def _require_polars_available() -> None:
+    """Raise ``ValidationError`` when ``output_type="polars"`` is requested but
+    the optional ``polars`` dependency is not installed.
 
-    Args:
-        dt_str: DateTime string from REST API
-        date_output_format: Requested output format
+    Consolidates the check that previously silently fell through to a list
+    return in several enhanced-layer methods, matching the explicit raise
+    in ``collect_data``.
+    """
+    if not POLARS_AVAILABLE:
+        raise_exception(
+            ValidationError,
+            "Polars not available",
+            field="output_type",
+            value="polars",
+            expected=(
+                "polars package must be installed: "
+                "pip install 'ffiec-data-connect[polars]'"
+            ),
+        )
+
+
+def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
+    """Format a date or datetime value per the requested output format.
+
+    Accepts:
+        - Empty string / ``None`` → returned unchanged
+        - ``datetime`` object → used directly
+        - String in any of: ``"MM/DD/YYYY"``, ``"M/D/YYYY"``, or the same
+          with a trailing ``"HH:MM:SS AM/PM"`` or 24-hour ``"HH:MM:SS"``
+          time component (matches what the FFIEC REST endpoints return).
 
     Returns:
-        Formatted datetime string
+        - ``"string_original"``: the input unchanged.
+        - ``"string_yyyymmdd"``: ``"YYYYMMDD"`` (date portion only — any
+          time component is dropped, matching legacy FFIEC semantics).
+        - ``"python_format"``: a ``datetime`` object.
+        Unparseable input is returned unchanged so callers downstream of
+        this layer aren't surprised by a partial conversion.
     """
-    if not dt_str:
-        return dt_str
+    if not date_value or date_output_format == "string_original":
+        return date_value
 
-    # For now, return as-is since REST API provides consistent format
-    # Future enhancement: parse and reformat according to date_output_format
-    return dt_str
+    # Normalize to a datetime object first.
+    if isinstance(date_value, datetime):
+        dt: datetime = date_value
+    elif isinstance(date_value, str):
+        stripped = date_value.strip()
+        for fmt in (
+            "%m/%d/%Y %I:%M:%S %p",  # datetime with AM/PM (submission endpoint)
+            "%m/%d/%Y %H:%M:%S",  # datetime 24-hour
+            "%m/%d/%Y",  # pure date (reporting-periods endpoint)
+        ):
+            try:
+                dt = datetime.strptime(stripped, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            # No recognized format matched. Return the input verbatim —
+            # better to hand back a usable (if unreformatted) value than
+            # to silently coerce it to something else.
+            return date_value
+    else:
+        return date_value
+
+    if date_output_format == "string_yyyymmdd":
+        return dt.strftime("%Y%m%d")
+    if date_output_format == "python_format":
+        return dt
+
+    # _date_format_validator should have rejected any other value upstream;
+    # defensively return input unchanged if we ever reach here.
+    return date_value
+
+
+def _format_datetime_for_output(dt_str: str, date_output_format: str) -> Any:
+    """Back-compat alias for ``_format_date_for_output``.
+
+    The original name only served datetime strings from the submission
+    endpoint. rc6 broadened it to any date value, so the newer function is
+    preferred internally. Kept here for any import path that still uses
+    the older name.
+    """
+    return _format_date_for_output(dt_str, date_output_format)
 
 
 def collect_reporting_periods_enhanced(
@@ -155,26 +224,33 @@ def collect_reporting_periods_enhanced(
 
         sorted_periods = sort_reporting_periods_ascending(raw_periods)
 
-        # Process dates - convert from MM/DD/YYYY to requested format if needed
-        processed_periods = []
-        for period_str in sorted_periods:
-            # For now, keep as-is since most users expect MM/DD/YYYY
-            # Future enhancement: convert based on date_output_format
-            processed_periods.append(period_str)
+        # Apply the requested date_output_format to each period. For
+        # ``"string_original"`` (the default) this is a no-op; for the
+        # other formats _format_date_for_output parses the MM/DD/YYYY
+        # string and returns a YYYYMMDD string or a datetime object.
+        processed_periods = [
+            _format_date_for_output(period_str, date_output_format)
+            for period_str in sorted_periods
+        ]
 
-        # Handle output type conversion
+        # Handle output type conversion. Polars requested but not
+        # available now raises (was silently falling back to a list).
         if output_type == "pandas":
             return pd.DataFrame({"reporting_period": processed_periods})
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             return pl.DataFrame({"reporting_period": processed_periods})  # type: ignore[union-attr]
         else:
             return processed_periods
 
     except Exception as e:
+        # Don't swallow specific, already-typed FFIEC exceptions — only wrap
+        # unexpected errors.
+        if isinstance(e, FFIECError):
+            raise
         logger.error(f"REST API call failed in collect_reporting_periods_enhanced: {e}")
-        raise_exception(
-            ConnectionError, f"Failed to retrieve reporting periods via REST API: {e}"
-        )
+        msg = f"Failed to retrieve reporting periods via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)
 
 
 def collect_filers_on_reporting_period_enhanced(
@@ -248,7 +324,8 @@ def collect_filers_on_reporting_period_enhanced(
         # Handle output type conversion
         if output_type == "pandas":
             return pd.DataFrame(normalized_filers)
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             return pl.DataFrame(normalized_filers)  # type: ignore[union-attr]
         else:
             return normalized_filers
@@ -257,7 +334,10 @@ def collect_filers_on_reporting_period_enhanced(
         logger.error(
             f"REST API call failed in collect_filers_on_reporting_period_enhanced: {e}"
         )
-        raise_exception(ConnectionError, f"Failed to retrieve filers via REST API: {e}")
+        if isinstance(e, FFIECError):
+            raise
+        msg = f"Failed to retrieve filers via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)
 
 
 def collect_filers_since_date_enhanced(
@@ -347,7 +427,8 @@ def collect_filers_since_date_enhanced(
             df = pd.DataFrame({"rssd_id": string_rssd_ids})
             df["rssd"] = df["rssd_id"]  # Dual field support
             return df
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             # Provide dual column names for compatibility
             data_dict = {"rssd_id": string_rssd_ids, "rssd": string_rssd_ids}
             return pl.DataFrame(data_dict)  # type: ignore[union-attr]
@@ -356,9 +437,10 @@ def collect_filers_since_date_enhanced(
 
     except Exception as e:
         logger.error(f"REST API call failed in collect_filers_since_date_enhanced: {e}")
-        raise_exception(
-            ConnectionError, f"Failed to retrieve filers since date via REST API: {e}"
-        )
+        if isinstance(e, FFIECError):
+            raise
+        msg = f"Failed to retrieve filers since date via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)
 
 
 def collect_filers_submission_date_time_enhanced(
@@ -471,7 +553,8 @@ def collect_filers_submission_date_time_enhanced(
         # Handle output type conversion
         if output_type == "pandas":
             return pd.DataFrame(processed_submissions)
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             return pl.DataFrame(processed_submissions)  # type: ignore[union-attr]
         else:
             return processed_submissions
@@ -480,7 +563,7 @@ def collect_filers_submission_date_time_enhanced(
         logger.error(
             f"REST API call failed in collect_filers_submission_date_time_enhanced: {e}"
         )
-        raise_exception(
-            ConnectionError,
-            f"Failed to retrieve submission date times via REST API: {e}",
-        )
+        if isinstance(e, FFIECError):
+            raise
+        msg = f"Failed to retrieve submission date times via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)

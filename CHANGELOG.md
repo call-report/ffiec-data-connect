@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0rc6] - 2026-04-22
+
+Vestigial-argument audit: warnings on silently-ignored parameter
+combinations, completion of a previously-stubbed feature
+(`date_output_format`), and a consistency fix for polars-without-polars.
+
+### Added
+
+- **`date_output_format` now actually works** on `collect_reporting_periods`,
+  `collect_ubpr_reporting_periods`, and `collect_filers_submission_date_time`.
+  The helper that was a no-op stub (`# Future enhancement: ...`) is now
+  implemented. `"string_yyyymmdd"` converts `"MM/DD/YYYY"` → `"YYYYMMDD"`;
+  `"python_format"` returns a `datetime` object. Shared via a new
+  `_format_date_for_output()` helper in `methods_enhanced.py`.
+- Shared `_require_polars_available()` helper consolidating the
+  "polars extra not installed" check.
+
+### Fixed
+
+- **Silent polars fallback → `ValidationError`.** When `output_type="polars"`
+  was requested but the `polars` extra wasn't installed, four methods
+  (`collect_reporting_periods`, `collect_filers_since_date`,
+  `collect_filers_submission_date_time`, `collect_filers_on_reporting_period`,
+  plus `collect_ubpr_reporting_periods`) would silently return a Python
+  list instead. Now they raise `ValidationError`, matching `collect_data`'s
+  long-standing behavior.
+- **Pre-existing `ConnectionError` re-raise bug.** Four spots in
+  `methods_enhanced.py` wrapped caught exceptions with
+  `raise_exception(ConnectionError, f"...")` — missing the positional
+  `message` argument for the typed-exception path, so any error in those
+  methods raised `TypeError: ConnectionError.__init__() missing 1
+  required positional argument: 'message'` instead of the intended
+  `ConnectionError`. Also narrowed the re-raise to skip re-wrapping
+  already-typed `FFIECError` subclasses (fixes a separate silent-failure
+  where a `ValidationError` from `_require_polars_available()` would be
+  swallowed and turned into the same `TypeError`).
+- **Stale "endpoint may not be implemented" error text** (two sites —
+  `methods.py` and `protocol_adapter.py`). The `RetrieveFacsimile`
+  endpoint is implemented and exercised by live integration tests; an
+  HTTP 500 there is almost always a transient upstream issue. Message
+  now says so and suggests retry.
+
+### Documented
+
+- **`UserWarning` when `force_null_types` / `date_output_format` are passed
+  with `output_type="xbrl"` or `"pdf"`.** Raw-bytes outputs bypass parsing,
+  so those arguments silently had no effect. The warning surfaces the
+  no-op so callers drop the argument (or change `output_type`).
+- **`UserWarning` when `force_null_types` is passed to a method with no
+  typed null columns** (`collect_reporting_periods`,
+  `collect_ubpr_reporting_periods`, `collect_filers_since_date`). The
+  parameter is accepted on those methods for API symmetry; warning makes
+  the no-op visible at runtime rather than only in the docstring.
+
+### Tests
+
+- New `tests/unit/test_rc6_arg_interactions.py` (32 tests) covers every
+  warning path, the polars-missing error on each affected method, and
+  end-to-end date-format conversion on each wired method.
+- Updated two pre-existing tests in `test_methods_enhanced.py` and
+  `test_protocol_adapter_v3.py` whose asserted behavior changed
+  (the date-format stub became real; the 500 message was reworded).
+- 779 unit tests pass (up from 746 in rc5).
+
 ## [3.0.0rc5] - 2026-04-22
 
 Hotfix for a regression shipped in rc4 plus a systematic test-coverage audit

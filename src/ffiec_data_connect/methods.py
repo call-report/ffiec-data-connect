@@ -217,6 +217,88 @@ def _return_ffiec_reporting_date(indate: Union[datetime, str]) -> str:
                 )
 
 
+def _warn_ignored_params_for_raw_bytes(
+    method_name: str,
+    output_type: str,
+    *,
+    force_null_types: Optional[str] = None,
+    date_output_format: Optional[str] = None,
+) -> None:
+    """Emit ``UserWarning`` for parameters that have no effect with raw-bytes
+    outputs (``output_type="xbrl"`` / ``"pdf"``).
+
+    Raw-bytes returns bypass the parsing / DataFrame-formatting layer, so
+    ``force_null_types`` (null-sentinel selection) and ``date_output_format``
+    (date column formatting) are silently ignored on those paths. Warning
+    surfaces the no-op so the user can drop the argument or change
+    ``output_type``.
+
+    Args:
+        method_name: Name of the calling ``collect_*`` method (for the
+            warning text).
+        output_type: The resolved (post-validator) output_type; the warning
+            only fires when this is ``"xbrl"`` or ``"pdf"``.
+        force_null_types: Value passed by the user. ``None`` (default) is
+            treated as "not passed" — no warning.
+        date_output_format: Value passed by the user. ``None`` means
+            "this method doesn't accept date_output_format"; ``"string_original"``
+            is the no-op default and also doesn't warn.
+    """
+    if output_type not in ("xbrl", "pdf"):
+        return
+
+    import warnings
+
+    if force_null_types is not None:
+        warnings.warn(
+            f"force_null_types={force_null_types!r} has no effect on "
+            f"{method_name} with output_type={output_type!r} — the call "
+            "returns raw bytes without parsing. Drop the argument, or "
+            "change output_type to 'list', 'pandas', or 'polars' to apply "
+            "null-type selection.",
+            UserWarning,
+            stacklevel=3,
+        )
+
+    if date_output_format is not None and date_output_format != "string_original":
+        warnings.warn(
+            f"date_output_format={date_output_format!r} has no effect on "
+            f"{method_name} with output_type={output_type!r} — the call "
+            "returns raw bytes without parsing. Drop the argument, or "
+            "change output_type to 'list', 'pandas', or 'polars' to apply "
+            "date formatting.",
+            UserWarning,
+            stacklevel=3,
+        )
+
+
+def _warn_force_null_types_no_op(
+    method_name: str, force_null_types: Optional[str]
+) -> None:
+    """Emit ``UserWarning`` when ``force_null_types`` is passed to a method
+    whose return value has no typed null columns.
+
+    Three methods accept ``force_null_types`` for API symmetry with
+    ``collect_data`` (so callers can switch between methods without hitting
+    ``TypeError``) but never apply it: ``collect_reporting_periods``,
+    ``collect_ubpr_reporting_periods``, and ``collect_filers_since_date``
+    all return lists/DataFrames of strings with no typed columns. Warning
+    surfaces the no-op so users don't assume it's doing something.
+    """
+    if force_null_types is None:
+        return
+
+    import warnings
+
+    warnings.warn(
+        f"force_null_types={force_null_types!r} has no effect on "
+        f"{method_name} — this method returns string data with no typed "
+        "null columns. Drop the argument; the value is ignored.",
+        UserWarning,
+        stacklevel=3,
+    )
+
+
 def _validate_force_null_types(force_null_types: Optional[str]) -> None:
     """Validate the ``force_null_types`` parameter across all collect_* methods.
 
@@ -594,6 +676,7 @@ def collect_reporting_periods(
     )
     _ = _date_format_validator(date_output_format)
     _validate_force_null_types(force_null_types)
+    _warn_force_null_types_no_op("collect_reporting_periods", force_null_types)
 
     from .methods_enhanced import collect_reporting_periods_enhanced
 
@@ -667,6 +750,15 @@ def collect_data(
                 "PDF is only available for Call Report data (series='call')"
             ),
         )
+
+    # Raw-bytes outputs bypass parsing; warn if the user passed params that
+    # only affect the parsed path.
+    _warn_ignored_params_for_raw_bytes(
+        "collect_data",
+        output_type,
+        force_null_types=force_null_types,
+        date_output_format=date_output_format,
+    )
 
     creds = resolved_creds
     if True:  # REST API path
@@ -811,11 +903,13 @@ def collect_data(
             return normalized_data
 
         except ConnectionError as e:
-            # If REST API fails with server error, log and re-raise with context
+            # Transient-upstream guidance for HTTP 500. The endpoint is
+            # implemented and exercised in live integration tests; a 500
+            # is almost always a transient service-side issue.
             if "server error" in str(e).lower() or "500" in str(e):
                 logger.warning(
-                    f"REST API RetrieveFacsimile endpoint returned server error for RSSD {rssd_id}. "
-                    f"This endpoint may not be fully implemented yet."
+                    f"REST API RetrieveFacsimile returned HTTP 500 for "
+                    f"RSSD {rssd_id} — transient upstream error, retry."
                 )
             raise
 
@@ -858,6 +952,7 @@ def collect_filers_since_date(
         method_name="collect_filers_since_date",
     )
     _validate_force_null_types(force_null_types)
+    _warn_force_null_types_no_op("collect_filers_since_date", force_null_types)
 
     from .methods_enhanced import collect_filers_since_date_enhanced
 
@@ -1010,6 +1105,7 @@ def collect_ubpr_reporting_periods(
     )
     _ = _date_format_validator(date_output_format)
     _validate_force_null_types(force_null_types)
+    _warn_force_null_types_no_op("collect_ubpr_reporting_periods", force_null_types)
 
     from .protocol_adapter import create_protocol_adapter
 
@@ -1018,10 +1114,22 @@ def collect_ubpr_reporting_periods(
 
     sorted_periods = sort_reporting_periods_ascending(raw_periods)
 
+    # Apply date_output_format conversion (rc6 — previously this parameter
+    # was validated but never honored on UBPR periods). Default
+    # "string_original" passes through unchanged.
+    from .methods_enhanced import _format_date_for_output, _require_polars_available
+
+    formatted_periods = [
+        _format_date_for_output(p, date_output_format) for p in sorted_periods
+    ]
+
     if output_type == "pandas":
-        return pd.DataFrame({"reporting_period": sorted_periods})
+        return pd.DataFrame({"reporting_period": formatted_periods})
+    elif output_type == "polars":
+        _require_polars_available()
+        return pl.DataFrame({"reporting_period": formatted_periods})  # type: ignore[union-attr]
     else:
-        return sorted_periods
+        return formatted_periods
 
 
 def collect_ubpr_facsimile_data(
@@ -1068,6 +1176,14 @@ def collect_ubpr_facsimile_data(
         method_name="collect_ubpr_facsimile_data",
     )
     _validate_force_null_types(force_null_types)
+
+    # Warn if force_null_types has no effect for the requested output.
+    # (This method has no date_output_format parameter.)
+    _warn_ignored_params_for_raw_bytes(
+        "collect_ubpr_facsimile_data",
+        output_type,
+        force_null_types=force_null_types,
+    )
 
     if not _is_valid_date_or_quarter(reporting_period):  # type: ignore[arg-type]
         raise_exception(

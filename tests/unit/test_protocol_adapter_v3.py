@@ -660,7 +660,12 @@ class TestRESTAdapterRetrieveFacsimile:
             adapter.retrieve_facsimile("480228", "12/31/2023", "call")
 
     def test_facsimile_500_raises_connection_error(self):
-        """500 response raises ConnectionError (lines 553-562)."""
+        """500 response raises ConnectionError.
+
+        rc6 reworded the message from "may not be implemented yet" to the
+        accurate "transient upstream" guidance (live tests confirm the
+        endpoint is implemented and working).
+        """
         adapter = _make_rest_adapter()
         adapter.rate_limiter = Mock()
 
@@ -672,7 +677,7 @@ class TestRESTAdapterRetrieveFacsimile:
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        with pytest.raises(ConnectionError, match="server error"):
+        with pytest.raises(ConnectionError, match="HTTP 500|transient"):
             adapter.retrieve_facsimile("480228", "12/31/2023", "call")
 
     def test_facsimile_unexpected_status_raises_connection_error(self):
