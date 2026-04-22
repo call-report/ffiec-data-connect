@@ -445,3 +445,99 @@ class TestForceNullTypesNoOpWarning:
                 if issubclass(w.category, UserWarning) and "no effect" in str(w.message)
             ]
             assert no_op == []
+
+    # The following two tests address a rc6 review finding: the warning was
+    # applied to 3 of the 5 methods that document force_null_types as a
+    # no-op. These two were missing; they warn too for symmetry.
+
+    def test_collect_filers_submission_date_time_warns(self):
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            with pytest.warns(UserWarning, match="force_null_types.*no effect"):
+                collect_filers_submission_date_time(
+                    creds,
+                    since_date="1/1/2024",
+                    reporting_period="12/31/2024",
+                    force_null_types="pandas",
+                )
+
+    def test_collect_filers_on_reporting_period_warns(self):
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            with pytest.warns(UserWarning, match="force_null_types.*no effect"):
+                collect_filers_on_reporting_period(
+                    creds,
+                    reporting_period="12/31/2024",
+                    force_null_types="pandas",
+                )
+
+
+# ---------------------------------------------------------------------------
+# Review follow-ups — `_format_date_for_output` unparseable input handling,
+# and propagation of programming errors through the enhanced methods.
+# ---------------------------------------------------------------------------
+
+
+class TestFormatDateUnparseableInput:
+    """rc6 review finding: unparseable input must not silently return a str
+    when the caller requested ``python_format``, which would violate the
+    documented return type and break downstream ``.year`` / ``.month`` access.
+    """
+
+    def test_python_format_unparseable_raises(self):
+        """python_format + unparseable input → ValidationError."""
+        # Matches both legacy ("Cannot parse date ...") and non-legacy
+        # ("Validation failed for field 'date_value' ...") message forms.
+        with pytest.raises((ValidationError, ValueError), match="date"):
+            _format_date_for_output("not a date", "python_format")
+
+    def test_python_format_dashes_raises(self):
+        """ISO-ish input (dashes) isn't supported; raises in python_format."""
+        # Matches both legacy ("Cannot parse date ...") and non-legacy
+        # ("Validation failed for field 'date_value' ...") message forms.
+        with pytest.raises((ValidationError, ValueError), match="date"):
+            _format_date_for_output("2024-12-31", "python_format")
+
+    def test_string_yyyymmdd_unparseable_passes_through(self):
+        """string_yyyymmdd + unparseable input → unchanged (still a string).
+
+        A string return is type-compatible here; caller doesn't expect a
+        datetime, so a log-and-passthrough is the safer default.
+        """
+        assert _format_date_for_output("not a date", "string_yyyymmdd") == "not a date"
+        assert _format_date_for_output("2024-12-31", "string_yyyymmdd") == "2024-12-31"
+
+
+class TestProgrammingErrorsPropagate:
+    """rc6 review finding: the narrowed ``except Exception`` in the enhanced
+    methods lets ``AttributeError`` / ``KeyError`` / ``TypeError`` bubble
+    through untouched. Wrapping those as ``ConnectionError`` misleads users
+    into thinking FFIEC is down when the real problem is a library bug or
+    API shape drift.
+    """
+
+    def test_attribute_error_from_adapter_propagates(self):
+        """A raw AttributeError from the adapter is NOT wrapped as ConnectionError."""
+        creds = _make_creds()
+        adapter = _default_mock_adapter()
+        adapter.retrieve_reporting_periods.side_effect = AttributeError(
+            "shape drift: 'NoneType' object has no attribute 'root'"
+        )
+        with _mock_adapter_everywhere(adapter):
+            # Must raise AttributeError, NOT ConnectionError — a shape-drift
+            # bug is not a network issue.
+            with pytest.raises(AttributeError, match="shape drift"):
+                collect_reporting_periods(creds, series="call")
+
+    def test_key_error_from_adapter_propagates(self):
+        """A raw KeyError propagates."""
+        creds = _make_creds()
+        adapter = _default_mock_adapter()
+        adapter.retrieve_filers_since_date.side_effect = KeyError("ID_RSSD")
+        with _mock_adapter_everywhere(adapter):
+            with pytest.raises(KeyError, match="ID_RSSD"):
+                collect_filers_since_date(
+                    creds,
+                    reporting_period="12/31/2024",
+                    since_date="1/1/2024",
+                )

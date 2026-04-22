@@ -59,15 +59,44 @@ combinations, completion of a previously-stubbed feature
   parameter is accepted on those methods for API symmetry; warning makes
   the no-op visible at runtime rather than only in the docstring.
 
+### Review follow-ups
+
+Post-review tightening based on parallel code-review + silent-failure hunt:
+
+- `_warn_force_null_types_no_op` is now applied to **all five** methods
+  where the parameter is a documented no-op —
+  `collect_filers_submission_date_time` and
+  `collect_filers_on_reporting_period` were missing the warning in the
+  initial rc6 commit and would have been silent drop-through.
+- `_format_date_for_output` with `date_output_format="python_format"` now
+  raises `ValidationError` on unparseable input instead of silently
+  returning a string. The previous behavior would have violated the
+  documented return type and broken downstream `.year` / `.month`
+  access on any value that didn't round-trip through `strptime`. String
+  modes still pass through unchanged (with a `logger.debug` for
+  diagnostic trails).
+- The narrowed `except Exception` handlers in `methods_enhanced.py` now
+  also re-raise `AttributeError` / `KeyError` / `TypeError` untouched.
+  Wrapping those as `ConnectionError` would mislead users into thinking
+  FFIEC is down when the real problem is a library bug or an API shape
+  drift. Only genuinely unexpected (presumed-network) exceptions still
+  fall through to the `ConnectionError` wrap.
+- Minor legacy-mode behavior change: adapter `ConnectionError` now
+  propagates verbatim instead of being re-wrapped with the
+  "Failed to retrieve … via REST API: …" prefix. The new message is
+  cleaner; flagged here because legacy-mode users may notice.
+
 ### Tests
 
-- New `tests/unit/test_rc6_arg_interactions.py` (32 tests) covers every
-  warning path, the polars-missing error on each affected method, and
-  end-to-end date-format conversion on each wired method.
+- New `tests/unit/test_rc6_arg_interactions.py` (39 tests) covers every
+  warning path, the polars-missing error on each affected method,
+  end-to-end date-format conversion on each wired method, unparseable-
+  input handling in both string and python-format modes, and the
+  programming-error-propagation behavior on the narrowed `except` blocks.
 - Updated two pre-existing tests in `test_methods_enhanced.py` and
   `test_protocol_adapter_v3.py` whose asserted behavior changed
   (the date-format stub became real; the 500 message was reworded).
-- 779 unit tests pass (up from 746 in rc5).
+- **786 unit tests pass** (up from 746 in rc5, 711 on main).
 
 ## [3.0.0rc5] - 2026-04-22
 

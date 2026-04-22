@@ -97,7 +97,9 @@ def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
 
     Accepts:
         - Empty string / ``None`` → returned unchanged
-        - ``datetime`` object → used directly
+        - ``datetime`` object → used directly (any tz info is preserved for
+          ``python_format``; dropped for ``string_yyyymmdd`` since that
+          format is date-only)
         - String in any of: ``"MM/DD/YYYY"``, ``"M/D/YYYY"``, or the same
           with a trailing ``"HH:MM:SS AM/PM"`` or 24-hour ``"HH:MM:SS"``
           time component (matches what the FFIEC REST endpoints return).
@@ -105,10 +107,20 @@ def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
     Returns:
         - ``"string_original"``: the input unchanged.
         - ``"string_yyyymmdd"``: ``"YYYYMMDD"`` (date portion only — any
-          time component is dropped, matching legacy FFIEC semantics).
+          time component and timezone is dropped).
         - ``"python_format"``: a ``datetime`` object.
-        Unparseable input is returned unchanged so callers downstream of
-        this layer aren't surprised by a partial conversion.
+
+    Error handling for unparseable input:
+        - In ``"python_format"`` mode, unparseable input raises
+          :class:`ValidationError`. Returning a string here would violate
+          the documented return type and break downstream consumers doing
+          e.g. ``result.year``.
+        - In the string modes, unparseable input is returned unchanged and
+          a ``logger.debug`` is emitted. The string is still a string, just
+          not reformatted. Raising here would be noisy because the FFIEC
+          REST endpoints have always emitted ``MM/DD/YYYY`` and any
+          deviation is a server-side anomaly worth a debug trail but not a
+          hard failure.
     """
     if not date_value or date_output_format == "string_original":
         return date_value
@@ -129,9 +141,29 @@ def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
             except ValueError:
                 continue
         else:
-            # No recognized format matched. Return the input verbatim —
-            # better to hand back a usable (if unreformatted) value than
-            # to silently coerce it to something else.
+            # No recognized format matched.
+            logger.debug(
+                "date %r did not match any known FFIEC format; " "output format=%r",
+                date_value,
+                date_output_format,
+            )
+            if date_output_format == "python_format":
+                # Returning a str here would violate the documented return
+                # type (datetime) and break callers doing .year / .month.
+                raise_exception(
+                    ValidationError,
+                    f"Cannot parse date {date_value!r} for "
+                    f"date_output_format='python_format'",
+                    field="date_value",
+                    value=str(date_value),
+                    expected=(
+                        "a date string in MM/DD/YYYY format, optionally "
+                        "with a trailing HH:MM:SS AM/PM or HH:MM:SS time, "
+                        "or a datetime object"
+                    ),
+                )
+            # String modes: return input verbatim so callers still get a
+            # usable (unreformatted) value.
             return date_value
     else:
         return date_value
@@ -246,7 +278,13 @@ def collect_reporting_periods_enhanced(
     except Exception as e:
         # Don't swallow specific, already-typed FFIEC exceptions — only wrap
         # unexpected errors.
-        if isinstance(e, FFIECError):
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
             raise
         logger.error(f"REST API call failed in collect_reporting_periods_enhanced: {e}")
         msg = f"Failed to retrieve reporting periods via REST API: {e}"
@@ -334,7 +372,13 @@ def collect_filers_on_reporting_period_enhanced(
         logger.error(
             f"REST API call failed in collect_filers_on_reporting_period_enhanced: {e}"
         )
-        if isinstance(e, FFIECError):
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
             raise
         msg = f"Failed to retrieve filers via REST API: {e}"
         raise_exception(ConnectionError, msg, msg)
@@ -437,7 +481,13 @@ def collect_filers_since_date_enhanced(
 
     except Exception as e:
         logger.error(f"REST API call failed in collect_filers_since_date_enhanced: {e}")
-        if isinstance(e, FFIECError):
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
             raise
         msg = f"Failed to retrieve filers since date via REST API: {e}"
         raise_exception(ConnectionError, msg, msg)
@@ -563,7 +613,13 @@ def collect_filers_submission_date_time_enhanced(
         logger.error(
             f"REST API call failed in collect_filers_submission_date_time_enhanced: {e}"
         )
-        if isinstance(e, FFIECError):
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
             raise
         msg = f"Failed to retrieve submission date times via REST API: {e}"
         raise_exception(ConnectionError, msg, msg)

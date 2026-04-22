@@ -278,12 +278,19 @@ def _warn_force_null_types_no_op(
     """Emit ``UserWarning`` when ``force_null_types`` is passed to a method
     whose return value has no typed null columns.
 
-    Three methods accept ``force_null_types`` for API symmetry with
+    Five methods accept ``force_null_types`` for API symmetry with
     ``collect_data`` (so callers can switch between methods without hitting
-    ``TypeError``) but never apply it: ``collect_reporting_periods``,
-    ``collect_ubpr_reporting_periods``, and ``collect_filers_since_date``
-    all return lists/DataFrames of strings with no typed columns. Warning
-    surfaces the no-op so users don't assume it's doing something.
+    ``TypeError``) but never apply it:
+
+    - ``collect_reporting_periods`` / ``collect_ubpr_reporting_periods`` —
+      list of MM/DD/YYYY strings (or the reformatted equivalent);
+    - ``collect_filers_since_date`` — list of RSSD-ID strings;
+    - ``collect_filers_on_reporting_period`` — panel rows with string
+      metadata columns;
+    - ``collect_filers_submission_date_time`` — RSSD-ID + datetime string/
+      object columns, no typed numerics.
+
+    The warning surfaces the no-op so users don't assume it's doing something.
     """
     if force_null_types is None:
         return
@@ -1008,6 +1015,9 @@ def collect_filers_submission_date_time(
     )
     _ = _date_format_validator(date_output_format)
     _validate_force_null_types(force_null_types)
+    _warn_force_null_types_no_op(
+        "collect_filers_submission_date_time", force_null_types
+    )
 
     from .methods_enhanced import collect_filers_submission_date_time_enhanced
 
@@ -1057,6 +1067,7 @@ def collect_filers_on_reporting_period(
         method_name="collect_filers_on_reporting_period",
     )
     _validate_force_null_types(force_null_types)
+    _warn_force_null_types_no_op("collect_filers_on_reporting_period", force_null_types)
 
     from .methods_enhanced import collect_filers_on_reporting_period_enhanced
 
