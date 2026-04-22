@@ -71,10 +71,15 @@ Also applies to: `collect_ubpr_reporting_periods`, `collect_ubpr_facsimile_data`
 
 ALTERNATIVE (deprecated, emits DeprecationWarning):
 ```python
+# Positional-None form
 collect_reporting_periods(None, creds, ...)
 collect_data(None, creds, ...)
+
+# Keyword form (restored in 3.0.0rc4 after briefly breaking in rc1-rc3)
+collect_reporting_periods(session=None, creds=creds, ...)
+collect_data(session=None, creds=creds, ...)
 ```
-Passing `None` as the first argument still works but triggers a `DeprecationWarning`.
+Both forms still work but trigger a `DeprecationWarning`. The `session=None, creds=creds` kwarg form matches what the v2.x docs showed, so AI agents refactoring older code will commonly encounter it.
 
 ### Rule 4: Update imports
 
@@ -141,6 +146,46 @@ Token expiry is now automatically extracted from the JWT `exp` claim.
 `creds.is_expired` returns True if token expires within 24 hours.
 `creds.token_expires` returns the expiry datetime.
 
+Passing `token_expires=...` as a constructor argument still works but emits a `DeprecationWarning` (since 3.0.0rc4) — the JWT's own `exp` claim is authoritative and any value passed here is discarded. Drop the argument.
+
+### Rule 8: Replace output_type="bytes" with "xbrl" or "pdf"
+
+As of 3.0.0rc4, `output_type="bytes"` is deprecated and now behaves differently depending on the method:
+
+FIND:
+```python
+# v2 pattern — was inconsistent across methods, "worked" silently on some
+data = collect_data(conn, creds, ..., output_type="bytes")
+```
+
+REPLACE WITH:
+```python
+# For XBRL XML bytes (works on collect_data and collect_ubpr_facsimile_data):
+data = collect_data(creds, ..., output_type="xbrl")
+# For PDF bytes (works on collect_data only — UBPR endpoint is XBRL-only):
+data = collect_data(creds, ..., output_type="pdf")
+```
+
+On `collect_ubpr_facsimile_data`, `output_type="bytes"` is transparently translated to `"xbrl"` (with `DeprecationWarning`). On every other method, `output_type="bytes"` now raises `ValidationError` — those methods have no raw-bytes representation; the v2 "bytes" on them was a silent no-op returning `None` (from `collect_data`) or a list (from the other five methods).
+
+### Rule 9: Polars output requires the [polars] extra (or switch to pandas)
+
+As of 3.0.0rc6, `output_type="polars"` without the optional extra raises `ValidationError` instead of silently returning a Python list. If a v2 script used polars output "successfully" but didn't install the extra, it was getting a list — which is a bug, not a feature.
+
+FIND:
+```python
+data = collect_reporting_periods(creds, output_type="polars")
+```
+
+REPLACE WITH, EITHER:
+```bash
+pip install 'ffiec-data-connect[polars]'   # Then leave output_type="polars" as-is
+```
+OR:
+```python
+data = collect_reporting_periods(creds, output_type="pandas")   # or "list"
+```
+
 ## Method Reference
 
 All 7 public methods. Preferred calling convention is `collect_*(creds, ...)` (no session parameter):
@@ -159,9 +204,10 @@ All 7 public methods. Preferred calling convention is `collect_*(creds, ...)` (n
 
 | Variable | Status | Notes |
 |----------|--------|-------|
-| `FFIEC_USERNAME` | No longer used | Was for WebserviceCredentials env var mode |
-| `FFIEC_PASSWORD` | No longer used | Was for WebserviceCredentials env var mode |
-| `FFIEC_USE_LEGACY_ERRORS` | Still active | Controls error mode (ValueError vs typed exceptions) |
+| `FFIEC_USERNAME` | No longer auto-read | Was for WebserviceCredentials env var mode. OAuth2Credentials requires the username to be passed explicitly; notebooks often use this env var as a convention (`os.environ["FFIEC_USERNAME"]`) but the library itself no longer reads it. |
+| `FFIEC_PASSWORD` | No longer used | Was for WebserviceCredentials env var mode. REST uses JWT; there is no password. |
+| `FFIEC_BEARER_TOKEN` | Consulted on empty-token error | If `OAuth2Credentials(..., bearer_token="")` is constructed with an empty string, the error message tells the user to set this env var. No other auto-read. |
+| `FFIEC_USE_LEGACY_ERRORS` | Still active (default: `true`) | Controls error mode. `true` → plain `ValueError` (for v2 back-compat); `false` → typed `FFIECError` subclasses (`CredentialError`, `ValidationError`, etc.). Recommend setting to `false` in new code. |
 
 ## Output Compatibility
 
@@ -185,9 +231,21 @@ Exception hierarchy is unchanged:
 - `NoDataError` - no data for given parameters
 - `SOAPDeprecationError` - raised when SOAP classes are used (new in v3.0.0)
 
+## Behavioral changes AI agents should know (3.0.0rc4 — rc6)
+
+These are not migration steps but behavioral shifts that can bite code that "worked" in v2.x:
+
+1. **`date_output_format="python_format"` returns tz-aware datetimes (3.0.0rc6).** FFIEC publishes all timestamps in Washington, DC local wall-clock time; the library now attaches `zoneinfo.ZoneInfo("America/New_York")` in this mode. DST is honored. Affects `collect_reporting_periods`, `collect_ubpr_reporting_periods`, `collect_filers_submission_date_time`, and `collect_data`'s `quarter` column. If refactored code compares these datetimes with naive `datetime` values, it will raise `TypeError: can't compare offset-naive and offset-aware datetimes`. Attach a tz to the naive value, or call `.replace(tzinfo=None)` on the library's output.
+
+2. **`date_output_format` is now honored on list-returning methods (3.0.0rc6).** In v2.x, passing `date_output_format="python_format"` or `"string_yyyymmdd"` on `collect_reporting_periods`, `collect_ubpr_reporting_periods`, or `collect_filers_submission_date_time` was a silent no-op — the parameter was validated but ignored. If refactored code had a `datetime.strptime(...)` workaround to parse the returned strings, delete the workaround and trust the parameter.
+
+3. **`except ConnectionError:` may miss more errors (3.0.0rc6).** The REST code path no longer wraps `AttributeError` / `KeyError` / `TypeError` / `FFIECError` subclasses as `ConnectionError`. Code that relied on the wrap (e.g. to suppress transient API quirks surfacing as `AttributeError`) needs explicit handlers for those types.
+
+4. **Legacy-mode error messages got shorter (3.0.0rc6).** In the default legacy error mode, a polars-missing error used to arrive as `ValueError("Failed to retrieve ... via REST API: Polars not available")`. Now it's the clean `ValueError("Polars not available")`. Code grepping on the old "via REST API" prefix will need updating.
+
 ## Testing After Migration
 
 1. Replace `WebserviceCredentials` with `OAuth2Credentials` in test fixtures
 2. Replace `FFIECConnection()` with `None` as session parameter
 3. Use `Mock(spec=WebserviceCredentials)` if tests need a credential-like object for isinstance checks
-4. All output assertions should pass unchanged (format is identical)
+4. All output assertions should pass unchanged (format is identical) — **except** for `date_output_format="python_format"` assertions if the test previously expected a naive `datetime` (now tz-aware — see behavioral note 1 above).
