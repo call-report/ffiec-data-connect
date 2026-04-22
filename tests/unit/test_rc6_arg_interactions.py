@@ -430,6 +430,85 @@ class TestDateOutputFormatEndToEnd:
         q_summer = result_summer[0]["quarter"]
         assert q_summer.utcoffset().total_seconds() == -4 * 3600
 
+    # ---- gap-filler tests for rc6 tz coverage -----------------------------
+
+    def test_collect_ubpr_reporting_periods_python_format(self):
+        """End-to-end: ``collect_ubpr_reporting_periods`` + ``python_format``
+        returns tz-aware ``datetime`` objects. (The yyyymmdd path has its own
+        test above; this closes the python_format gap.)
+        """
+        creds = _make_creds()
+        adapter = _default_mock_adapter()
+        adapter.retrieve_ubpr_reporting_periods.return_value = ["12/31/2024"]
+        with _mock_adapter_everywhere(adapter):
+            result = collect_ubpr_reporting_periods(
+                creds,
+                output_type="list",
+                date_output_format="python_format",
+            )
+        assert len(result) == 1
+        assert isinstance(result[0], datetime)
+        assert result[0] == datetime(2024, 12, 31, tzinfo=_FFIEC_TZ)
+        assert result[0].tzinfo is not None
+
+    def test_collect_filers_submission_date_time_yyyymmdd(self):
+        """End-to-end: yyyymmdd mode drops the time component as documented."""
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            result = collect_filers_submission_date_time(
+                creds,
+                since_date="1/1/2024",
+                reporting_period="12/31/2024",
+                output_type="list",
+                date_output_format="string_yyyymmdd",
+            )
+        assert len(result) == 1
+        # The yyyymmdd mode drops the time; the quarter-end date remains.
+        assert result[0]["datetime"] == "20241231"
+
+    def test_collect_reporting_periods_pandas_output_preserves_tz(self):
+        """``output_type='pandas'`` + ``python_format``: the DataFrame column
+        is inferred as ``datetime64[ns, America/New_York]`` by pandas when
+        handed a list of tz-aware datetimes, so the tz survives the
+        List → DataFrame conversion.
+        """
+        creds = _make_creds()
+        adapter = _default_mock_adapter()
+        adapter.retrieve_reporting_periods.return_value = [
+            "9/30/2024",
+            "12/31/2024",
+        ]
+        with _mock_adapter_everywhere(adapter):
+            df = collect_reporting_periods(
+                creds,
+                series="call",
+                output_type="pandas",
+                date_output_format="python_format",
+            )
+        col = df["reporting_period"]
+        # pandas surfaces the tz through the dtype; we don't care about the
+        # exact string, only that the tz is present.
+        assert col.dt.tz is not None
+        assert str(col.dt.tz) == "America/New_York"
+        # And a tz-aware datetime comparison works across rows.
+        assert col.iloc[0] < col.iloc[1]
+
+    def test_collect_filers_submission_date_time_pandas_preserves_tz(self):
+        """Same guarantee on the submission-datetime path: pandas output with
+        python_format yields a tz-aware datetime column.
+        """
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            df = collect_filers_submission_date_time(
+                creds,
+                since_date="1/1/2024",
+                reporting_period="12/31/2024",
+                output_type="pandas",
+                date_output_format="python_format",
+            )
+        assert df["datetime"].dt.tz is not None
+        assert str(df["datetime"].dt.tz) == "America/New_York"
+
 
 # ---------------------------------------------------------------------------
 # E: the new error wording.
