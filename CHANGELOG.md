@@ -17,8 +17,14 @@ combinations, completion of a previously-stubbed feature
   `collect_ubpr_reporting_periods`, and `collect_filers_submission_date_time`.
   The helper that was a no-op stub (`# Future enhancement: ...`) is now
   implemented. `"string_yyyymmdd"` converts `"MM/DD/YYYY"` → `"YYYYMMDD"`;
-  `"python_format"` returns a `datetime` object. Shared via a new
-  `_format_date_for_output()` helper in `methods_enhanced.py`.
+  `"python_format"` returns a **tz-aware** `datetime` object labeled as
+  `America/New_York`. FFIEC emits all of its date/time values in Washington,
+  DC local time but sends no tz marker on the wire, so naive datetimes here
+  would force every downstream caller to reattach the same timezone. DST is
+  handled automatically via `zoneinfo` (EST in winter, EDT in summer). If a
+  caller passes an already-tz-aware `datetime` in, its tzinfo is preserved —
+  we only label naive values. Shared via a new `_format_date_for_output()`
+  helper in `methods_enhanced.py`.
 - Shared `_require_polars_available()` helper consolidating the
   "polars extra not installed" check.
 

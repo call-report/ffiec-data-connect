@@ -12,6 +12,7 @@ import logging
 from datetime import datetime
 from types import ModuleType
 from typing import Any, Dict, List, Optional, Union
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -31,6 +32,15 @@ from ffiec_data_connect.methods import (
     _output_type_validator,
 )
 from ffiec_data_connect.protocol_adapter import create_protocol_adapter
+
+# FFIEC reports submission timestamps and reporting periods in Washington,
+# DC local wall-clock time (Eastern). The REST API does not stamp a tz
+# marker on the wire — the library attaches one for ``python_format``
+# output so downstream `datetime` arithmetic doesn't accidentally treat
+# the values as UTC or local-runtime tz. ``ZoneInfo`` handles EST↔EDT
+# transitions from the tz database, so a naive 2:30 PM on 2024-02-20
+# becomes EST; 2:30 PM on 2024-07-15 becomes EDT.
+_FFIEC_TZ = ZoneInfo("America/New_York")
 
 # Polars import - optional
 pl: Optional[ModuleType]
@@ -97,9 +107,12 @@ def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
 
     Accepts:
         - Empty string / ``None`` → returned unchanged
-        - ``datetime`` object → used directly (any tz info is preserved for
-          ``python_format``; dropped for ``string_yyyymmdd`` since that
-          format is date-only)
+        - ``datetime`` object → used directly. If the caller provides an
+          already-aware datetime, its tzinfo is preserved. If they pass a
+          naive datetime and ask for ``python_format``, the helper labels
+          it with ``America/New_York`` — same treatment as a parsed
+          string, on the assumption the caller produced it from a
+          FFIEC-shaped input.
         - String in any of: ``"MM/DD/YYYY"``, ``"M/D/YYYY"``, or the same
           with a trailing ``"HH:MM:SS AM/PM"`` or 24-hour ``"HH:MM:SS"``
           time component (matches what the FFIEC REST endpoints return).
@@ -108,7 +121,12 @@ def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
         - ``"string_original"``: the input unchanged.
         - ``"string_yyyymmdd"``: ``"YYYYMMDD"`` (date portion only — any
           time component and timezone is dropped).
-        - ``"python_format"``: a ``datetime`` object.
+        - ``"python_format"``: a **tz-aware** ``datetime`` in
+          ``America/New_York``. FFIEC reports wall-clock values in
+          Washington, DC local time with no tz marker on the wire; the
+          library attaches the label so downstream arithmetic doesn't
+          silently treat the value as UTC or process-local time. The
+          ``ZoneInfo`` handles EST↔EDT transitions automatically.
 
     Error handling for unparseable input:
         - In ``"python_format"`` mode, unparseable input raises
@@ -169,8 +187,16 @@ def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
         return date_value
 
     if date_output_format == "string_yyyymmdd":
+        # strftime doesn't convert across tz, it just formats — safe on
+        # both naive and aware datetimes. The string output is date-only,
+        # so any tzinfo is intentionally dropped.
         return dt.strftime("%Y%m%d")
     if date_output_format == "python_format":
+        # Only attach DC tz if the datetime is naive. If the caller
+        # supplied an already-aware datetime, their intent trumps the
+        # library's default — don't overwrite.
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=_FFIEC_TZ)
         return dt
 
     # _date_format_validator should have rejected any other value upstream;

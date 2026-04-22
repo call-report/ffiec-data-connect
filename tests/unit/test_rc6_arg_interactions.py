@@ -23,6 +23,7 @@ import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import Mock, patch
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -41,6 +42,10 @@ from ffiec_data_connect.methods import (
 from ffiec_data_connect.methods_enhanced import (
     _format_date_for_output,
 )
+
+# Mirror of methods_enhanced._FFIEC_TZ — tests reference it directly to
+# avoid importing a private symbol from the library.
+_FFIEC_TZ = ZoneInfo("America/New_York")
 
 TEST_JWT = (
     "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzgzNDQyMjUzfQ."
@@ -287,16 +292,39 @@ class TestFormatDateForOutput:
     def test_python_format_from_date(self):
         result = _format_date_for_output("12/31/2024", "python_format")
         assert isinstance(result, datetime)
-        assert result == datetime(2024, 12, 31)
+        # Winter date → EST (UTC-5). The wire format carries no tz marker;
+        # the library labels FFIEC timestamps as America/New_York.
+        assert result == datetime(2024, 12, 31, tzinfo=_FFIEC_TZ)
+        assert result.tzinfo is not None
+        assert result.utcoffset().total_seconds() == -5 * 3600
 
     def test_python_format_from_datetime_string_preserves_time(self):
         result = _format_date_for_output("12/31/2024 3:45:00 PM", "python_format")
         assert isinstance(result, datetime)
-        assert result == datetime(2024, 12, 31, 15, 45, 0)
+        assert result == datetime(2024, 12, 31, 15, 45, 0, tzinfo=_FFIEC_TZ)
 
-    def test_datetime_object_passthrough_for_python_format(self):
+    def test_python_format_summer_date_gets_edt(self):
+        """ZoneInfo, not a fixed offset, so DST is honored."""
+        result = _format_date_for_output("7/15/2024 10:00:00 AM", "python_format")
+        assert result.tzinfo is not None
+        # EDT = UTC-4
+        assert result.utcoffset().total_seconds() == -4 * 3600
+
+    def test_datetime_object_naive_gets_tz_attached(self):
+        """Naive datetime input is labeled with America/New_York."""
         dt = datetime(2024, 6, 30, 12, 0, 0)
-        assert _format_date_for_output(dt, "python_format") is dt
+        result = _format_date_for_output(dt, "python_format")
+        assert result == datetime(2024, 6, 30, 12, 0, 0, tzinfo=_FFIEC_TZ)
+        assert result.tzinfo is not None
+
+    def test_datetime_object_aware_passthrough_for_python_format(self):
+        """If the caller passes an already-aware datetime, respect their tz."""
+        from datetime import timezone
+
+        dt = datetime(2024, 6, 30, 12, 0, 0, tzinfo=timezone.utc)
+        result = _format_date_for_output(dt, "python_format")
+        assert result is dt
+        assert result.tzinfo is timezone.utc
 
     def test_datetime_object_formatted_for_string_yyyymmdd(self):
         dt = datetime(2024, 6, 30, 12, 0, 0)
@@ -340,7 +368,8 @@ class TestDateOutputFormatEndToEnd:
             )
         assert len(result) == 1
         assert isinstance(result[0], datetime)
-        assert result[0] == datetime(2024, 12, 31)
+        assert result[0] == datetime(2024, 12, 31, tzinfo=_FFIEC_TZ)
+        assert result[0].tzinfo is not None
 
     def test_collect_ubpr_reporting_periods_yyyymmdd(self):
         creds = _make_creds()
@@ -365,7 +394,10 @@ class TestDateOutputFormatEndToEnd:
             )
         assert len(result) == 1
         assert isinstance(result[0]["datetime"], datetime)
-        assert result[0]["datetime"] == datetime(2024, 12, 31, 15, 45, 0)
+        assert result[0]["datetime"] == datetime(
+            2024, 12, 31, 15, 45, 0, tzinfo=_FFIEC_TZ
+        )
+        assert result[0]["datetime"].tzinfo is not None
 
 
 # ---------------------------------------------------------------------------
