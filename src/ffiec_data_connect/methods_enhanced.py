@@ -12,13 +12,16 @@ import logging
 from datetime import datetime
 from types import ModuleType
 from typing import Any, Dict, List, Optional, Union
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
+from ffiec_data_connect.config import use_legacy_errors
 from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.data_normalizer import DataNormalizer
 from ffiec_data_connect.exceptions import (
     ConnectionError,
+    FFIECError,
     ValidationError,
     raise_exception,
 )
@@ -30,6 +33,15 @@ from ffiec_data_connect.methods import (
     _output_type_validator,
 )
 from ffiec_data_connect.protocol_adapter import create_protocol_adapter
+
+# FFIEC reports submission timestamps and reporting periods in Washington,
+# DC local wall-clock time (Eastern). The REST API does not stamp a tz
+# marker on the wire — the library attaches one for ``python_format``
+# output so downstream `datetime` arithmetic doesn't accidentally treat
+# the values as UTC or local-runtime tz. ``ZoneInfo`` handles EST↔EDT
+# transitions from the tz database, so a naive 2:30 PM on 2024-02-20
+# becomes EST; 2:30 PM on 2024-07-15 becomes EDT.
+_FFIEC_TZ = ZoneInfo("America/New_York")
 
 # Polars import - optional
 pl: Optional[ModuleType]
@@ -70,22 +82,138 @@ def _normalize_pydantic_to_soap_format(pydantic_obj: Any) -> Dict[str, Any]:
         return _normalize_output_from_reporter_panel(pydantic_obj)
 
 
-def _format_datetime_for_output(dt_str: str, date_output_format: str) -> str:
-    """Format datetime string according to requested output format
+def _require_polars_available() -> None:
+    """Raise ``ValidationError`` when ``output_type="polars"`` is requested but
+    the optional ``polars`` dependency is not installed.
 
-    Args:
-        dt_str: DateTime string from REST API
-        date_output_format: Requested output format
+    Consolidates the check that previously silently fell through to a list
+    return in several enhanced-layer methods, matching the explicit raise
+    in ``collect_data``.
+    """
+    if not POLARS_AVAILABLE:
+        raise_exception(
+            ValidationError,
+            "Polars not available",
+            field="output_type",
+            value="polars",
+            expected=(
+                "polars package must be installed: "
+                "pip install 'ffiec-data-connect[polars]'"
+            ),
+        )
+
+
+def _format_date_for_output(date_value: Any, date_output_format: str) -> Any:
+    """Format a date or datetime value per the requested output format.
+
+    Accepts:
+        - Empty string / ``None`` → returned unchanged
+        - ``datetime`` object → used directly. If the caller provides an
+          already-aware datetime, its tzinfo is preserved. If they pass a
+          naive datetime and ask for ``python_format``, the helper labels
+          it with ``America/New_York`` — same treatment as a parsed
+          string, on the assumption the caller produced it from a
+          FFIEC-shaped input.
+        - String in any of: ``"MM/DD/YYYY"``, ``"M/D/YYYY"``, or the same
+          with a trailing ``"HH:MM:SS AM/PM"`` or 24-hour ``"HH:MM:SS"``
+          time component (matches what the FFIEC REST endpoints return).
 
     Returns:
-        Formatted datetime string
-    """
-    if not dt_str:
-        return dt_str
+        - ``"string_original"``: the input unchanged.
+        - ``"string_yyyymmdd"``: ``"YYYYMMDD"`` (date portion only — any
+          time component and timezone is dropped).
+        - ``"python_format"``: a **tz-aware** ``datetime`` in
+          ``America/New_York``. FFIEC reports wall-clock values in
+          Washington, DC local time with no tz marker on the wire; the
+          library attaches the label so downstream arithmetic doesn't
+          silently treat the value as UTC or process-local time. The
+          ``ZoneInfo`` handles EST↔EDT transitions automatically.
 
-    # For now, return as-is since REST API provides consistent format
-    # Future enhancement: parse and reformat according to date_output_format
-    return dt_str
+    Error handling for unparseable input:
+        - In ``"python_format"`` mode, unparseable input raises
+          :class:`ValidationError`. Returning a string here would violate
+          the documented return type and break downstream consumers doing
+          e.g. ``result.year``.
+        - In the string modes, unparseable input is returned unchanged and
+          a ``logger.debug`` is emitted. The string is still a string, just
+          not reformatted. Raising here would be noisy because the FFIEC
+          REST endpoints have always emitted ``MM/DD/YYYY`` and any
+          deviation is a server-side anomaly worth a debug trail but not a
+          hard failure.
+    """
+    if not date_value or date_output_format == "string_original":
+        return date_value
+
+    # Normalize to a datetime object first.
+    if isinstance(date_value, datetime):
+        dt: datetime = date_value
+    elif isinstance(date_value, str):
+        stripped = date_value.strip()
+        for fmt in (
+            "%m/%d/%Y %I:%M:%S %p",  # datetime with AM/PM (submission endpoint)
+            "%m/%d/%Y %H:%M:%S",  # datetime 24-hour
+            "%m/%d/%Y",  # pure date (reporting-periods endpoint)
+        ):
+            try:
+                dt = datetime.strptime(stripped, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            # No recognized format matched.
+            logger.debug(
+                "date %r did not match any known FFIEC format; " "output format=%r",
+                date_value,
+                date_output_format,
+            )
+            if date_output_format == "python_format":
+                # Returning a str here would violate the documented return
+                # type (datetime) and break callers doing .year / .month.
+                raise_exception(
+                    ValidationError,
+                    f"Cannot parse date {date_value!r} for "
+                    f"date_output_format='python_format'",
+                    field="date_value",
+                    value=str(date_value),
+                    expected=(
+                        "a date string in MM/DD/YYYY format, optionally "
+                        "with a trailing HH:MM:SS AM/PM or HH:MM:SS time, "
+                        "or a datetime object"
+                    ),
+                )
+            # String modes: return input verbatim so callers still get a
+            # usable (unreformatted) value.
+            return date_value
+    else:
+        return date_value
+
+    if date_output_format == "string_yyyymmdd":
+        # strftime doesn't convert across tz, it just formats — safe on
+        # both naive and aware datetimes. The string output is date-only,
+        # so any tzinfo is intentionally dropped.
+        return dt.strftime("%Y%m%d")
+    if date_output_format == "python_format":
+        # Only attach DC tz if the datetime is naive. If the caller
+        # supplied an already-aware datetime, their intent trumps the
+        # library's default — don't overwrite.
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=_FFIEC_TZ)
+        return dt
+
+    # _date_format_validator should have rejected any other value upstream;
+    # defensively return input unchanged if we ever reach here.
+    return date_value
+
+
+def _format_datetime_for_output(dt_str: str, date_output_format: str) -> Any:
+    """Back-compat alias for ``_format_date_for_output``.
+
+    The original name only served datetime strings from the submission
+    endpoint. rc6 broadened it to any date value, so the newer function is
+    preferred internally. Kept here for any import path that still uses
+    the older name.
+    """
+    return _format_date_for_output(dt_str, date_output_format)
 
 
 def collect_reporting_periods_enhanced(
@@ -155,26 +283,49 @@ def collect_reporting_periods_enhanced(
 
         sorted_periods = sort_reporting_periods_ascending(raw_periods)
 
-        # Process dates - convert from MM/DD/YYYY to requested format if needed
-        processed_periods = []
-        for period_str in sorted_periods:
-            # For now, keep as-is since most users expect MM/DD/YYYY
-            # Future enhancement: convert based on date_output_format
-            processed_periods.append(period_str)
+        # Apply the requested date_output_format to each period. For
+        # ``"string_original"`` (the default) this is a no-op; for the
+        # other formats _format_date_for_output parses the MM/DD/YYYY
+        # string and returns a YYYYMMDD string or a datetime object.
+        processed_periods = [
+            _format_date_for_output(period_str, date_output_format)
+            for period_str in sorted_periods
+        ]
 
-        # Handle output type conversion
+        # Handle output type conversion. Polars requested but not
+        # available now raises (was silently falling back to a list).
         if output_type == "pandas":
             return pd.DataFrame({"reporting_period": processed_periods})
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             return pl.DataFrame({"reporting_period": processed_periods})  # type: ignore[union-attr]
         else:
             return processed_periods
 
     except Exception as e:
+        # Don't swallow specific, already-typed FFIEC exceptions — only wrap
+        # unexpected errors.
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
+            raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
+            raise
         logger.error(f"REST API call failed in collect_reporting_periods_enhanced: {e}")
-        raise_exception(
-            ConnectionError, f"Failed to retrieve reporting periods via REST API: {e}"
-        )
+        msg = f"Failed to retrieve reporting periods via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)
 
 
 def collect_filers_on_reporting_period_enhanced(
@@ -248,7 +399,8 @@ def collect_filers_on_reporting_period_enhanced(
         # Handle output type conversion
         if output_type == "pandas":
             return pd.DataFrame(normalized_filers)
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             return pl.DataFrame(normalized_filers)  # type: ignore[union-attr]
         else:
             return normalized_filers
@@ -257,7 +409,26 @@ def collect_filers_on_reporting_period_enhanced(
         logger.error(
             f"REST API call failed in collect_filers_on_reporting_period_enhanced: {e}"
         )
-        raise_exception(ConnectionError, f"Failed to retrieve filers via REST API: {e}")
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
+            raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
+            raise
+        msg = f"Failed to retrieve filers via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)
 
 
 def collect_filers_since_date_enhanced(
@@ -347,7 +518,8 @@ def collect_filers_since_date_enhanced(
             df = pd.DataFrame({"rssd_id": string_rssd_ids})
             df["rssd"] = df["rssd_id"]  # Dual field support
             return df
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             # Provide dual column names for compatibility
             data_dict = {"rssd_id": string_rssd_ids, "rssd": string_rssd_ids}
             return pl.DataFrame(data_dict)  # type: ignore[union-attr]
@@ -356,9 +528,26 @@ def collect_filers_since_date_enhanced(
 
     except Exception as e:
         logger.error(f"REST API call failed in collect_filers_since_date_enhanced: {e}")
-        raise_exception(
-            ConnectionError, f"Failed to retrieve filers since date via REST API: {e}"
-        )
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
+            raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
+            raise
+        msg = f"Failed to retrieve filers since date via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)
 
 
 def collect_filers_submission_date_time_enhanced(
@@ -471,7 +660,8 @@ def collect_filers_submission_date_time_enhanced(
         # Handle output type conversion
         if output_type == "pandas":
             return pd.DataFrame(processed_submissions)
-        elif output_type == "polars" and POLARS_AVAILABLE:
+        elif output_type == "polars":
+            _require_polars_available()
             return pl.DataFrame(processed_submissions)  # type: ignore[union-attr]
         else:
             return processed_submissions
@@ -480,7 +670,23 @@ def collect_filers_submission_date_time_enhanced(
         logger.error(
             f"REST API call failed in collect_filers_submission_date_time_enhanced: {e}"
         )
-        raise_exception(
-            ConnectionError,
-            f"Failed to retrieve submission date times via REST API: {e}",
-        )
+        # Re-raise typed FFIEC errors (ValidationError, NoDataError, etc.)
+        # and programming errors (AttributeError / KeyError / TypeError)
+        # untouched. Wrapping a bug as `ConnectionError` would mislead the
+        # user into thinking FFIEC is down when the real issue is a
+        # library bug or an API-shape drift. Only genuinely unexpected
+        # (presumed-network) exceptions fall through to the wrap below.
+        if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
+            raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
+            raise
+        msg = f"Failed to retrieve submission date times via REST API: {e}"
+        raise_exception(ConnectionError, msg, msg)

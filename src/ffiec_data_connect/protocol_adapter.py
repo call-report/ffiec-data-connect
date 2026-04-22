@@ -629,14 +629,18 @@ class RESTAdapter(ProtocolAdapter):
                     f"No data found for RSSD {rssd_id} for period {reporting_period}"
                 )
             elif response.status_code == 500:
-                # Server error - this endpoint may not be implemented yet
+                # The RetrieveFacsimile endpoint is implemented and working
+                # in production (verified in live integration tests); a 500
+                # at this point is a transient upstream issue — retry, or
+                # investigate FFIEC's service status.
                 logger.error(
-                    "Server error retrieving facsimile - endpoint may not be implemented"
+                    "FFIEC RetrieveFacsimile returned HTTP 500 — "
+                    "transient upstream error, retry"
                 )
                 raise ConnectionError(
-                    "RetrieveFacsimile endpoint returned server error. "
-                    "This REST endpoint may not be implemented yet. "
-                    "This endpoint may not be fully available yet."
+                    "FFIEC RetrieveFacsimile returned HTTP 500 — this is "
+                    "usually a transient upstream issue. Retry the request, "
+                    "or check https://cdr.ffiec.gov/ for service status."
                 )
             else:
                 self._handle_response(response, "RetrieveFacsimile")

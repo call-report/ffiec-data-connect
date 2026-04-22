@@ -5,6 +5,185 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0rc6] - 2026-04-22
+
+Vestigial-argument audit: warnings on silently-ignored parameter
+combinations, completion of a previously-stubbed feature
+(`date_output_format`), and a consistency fix for polars-without-polars.
+
+### Added
+
+- **`date_output_format` now actually works** on `collect_reporting_periods`,
+  `collect_ubpr_reporting_periods`, and `collect_filers_submission_date_time`.
+  The helper that was a no-op stub (`# Future enhancement: ...`) is now
+  implemented. `"string_yyyymmdd"` converts `"MM/DD/YYYY"` → `"YYYYMMDD"`;
+  `"python_format"` returns a **tz-aware** `datetime` object labeled as
+  `America/New_York`. FFIEC emits all of its date/time values in Washington,
+  DC local time but sends no tz marker on the wire, so naive datetimes here
+  would force every downstream caller to reattach the same timezone. DST is
+  handled automatically via `zoneinfo` (EST in winter, EDT in summer). If a
+  caller passes an already-tz-aware `datetime` in, its tzinfo is preserved —
+  we only label naive values. Shared via a new `_format_date_for_output()`
+  helper in `methods_enhanced.py`.
+- **`collect_data`'s `quarter` column is also tz-aware under
+  `date_output_format="python_format"`.** The XBRL-processing code path in
+  `xbrl_processor.py` used a second, parallel date-conversion branch that
+  previously returned naive datetimes. Applying the same
+  `ZoneInfo("America/New_York")` label there keeps the two code paths
+  consistent, so callers can compare a `collect_data` quarter against a
+  `collect_filers_submission_date_time` timestamp (or a
+  `collect_reporting_periods` entry) without hitting
+  `TypeError: can't compare offset-naive and offset-aware datetimes`.
+- Shared `_require_polars_available()` helper consolidating the
+  "polars extra not installed" check.
+
+### Fixed
+
+- **Silent polars fallback → `ValidationError`.** When `output_type="polars"`
+  was requested but the `polars` extra wasn't installed, four methods
+  (`collect_reporting_periods`, `collect_filers_since_date`,
+  `collect_filers_submission_date_time`, `collect_filers_on_reporting_period`,
+  plus `collect_ubpr_reporting_periods`) would silently return a Python
+  list instead. Now they raise `ValidationError`, matching `collect_data`'s
+  long-standing behavior.
+- **Pre-existing `ConnectionError` re-raise bug.** Four spots in
+  `methods_enhanced.py` wrapped caught exceptions with
+  `raise_exception(ConnectionError, f"...")` — missing the positional
+  `message` argument for the typed-exception path, so any error in those
+  methods raised `TypeError: ConnectionError.__init__() missing 1
+  required positional argument: 'message'` instead of the intended
+  `ConnectionError`. Also narrowed the re-raise to skip re-wrapping
+  already-typed `FFIECError` subclasses (fixes a separate silent-failure
+  where a `ValidationError` from `_require_polars_available()` would be
+  swallowed and turned into the same `TypeError`).
+- **Stale "endpoint may not be implemented" error text** (two sites —
+  `methods.py` and `protocol_adapter.py`). The `RetrieveFacsimile`
+  endpoint is implemented and exercised by live integration tests; an
+  HTTP 500 there is almost always a transient upstream issue. Message
+  now says so and suggests retry.
+
+### Documented
+
+- **`UserWarning` when `force_null_types` / `date_output_format` are passed
+  with `output_type="xbrl"` or `"pdf"`.** Raw-bytes outputs bypass parsing,
+  so those arguments silently had no effect. The warning surfaces the
+  no-op so callers drop the argument (or change `output_type`).
+- **`UserWarning` when `force_null_types` is passed to a method with no
+  typed null columns** (`collect_reporting_periods`,
+  `collect_ubpr_reporting_periods`, `collect_filers_since_date`). The
+  parameter is accepted on those methods for API symmetry; warning makes
+  the no-op visible at runtime rather than only in the docstring.
+
+### Review follow-ups
+
+Post-review tightening based on parallel code-review + silent-failure hunt:
+
+- `_warn_force_null_types_no_op` is now applied to **all five** methods
+  where the parameter is a documented no-op —
+  `collect_filers_submission_date_time` and
+  `collect_filers_on_reporting_period` were missing the warning in the
+  initial rc6 commit and would have been silent drop-through.
+- `_format_date_for_output` with `date_output_format="python_format"` now
+  raises `ValidationError` on unparseable input instead of silently
+  returning a string. The previous behavior would have violated the
+  documented return type and broken downstream `.year` / `.month`
+  access on any value that didn't round-trip through `strptime`. String
+  modes still pass through unchanged (with a `logger.debug` for
+  diagnostic trails).
+- The narrowed `except Exception` handlers in `methods_enhanced.py` now
+  also re-raise `AttributeError` / `KeyError` / `TypeError` untouched.
+  Wrapping those as `ConnectionError` would mislead users into thinking
+  FFIEC is down when the real problem is a library bug or an API shape
+  drift. Only genuinely unexpected (presumed-network) exceptions still
+  fall through to the `ConnectionError` wrap.
+- Minor legacy-mode behavior change: adapter `ConnectionError` now
+  propagates verbatim instead of being re-wrapped with the
+  "Failed to retrieve … via REST API: …" prefix. The new message is
+  cleaner; flagged here because legacy-mode users may notice.
+- **Legacy-error-mode narrowing symmetry.** rc6's initial narrowed
+  `except Exception` re-raised `FFIECError` subclasses untouched — but
+  that only helps users running with `FFIEC_USE_LEGACY_ERRORS=false`.
+  In the default legacy mode, `raise_exception(ValidationError, ...)`
+  produces a plain `ValueError`, which wasn't in the re-raise list and
+  got wrapped as `"Failed to retrieve … via REST API: …"`. Net effect:
+  when a legacy-mode user forgot `pip install 'ffiec-data-connect[polars]'`
+  and asked for `output_type="polars"`, they saw a message that read
+  like FFIEC was down (`"Failed to retrieve reporting periods via REST
+  API: Polars not available"`). The narrowed `except` now also
+  re-raises `ValueError` when `use_legacy_errors()` is true, so the
+  clean `"Polars not available"` error surfaces in both modes. Applied
+  to the same four sites as the prior narrowing.
+
+### Tests
+
+- New `tests/unit/test_rc6_arg_interactions.py` (39 tests) covers every
+  warning path, the polars-missing error on each affected method,
+  end-to-end date-format conversion on each wired method, unparseable-
+  input handling in both string and python-format modes, and the
+  programming-error-propagation behavior on the narrowed `except` blocks.
+- Updated two pre-existing tests in `test_methods_enhanced.py` and
+  `test_protocol_adapter_v3.py` whose asserted behavior changed
+  (the date-format stub became real; the 500 message was reworded).
+- **786 unit tests pass** (up from 746 in rc5, 711 on main).
+
+## [3.0.0rc5] - 2026-04-22
+
+Hotfix for a regression shipped in rc4 plus a systematic test-coverage audit
+of every meaningful kwarg combination on the seven public `collect_*` methods.
+
+### Fixed
+
+- **`collect_*(creds=creds, ...)` pure-kwarg new style no longer raises
+  `ValueError: Missing credentials argument`.** rc4's resolver checked only
+  the first-positional slot (`creds_or_session`) and skipped straight to an
+  error when that slot was unset — even when the caller had correctly
+  provided `creds=` as a keyword argument (the natural form after dropping
+  the deprecated `session` parameter). The resolver now falls back to the
+  `second_arg` slot when the first is unset: it returns the credentials on
+  `OAuth2Credentials`, raises `SOAPDeprecationError` on
+  `WebserviceCredentials`, and raises `ValidationError` only when truly
+  nothing was provided.
+
+  ```python
+  # Now works (was broken in rc4):
+  periods = collect_reporting_periods(creds=creds, series="call")
+  ```
+
+### Test coverage
+
+rc4's regression reached users because the test suite covered the positional
+form (`f(creds, ...)`) and the legacy kwarg form (`f(session=None, creds=creds, ...)`)
+but **not** the pure-kwarg new style. rc5 closes every gap in the calling-
+convention matrix (~27 new tests):
+
+- New `TestMixedKwargCombinations` class for mid-migration patterns:
+  `f(None, creds=creds, ...)` (half-migrated, S4) and `f(creds, session=None, ...)`
+  (moved creds positional but hasn't removed `session=None`, S6).
+- `TestNewStyleKwargCreds` extended with `test_pure_kwarg_soap_creds_raises`
+  (the exact path the rc5 resolver fix introduced — the test that, had it
+  existed for rc4, would have caught the regression), `test_creds_none_kwarg_raises_validation_error`
+  (common user mistake — forgot to instantiate creds), and
+  `test_positional_none_only_raises_validation_error`.
+- `TestResolveSessionAndCreds` extended with helper-level coverage for
+  `f(creds=soap_creds)`, `f(session=truthy_conn)` alone, and
+  `f(creds="not_creds")`.
+- `test_pure_kwarg_creds_succeeds_without_warning` strengthened to assert
+  the mocked downstream was *called* — the rc4 version of this test passed
+  against the bug because its "error message" check was too permissive.
+  The tightened assertion would have caught rc4's regression.
+
+All 746 unit tests pass (up from 711 in rc4).
+
+### Documented behavior
+
+- `f(creds, session=<truthy_non_None>, ...)` — a valid positional
+  `OAuth2Credentials` combined with a truthy (non-`None`) `session=` kwarg.
+  Current behavior: the session is silently discarded and only a
+  deprecation warning fires. The positional equivalent `f(conn, creds)`
+  raises `SOAPDeprecationError`, so these probably ought to match. Test
+  added pinning the current behavior; decision deferred to a separate
+  issue.
+
 ## [3.0.0rc4] - 2026-04-22
 
 Deprecations, an output-format refactor, and several consistency fixes.

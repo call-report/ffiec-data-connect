@@ -479,8 +479,12 @@ class TestCollectFilersSubmissionDateTimeEnhanced:
         assert "datetime" in result.columns
 
     @patch("ffiec_data_connect.methods_enhanced.create_protocol_adapter")
-    def test_date_output_format_passthrough(self, mock_create_adapter):
-        """date_output_format should not alter the datetime string (current behavior)."""
+    def test_date_output_format_yyyymmdd_converts(self, mock_create_adapter):
+        """date_output_format='string_yyyymmdd' converts the datetime (rc6).
+
+        Previously this parameter was a no-op stub; rc6 implemented the
+        conversion. This test now asserts the new behavior.
+        """
         mock_adapter = Mock()
         mock_adapter.retrieve_filers_submission_datetime.return_value = [
             {"ID_RSSD": 480228, "DateTime": "12/31/2023 11:59:59 PM"},
@@ -497,7 +501,29 @@ class TestCollectFilersSubmissionDateTimeEnhanced:
             date_output_format="string_yyyymmdd",
         )
 
-        # Current impl passes through regardless
+        # rc6: the datetime is parsed and reformatted; the time component is
+        # dropped because YYYYMMDD is a date-only format.
+        assert result[0]["datetime"] == "20231231"
+
+    @patch("ffiec_data_connect.methods_enhanced.create_protocol_adapter")
+    def test_date_output_format_string_original_passthrough(self, mock_create_adapter):
+        """date_output_format='string_original' (default) passes through unchanged."""
+        mock_adapter = Mock()
+        mock_adapter.retrieve_filers_submission_datetime.return_value = [
+            {"ID_RSSD": 480228, "DateTime": "12/31/2023 11:59:59 PM"},
+        ]
+        mock_create_adapter.return_value = mock_adapter
+
+        creds = _make_creds()
+        result = collect_filers_submission_date_time_enhanced(
+            session=None,
+            creds=creds,
+            since_date="1/1/2023",
+            reporting_period="12/31/2023",
+            output_type="list",
+            date_output_format="string_original",
+        )
+
         assert result[0]["datetime"] == "12/31/2023 11:59:59 PM"
 
 

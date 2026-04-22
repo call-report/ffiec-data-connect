@@ -643,6 +643,30 @@ class TestRESTAdapterRetrieveFacsimile:
         with pytest.raises(ConnectionError, match="unexpected JSON shape"):
             adapter.retrieve_facsimile("480228", "12/31/2023", "call")
 
+    def test_facsimile_json_invalid_base64_raises(self):
+        """JSON string that is not valid base64 raises ConnectionError.
+
+        Defensive branch in the facsimile decoder: if FFIEC ever returns a
+        200 with a JSON-wrapped string that isn't decodable as base64, we
+        must not return garbled bytes to the caller. A ``ConnectionError``
+        with an explicit "not valid base64" message is the right surface.
+        """
+        adapter = _make_rest_adapter()
+        adapter.rate_limiter = Mock()
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {"content-type": "application/json"}
+        # Non-base64-safe characters (@, #) trigger binascii.Error.
+        mock_response.json.return_value = "not@valid#base64!"
+        mock_response.content = b"raw content"
+
+        adapter.client = Mock()
+        adapter.client.get.return_value = mock_response
+
+        with pytest.raises(ConnectionError, match="not valid base64"):
+            adapter.retrieve_facsimile("480228", "12/31/2023", "call")
+
     def test_facsimile_404_raises_no_data_error(self):
         """404 response raises NoDataError (lines 549-552)."""
         adapter = _make_rest_adapter()
@@ -660,7 +684,12 @@ class TestRESTAdapterRetrieveFacsimile:
             adapter.retrieve_facsimile("480228", "12/31/2023", "call")
 
     def test_facsimile_500_raises_connection_error(self):
-        """500 response raises ConnectionError (lines 553-562)."""
+        """500 response raises ConnectionError.
+
+        rc6 reworded the message from "may not be implemented yet" to the
+        accurate "transient upstream" guidance (live tests confirm the
+        endpoint is implemented and working).
+        """
         adapter = _make_rest_adapter()
         adapter.rate_limiter = Mock()
 
@@ -672,7 +701,7 @@ class TestRESTAdapterRetrieveFacsimile:
         adapter.client = Mock()
         adapter.client.get.return_value = mock_response
 
-        with pytest.raises(ConnectionError, match="server error"):
+        with pytest.raises(ConnectionError, match="HTTP 500|transient"):
             adapter.retrieve_facsimile("480228", "12/31/2023", "call")
 
     def test_facsimile_unexpected_status_raises_connection_error(self):
@@ -831,6 +860,25 @@ class TestRESTAdapterRetrieveUBPRXBRLFacsimile:
         adapter.client.get.return_value = mock_response
 
         with pytest.raises(ConnectionError, match="unexpected JSON shape"):
+            adapter.retrieve_ubpr_xbrl_facsimile("480228", "12/31/2023")
+
+    def test_ubpr_facsimile_json_invalid_base64_raises(self):
+        """JSON string that is not valid base64 raises ConnectionError on the
+        UBPR path — mirrors the Call-Report facsimile behavior.
+        """
+        adapter = _make_rest_adapter()
+        adapter.rate_limiter = Mock()
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.json.return_value = "not@valid#base64!"
+        mock_response.content = b"raw ubpr content"
+
+        adapter.client = Mock()
+        adapter.client.get.return_value = mock_response
+
+        with pytest.raises(ConnectionError, match="not valid base64"):
             adapter.retrieve_ubpr_xbrl_facsimile("480228", "12/31/2023")
 
     def test_ubpr_facsimile_404_raises_no_data_error(self):

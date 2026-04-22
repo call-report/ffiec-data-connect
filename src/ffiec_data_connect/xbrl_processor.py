@@ -10,6 +10,7 @@ import re
 from datetime import datetime
 from itertools import chain
 from typing import Any, Dict, List, Union
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -38,6 +39,14 @@ except ImportError:  # pragma: no cover
     SECURE_XML = False
 
 from ffiec_data_connect.exceptions import XMLParsingError, raise_exception
+
+# FFIEC publishes all dates/times in Washington, DC local wall-clock time
+# with no tz marker on the wire. When ``date_output_format="python_format"``,
+# we label the parsed ``datetime`` with ``America/New_York`` so it matches
+# the rc6 behavior of ``_format_date_for_output`` in ``methods_enhanced``
+# and so downstream arithmetic works without surprise tz mismatches.
+# ``ZoneInfo`` handles DST transitions automatically.
+_FFIEC_TZ = ZoneInfo("America/New_York")
 
 re_date = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
@@ -205,7 +214,8 @@ def _process_xbrl_item(
         elif date_format == "string_yyyymmdd":
             quarter = datetime.strptime(quarter, "%Y-%m-%d").strftime("%Y%m%d")
         elif date_format == "python_format":
-            quarter = datetime.strptime(quarter, "%Y-%m-%d")
+            # Attach DC tz — see module-level ``_FFIEC_TZ`` comment.
+            quarter = datetime.strptime(quarter, "%Y-%m-%d").replace(tzinfo=_FFIEC_TZ)
 
         data_type = None
 
