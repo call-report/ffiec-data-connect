@@ -340,6 +340,18 @@ class TestFormatDateForOutput:
         """Garbage input returned unchanged — better than a half-converted result."""
         assert _format_date_for_output("not a date", "string_yyyymmdd") == "not a date"
 
+    def test_non_string_non_datetime_value_passes_through(self):
+        """Exotic types (int, dict, etc.) fall through untouched. This is a
+        defensive fallback — the validators upstream should prevent these
+        values from reaching the formatter, but if they do we prefer a
+        pass-through over an opaque TypeError deep in the parser.
+        """
+        # int, dict, and tuple all non-string / non-datetime — returned as-is.
+        assert _format_date_for_output(42, "string_yyyymmdd") == 42
+        sentinel = {"weird": "input"}
+        assert _format_date_for_output(sentinel, "python_format") is sentinel
+        assert _format_date_for_output((1, 2), "string_yyyymmdd") == (1, 2)
+
 
 class TestDateOutputFormatEndToEnd:
     """Each affected collect_* method honors date_output_format end-to-end."""
@@ -682,4 +694,224 @@ class TestProgrammingErrorsPropagate:
                     creds,
                     reporting_period="12/31/2024",
                     since_date="1/1/2024",
+                )
+
+
+# ---------------------------------------------------------------------------
+# Cross-method tz consistency — the whole point of attaching tz in rc6 is
+# that users can mix results across methods without ``TypeError``.
+# ---------------------------------------------------------------------------
+
+
+class TestCrossMethodTzConsistency:
+    """Migration doc §9 promises that a user can compare a
+    ``collect_data`` quarter against a ``collect_filers_submission_date_time``
+    timestamp without the "offset-naive and offset-aware" ``TypeError``.
+    These tests pin that promise at the comparison site, not just the
+    attribute check.
+    """
+
+    def test_reporting_periods_vs_submission_datetime(self):
+        """A reporting-period quarter-end can be compared to a submission
+        timestamp from ``collect_filers_submission_date_time``.
+        """
+        creds = _make_creds()
+        adapter = _default_mock_adapter()
+        adapter.retrieve_reporting_periods.return_value = ["12/31/2024"]
+        # The submission lands 1:30 PM on the same calendar day.
+        adapter.retrieve_filers_submission_datetime.return_value = [
+            {"ID_RSSD": 480228, "DateTime": "12/31/2024 1:30:00 PM"}
+        ]
+        with _mock_adapter_everywhere(adapter):
+            period = collect_reporting_periods(
+                creds,
+                series="call",
+                output_type="list",
+                date_output_format="python_format",
+            )[0]
+            submissions = collect_filers_submission_date_time(
+                creds,
+                since_date="1/1/2024",
+                reporting_period="12/31/2024",
+                output_type="list",
+                date_output_format="python_format",
+            )
+        submission_dt = submissions[0]["datetime"]
+        # Cross-method comparison must not raise. Period midnight < 1:30 PM.
+        assert period < submission_dt
+        # Arithmetic across the two must also work.
+        assert (submission_dt - period).total_seconds() == 13 * 3600 + 30 * 60
+
+    def test_ubpr_periods_vs_call_periods(self):
+        """UBPR and Call Report period lists can be intersected directly
+        (common pattern: only pull data for quarters that exist in both).
+        """
+        creds = _make_creds()
+        adapter = _default_mock_adapter()
+        adapter.retrieve_reporting_periods.return_value = [
+            "9/30/2024",
+            "12/31/2024",
+        ]
+        adapter.retrieve_ubpr_reporting_periods.return_value = [
+            "6/30/2024",
+            "9/30/2024",
+        ]
+        with _mock_adapter_everywhere(adapter):
+            call_periods = set(
+                collect_reporting_periods(
+                    creds,
+                    series="call",
+                    output_type="list",
+                    date_output_format="python_format",
+                )
+            )
+            ubpr_periods = set(
+                collect_ubpr_reporting_periods(
+                    creds,
+                    output_type="list",
+                    date_output_format="python_format",
+                )
+            )
+        common = call_periods & ubpr_periods
+        assert common == {datetime(2024, 9, 30, tzinfo=_FFIEC_TZ)}
+
+
+# ---------------------------------------------------------------------------
+# Polars output path exercised WITH polars installed. The "without polars"
+# path is covered above; this closes the other half of the branch.
+# ---------------------------------------------------------------------------
+
+
+class TestPolarsOutputWithPolarsInstalled:
+    """Every list-returning method has a polars branch. The
+    polars-unavailable path is covered by ``TestPolarsMissingRaisesUniformly``;
+    these close the polars-installed path on each method individually.
+    """
+
+    def _polars_or_skip(self):
+        pytest.importorskip("polars")
+
+    def test_collect_reporting_periods_polars(self):
+        self._polars_or_skip()
+        import polars as pl
+
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            result = collect_reporting_periods(
+                creds, series="call", output_type="polars"
+            )
+        assert isinstance(result, pl.DataFrame)
+        assert result.columns == ["reporting_period"]
+
+    def test_collect_ubpr_reporting_periods_polars(self):
+        """Closes the coverage gap flagged by pytest-cov (methods.py:1141)."""
+        self._polars_or_skip()
+        import polars as pl
+
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            result = collect_ubpr_reporting_periods(creds, output_type="polars")
+        assert isinstance(result, pl.DataFrame)
+        assert result.columns == ["reporting_period"]
+
+    def test_collect_filers_since_date_polars(self):
+        self._polars_or_skip()
+        import polars as pl
+
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            result = collect_filers_since_date(
+                creds,
+                since_date="1/1/2024",
+                reporting_period="12/31/2024",
+                output_type="polars",
+            )
+        assert isinstance(result, pl.DataFrame)
+
+    def test_collect_filers_submission_date_time_polars(self):
+        self._polars_or_skip()
+        import polars as pl
+
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            result = collect_filers_submission_date_time(
+                creds,
+                since_date="1/1/2024",
+                reporting_period="12/31/2024",
+                output_type="polars",
+            )
+        assert isinstance(result, pl.DataFrame)
+
+
+# ---------------------------------------------------------------------------
+# Legacy-mode interactions with the new rc6 surfaces. In legacy mode
+# ``raise_exception`` re-wraps typed exceptions as ``ValueError``, so any
+# behavior we pin under non-legacy should also be sanity-checked under
+# legacy for the paths a 2.x script might still rely on.
+# ---------------------------------------------------------------------------
+
+
+class TestLegacyModeRc6Interactions:
+    """Legacy mode must still surface the same *categories* of failure
+    (just as ``ValueError`` instead of the typed subclass) for rc6 rules.
+    """
+
+    @pytest.fixture
+    def legacy_mode(self):
+        """Opt a single test into legacy mode (overrides the module-level
+        ``set_legacy_errors(False)`` autouse fixture).
+        """
+        Config.set_legacy_errors(True)
+        yield
+        Config.set_legacy_errors(False)
+
+    def test_polars_missing_raises_valueerror_in_legacy(self, legacy_mode):
+        """rc6 ``output_type='polars'`` without the extra → ``ValueError``
+        in legacy mode (vs ``ValidationError`` in new mode).
+
+        Caveat worth flagging: in legacy mode, ``_require_polars_available``
+        raises ``ValueError("Polars not available")``, which is not a
+        ``FFIECError`` subclass and so gets re-wrapped by the outer
+        ``except Exception`` as the "Failed to retrieve ... via REST API"
+        ``ConnectionError`` message (which is itself a ``ValueError`` in
+        legacy mode). Net effect: legacy-mode users see a message that
+        suggests a network failure, when the real cause is a missing extra.
+        In non-legacy mode the typed ``ValidationError`` re-raises untouched.
+
+        Filed mentally for a follow-up: in legacy mode the except block
+        should also preserve ``ValueError`` untouched (because that's how
+        typed errors present when the library itself raised them). Keeping
+        the behavior as-is for rc6 — narrow hotfix scope.
+        """
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            with patch("ffiec_data_connect.methods_enhanced.POLARS_AVAILABLE", False):
+                # Case-insensitive since the wrapped message capitalizes
+                # "Polars" and the inner one doesn't.
+                with pytest.raises(ValueError, match="(?i)polars"):
+                    collect_reporting_periods(
+                        creds, series="call", output_type="polars"
+                    )
+
+    def test_unparseable_python_format_raises_valueerror_in_legacy(self, legacy_mode):
+        """The rc6 unparseable-in-python_format raise survives legacy mode
+        (as ``ValueError``). Key: it is *not* silently returned as a string.
+        """
+        with pytest.raises(ValueError, match="date"):
+            _format_date_for_output("not a date", "python_format")
+
+    def test_user_warnings_still_fire_in_legacy_mode(self, legacy_mode):
+        """``UserWarning`` for ignored-param combos is independent of the
+        legacy exception toggle — both modes should still warn.
+        """
+        creds = _make_creds()
+        with _mock_adapter_everywhere(_default_mock_adapter()):
+            with pytest.warns(UserWarning, match="force_null_types.*has no effect"):
+                collect_data(
+                    creds,
+                    reporting_period="12/31/2024",
+                    rssd_id="480228",
+                    series="call",
+                    output_type="xbrl",
+                    force_null_types="pandas",
                 )
