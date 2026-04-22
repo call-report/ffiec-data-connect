@@ -417,14 +417,32 @@ def _resolve_session_and_creds(
         )
 
     if first_arg is _SESSION_UNSET:
+        # No positional first arg and no session= kwarg. If the caller passed
+        # `creds=` as a keyword (pure-kwarg new style, e.g.
+        # `collect_reporting_periods(creds=creds, ...)`), `second_arg` carries
+        # the credentials and we resolve from there. Falling through to the
+        # error branch only when truly nothing was provided.
+        if isinstance(second_arg, OAuth2Credentials):
+            return second_arg
+        if isinstance(second_arg, credentials.WebserviceCredentials):
+            raise SOAPDeprecationError(
+                soap_method="WebserviceCredentials",
+                rest_equivalent="OAuth2Credentials(username, bearer_token)",
+                code_example=(
+                    '  creds = OAuth2Credentials(username="...", bearer_token="eyJ...")\n'
+                    '  collect_reporting_periods(creds, series="call")'
+                ),
+            )
         raise_exception(
             ValidationError,
             "Missing credentials argument",
             field="creds",
             value=None,
             expected=(
-                "OAuth2Credentials as the first positional argument, e.g. "
-                "collect_reporting_periods(creds, series='call')"
+                "OAuth2Credentials as the first positional argument OR as "
+                "the creds= keyword, e.g. "
+                "collect_reporting_periods(creds, series='call') or "
+                "collect_reporting_periods(creds=creds, series='call')"
             ),
         )
 

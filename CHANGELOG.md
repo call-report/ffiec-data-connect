@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0rc5] - 2026-04-22
+
+Hotfix for a regression shipped in rc4 plus a systematic test-coverage audit
+of every meaningful kwarg combination on the seven public `collect_*` methods.
+
+### Fixed
+
+- **`collect_*(creds=creds, ...)` pure-kwarg new style no longer raises
+  `ValueError: Missing credentials argument`.** rc4's resolver checked only
+  the first-positional slot (`creds_or_session`) and skipped straight to an
+  error when that slot was unset — even when the caller had correctly
+  provided `creds=` as a keyword argument (the natural form after dropping
+  the deprecated `session` parameter). The resolver now falls back to the
+  `second_arg` slot when the first is unset: it returns the credentials on
+  `OAuth2Credentials`, raises `SOAPDeprecationError` on
+  `WebserviceCredentials`, and raises `ValidationError` only when truly
+  nothing was provided.
+
+  ```python
+  # Now works (was broken in rc4):
+  periods = collect_reporting_periods(creds=creds, series="call")
+  ```
+
+### Test coverage
+
+rc4's regression reached users because the test suite covered the positional
+form (`f(creds, ...)`) and the legacy kwarg form (`f(session=None, creds=creds, ...)`)
+but **not** the pure-kwarg new style. rc5 closes every gap in the calling-
+convention matrix (~27 new tests):
+
+- New `TestMixedKwargCombinations` class for mid-migration patterns:
+  `f(None, creds=creds, ...)` (half-migrated, S4) and `f(creds, session=None, ...)`
+  (moved creds positional but hasn't removed `session=None`, S6).
+- `TestNewStyleKwargCreds` extended with `test_pure_kwarg_soap_creds_raises`
+  (the exact path the rc5 resolver fix introduced — the test that, had it
+  existed for rc4, would have caught the regression), `test_creds_none_kwarg_raises_validation_error`
+  (common user mistake — forgot to instantiate creds), and
+  `test_positional_none_only_raises_validation_error`.
+- `TestResolveSessionAndCreds` extended with helper-level coverage for
+  `f(creds=soap_creds)`, `f(session=truthy_conn)` alone, and
+  `f(creds="not_creds")`.
+- `test_pure_kwarg_creds_succeeds_without_warning` strengthened to assert
+  the mocked downstream was *called* — the rc4 version of this test passed
+  against the bug because its "error message" check was too permissive.
+  The tightened assertion would have caught rc4's regression.
+
+All 746 unit tests pass (up from 711 in rc4).
+
+### Documented behavior
+
+- `f(creds, session=<truthy_non_None>, ...)` — a valid positional
+  `OAuth2Credentials` combined with a truthy (non-`None`) `session=` kwarg.
+  Current behavior: the session is silently discarded and only a
+  deprecation warning fires. The positional equivalent `f(conn, creds)`
+  raises `SOAPDeprecationError`, so these probably ought to match. Test
+  added pinning the current behavior; decision deferred to a separate
+  issue.
+
 ## [3.0.0rc4] - 2026-04-22
 
 Deprecations, an output-format refactor, and several consistency fixes.

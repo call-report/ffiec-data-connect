@@ -97,6 +97,50 @@ class TestResolveSessionAndCreds:
         with pytest.raises(SOAPDeprecationError):
             _resolve_session_and_creds("connection", None)
 
+    # ---- rc5 additions: helper-level coverage for kwarg-side paths --------
+
+    def test_kwarg_creds_soap_raises(self):
+        """(E3 helper-level) second_arg is WebserviceCredentials + first_arg
+        not given → ``SOAPDeprecationError``. Exercises the rc5 fallback
+        branch in the resolver.
+        """
+        soap_creds = Mock(spec=WebserviceCredentials)
+        with pytest.raises(SOAPDeprecationError):
+            _resolve_session_and_creds(second_arg=soap_creds)
+
+    def test_session_truthy_alone_raises_soap(self):
+        """(E8 helper-level) Only a truthy ``session=`` is passed (no creds at
+        all). The session gets promoted to first_arg, hits the non-None-session
+        branch, and raises ``SOAPDeprecationError`` — the session-kwarg
+        deprecation is NOT emitted since the call isn't salvageable.
+        """
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+            with pytest.raises(SOAPDeprecationError):
+                _resolve_session_and_creds(session="fake_conn")
+
+        session_kwarg_warnings = [
+            w
+            for w in captured
+            if issubclass(w.category, DeprecationWarning)
+            and "session" in str(w.message).lower()
+            and "keyword" in str(w.message).lower()
+        ]
+        assert session_kwarg_warnings == [], (
+            "Should not emit 'session kwarg deprecated' warning on paths that "
+            "immediately raise SOAPDeprecationError"
+        )
+
+    def test_invalid_type_kwarg_creds_raises(self):
+        """(V5) second_arg is a non-creds object (e.g. a string), first_arg
+        not given → ``ValidationError``. rc5's fallback lands here when
+        ``creds=<something unexpected>`` is passed.
+        """
+        from ffiec_data_connect.exceptions import ValidationError
+
+        with pytest.raises((ValidationError, ValueError)):
+            _resolve_session_and_creds(second_arg="not_creds")
+
 
 # ---------------------------------------------------------------------------
 # Parametrized tests for all 7 methods
@@ -297,6 +341,268 @@ class TestBearerTokenWarning:
                     and "FFIEC_BEARER_TOKEN" in str(x.message)
                 ]
                 assert len(user_warnings) == 0
+
+
+class TestNewStyleKwargCreds:
+    """
+    Pattern 5: ``collect_*(creds=creds, ...)`` — pure-kwarg new style, no
+    session at all. This is the natural form for users writing everything
+    as keyword arguments. It was broken in 3.0.0rc4 (raised
+    ``ValueError: Missing credentials argument`` because the resolver
+    checked only the first-positional slot) and fixed in rc5.
+    """
+
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
+    def test_pure_kwarg_creds_succeeds_without_warning(
+        self, func, patch_target, kwargs
+    ):
+        """``func(creds=creds, ...)`` should reach the mocked downstream
+        handler — proving the resolver didn't reject the pure-kwarg form.
+
+        Asserting the mock was *called* is much stronger than asserting the
+        error message doesn't contain a specific substring: it's the direct
+        evidence that the resolver passed through. (rc4 silently failed this
+        check because the error-message match was too permissive.)
+        """
+        creds = _make_creds()
+
+        with patch(patch_target) as mock_target:
+            if "create_protocol_adapter" in patch_target:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = b"<xbrl/>"
+                mock_adapter.retrieve_ubpr_reporting_periods.return_value = [
+                    "12/31/2025"
+                ]
+                mock_adapter.retrieve_ubpr_xbrl_facsimile.return_value = b"<xbrl/>"
+                mock_target.return_value = mock_adapter
+            else:
+                mock_target.return_value = []
+
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                try:
+                    func(creds=creds, **kwargs)
+                except Exception:
+                    pass  # mock-depth noise is OK; the assertion below is
+                    # whether the resolver let us through at all.
+
+                assert mock_target.called, (
+                    f"{func.__name__}(creds=creds) never reached the mocked "
+                    f"downstream handler — the resolver rejected the call "
+                    f"before any network/enhanced-layer code ran. This is "
+                    f"the rc4 regression."
+                )
+
+                session_warnings = [
+                    x
+                    for x in w
+                    if issubclass(x.category, DeprecationWarning)
+                    and "session" in str(x.message).lower()
+                ]
+                assert session_warnings == [], (
+                    f"{func.__name__}(creds=creds) should NOT emit a session "
+                    f"deprecation; got: {[str(w.message) for w in session_warnings]}"
+                )
+
+    def test_nothing_passed_still_raises(self):
+        """Truly missing credentials — no positional, no kwarg — must raise."""
+        from ffiec_data_connect.methods import collect_reporting_periods
+
+        with pytest.raises((ValidationError, ValueError)) as exc_info:
+            collect_reporting_periods()
+        # The error mentions the `creds` field and OAuth2Credentials guidance
+        # regardless of legacy-mode wrapping.
+        msg = str(exc_info.value)
+        assert "creds" in msg and "OAuth2Credentials" in msg
+
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
+    def test_pure_kwarg_soap_creds_raises(self, func, patch_target, kwargs):
+        """(E3) ``func(creds=soap_creds, ...)`` must raise SOAPDeprecationError.
+
+        This is the exact path the rc5 resolver fix added. Missing rc4
+        coverage here is what let the earlier regression slip through, so it
+        gets a parametrized pass across every public method.
+        """
+        soap_creds = Mock(spec=WebserviceCredentials)
+
+        with pytest.raises(SOAPDeprecationError):
+            func(creds=soap_creds, **kwargs)
+
+    def test_creds_none_kwarg_raises_validation_error(self):
+        """(V2) ``func(creds=None, ...)`` — common user mistake (forgot to
+        instantiate creds). Must raise a clear ValidationError, not a confusing
+        downstream crash.
+        """
+        from ffiec_data_connect.methods import collect_reporting_periods
+
+        with pytest.raises((ValidationError, ValueError)) as exc_info:
+            collect_reporting_periods(creds=None, series="call")
+        msg = str(exc_info.value)
+        assert "creds" in msg and "OAuth2Credentials" in msg
+
+    def test_positional_none_only_raises_validation_error(self):
+        """(V3) ``func(None)`` — positional None with no creds kwarg.
+
+        Symmetric with V1/V2; distinguishes "nothing at all" from "legacy
+        session=None but forgot creds".
+        """
+        from ffiec_data_connect.methods import collect_reporting_periods
+
+        with warnings.catch_warnings():
+            # Positional-None is the deprecated session-positional form; the
+            # warning will fire on any success path but we expect failure here.
+            warnings.simplefilter("ignore", DeprecationWarning)
+            with pytest.raises((ValidationError, ValueError)) as exc_info:
+                collect_reporting_periods(None, series="call")
+        msg = str(exc_info.value)
+        # Second arg is default None → "Invalid credentials type" branch.
+        assert "credential" in msg.lower() or "OAuth2Credentials" in msg
+
+
+class TestMixedKwargCombinations:
+    """
+    Mid-migration and unusual call shapes that aren't covered by the "clean
+    pattern" test classes. Each shape is something a real user might write
+    while migrating from 2.x. See the rc5 audit plan for the full matrix.
+    """
+
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
+    def test_positional_none_with_kwarg_creds_warns_and_succeeds(
+        self, func, patch_target, kwargs
+    ):
+        """(S4) ``func(None, creds=creds, ...)`` — half-migrated user.
+
+        Dropped the positional creds but kept the leading ``None``. Should
+        emit the positional-``session=None`` deprecation warning and succeed.
+        """
+        creds = _make_creds()
+
+        with patch(patch_target) as mock_target:
+            if "create_protocol_adapter" in patch_target:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = b"<xbrl/>"
+                mock_adapter.retrieve_ubpr_reporting_periods.return_value = [
+                    "12/31/2025"
+                ]
+                mock_adapter.retrieve_ubpr_xbrl_facsimile.return_value = b"<xbrl/>"
+                mock_target.return_value = mock_adapter
+            else:
+                mock_target.return_value = []
+
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                try:
+                    func(None, creds=creds, **kwargs)
+                except TypeError as e:
+                    pytest.fail(
+                        f"{func.__name__}(None, creds=creds) raised TypeError: {e}"
+                    )
+                except ValueError as e:
+                    if "Missing credentials" in str(e):
+                        pytest.fail(
+                            f"{func.__name__}(None, creds=creds) incorrectly raised: {e}"
+                        )
+                except Exception:
+                    pass
+
+                deprecations = [
+                    x
+                    for x in w
+                    if issubclass(x.category, DeprecationWarning)
+                    and "session" in str(x.message).lower()
+                ]
+                assert len(deprecations) >= 1, (
+                    f"{func.__name__}(None, creds=creds) should emit a "
+                    "session-related DeprecationWarning"
+                )
+
+    @pytest.mark.parametrize(
+        "func,patch_target,kwargs", METHOD_CONFIGS, ids=_method_ids()
+    )
+    def test_positional_creds_with_session_none_kwarg_warns(
+        self, func, patch_target, kwargs
+    ):
+        """(S6) ``func(creds, session=None, ...)`` — mid-migration user.
+
+        Moved creds to the first positional slot but hasn't yet removed the
+        now-redundant ``session=None``. Should emit the session-kwarg
+        deprecation and return the positional creds successfully.
+        """
+        creds = _make_creds()
+
+        with patch(patch_target) as mock_target:
+            if "create_protocol_adapter" in patch_target:
+                mock_adapter = Mock()
+                mock_adapter.retrieve_facsimile.return_value = b"<xbrl/>"
+                mock_adapter.retrieve_ubpr_reporting_periods.return_value = [
+                    "12/31/2025"
+                ]
+                mock_adapter.retrieve_ubpr_xbrl_facsimile.return_value = b"<xbrl/>"
+                mock_target.return_value = mock_adapter
+            else:
+                mock_target.return_value = []
+
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                try:
+                    func(creds, session=None, **kwargs)
+                except TypeError as e:
+                    pytest.fail(
+                        f"{func.__name__}(creds, session=None) raised TypeError: {e}"
+                    )
+                except Exception:
+                    pass
+
+                deprecations = [
+                    x
+                    for x in w
+                    if issubclass(x.category, DeprecationWarning)
+                    and "session" in str(x.message).lower()
+                ]
+                assert len(deprecations) >= 1, (
+                    f"{func.__name__}(creds, session=None) should emit a "
+                    "session-related DeprecationWarning"
+                )
+
+    def test_positional_creds_with_truthy_session_currently_discards(self):
+        """Documents current behavior of ``func(creds, session=<truthy>, ...)``.
+
+        A valid positional OAuth2Credentials + a truthy (non-None) session
+        kwarg currently returns the creds with a session-kwarg deprecation
+        warning; the session value is silently discarded.
+
+        The positional equivalent ``func(conn, creds)`` raises
+        ``SOAPDeprecationError``, so these probably ought to match — but
+        changing the behavior is a semantic shift, not a hotfix. This test
+        pins the current behavior so any future change is deliberate.
+
+        See the rc5 audit plan ("Open behavioral question") for context.
+        """
+        from ffiec_data_connect.methods import collect_reporting_periods
+
+        creds = _make_creds()
+
+        with patch(
+            "ffiec_data_connect.methods_enhanced.collect_reporting_periods_enhanced"
+        ) as mock_enhanced:
+            mock_enhanced.return_value = []
+
+            with pytest.warns(DeprecationWarning, match="session"):
+                result = collect_reporting_periods(
+                    creds, session="fake_conn_object", series="call"
+                )
+
+        # Current rc5 behavior: returns a result (the truthy session is
+        # silently discarded). If/when this is changed to raise
+        # SOAPDeprecationError for consistency with the positional form,
+        # update this test to match.
+        assert result is not None
 
 
 class TestSessionKeywordBackwardCompat:
