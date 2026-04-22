@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
+from ffiec_data_connect.config import use_legacy_errors
 from ffiec_data_connect.credentials import OAuth2Credentials
 from ffiec_data_connect.data_normalizer import DataNormalizer
 from ffiec_data_connect.exceptions import (
@@ -312,6 +313,16 @@ def collect_reporting_periods_enhanced(
         # (presumed-network) exceptions fall through to the wrap below.
         if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
             raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
+            raise
         logger.error(f"REST API call failed in collect_reporting_periods_enhanced: {e}")
         msg = f"Failed to retrieve reporting periods via REST API: {e}"
         raise_exception(ConnectionError, msg, msg)
@@ -405,6 +416,16 @@ def collect_filers_on_reporting_period_enhanced(
         # library bug or an API-shape drift. Only genuinely unexpected
         # (presumed-network) exceptions fall through to the wrap below.
         if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
+            raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
             raise
         msg = f"Failed to retrieve filers via REST API: {e}"
         raise_exception(ConnectionError, msg, msg)
@@ -514,6 +535,16 @@ def collect_filers_since_date_enhanced(
         # library bug or an API-shape drift. Only genuinely unexpected
         # (presumed-network) exceptions fall through to the wrap below.
         if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
+            raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
             raise
         msg = f"Failed to retrieve filers since date via REST API: {e}"
         raise_exception(ConnectionError, msg, msg)
@@ -646,6 +677,16 @@ def collect_filers_submission_date_time_enhanced(
         # library bug or an API-shape drift. Only genuinely unexpected
         # (presumed-network) exceptions fall through to the wrap below.
         if isinstance(e, (FFIECError, AttributeError, KeyError, TypeError)):
+            raise
+        # In legacy error mode (default for v2 back-compat), typed FFIEC
+        # errors are raised as plain ``ValueError`` via ``raise_exception``.
+        # A ``ValueError`` bubbling up here is the legacy-mode equivalent
+        # of a typed ``FFIECError`` and must re-raise for the same reason
+        # — otherwise e.g. ``_require_polars_available``'s "Polars not
+        # available" error gets re-wrapped as "Failed to retrieve … via
+        # REST API: Polars not available", which reads as a network issue
+        # when the real cause is a missing Python dependency.
+        if use_legacy_errors() and isinstance(e, ValueError):
             raise
         msg = f"Failed to retrieve submission date times via REST API: {e}"
         raise_exception(ConnectionError, msg, msg)

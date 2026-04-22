@@ -865,33 +865,84 @@ class TestLegacyModeRc6Interactions:
         yield
         Config.set_legacy_errors(False)
 
-    def test_polars_missing_raises_valueerror_in_legacy(self, legacy_mode):
-        """rc6 ``output_type='polars'`` without the extra → ``ValueError``
-        in legacy mode (vs ``ValidationError`` in new mode).
+    def test_polars_missing_raises_clean_valueerror_in_legacy(self, legacy_mode):
+        """rc6: in legacy mode, a polars-missing error surfaces as a clean
+        ``ValueError("Polars not available")`` — NOT double-wrapped as
+        ``"Failed to retrieve reporting periods via REST API: Polars not
+        available"``.
 
-        Caveat worth flagging: in legacy mode, ``_require_polars_available``
-        raises ``ValueError("Polars not available")``, which is not a
-        ``FFIECError`` subclass and so gets re-wrapped by the outer
-        ``except Exception`` as the "Failed to retrieve ... via REST API"
-        ``ConnectionError`` message (which is itself a ``ValueError`` in
-        legacy mode). Net effect: legacy-mode users see a message that
-        suggests a network failure, when the real cause is a missing extra.
-        In non-legacy mode the typed ``ValidationError`` re-raises untouched.
+        The double-wrap was a pre-existing bug in legacy mode (default
+        error flavor for v2 back-compat): ``raise_exception`` converts
+        ``ValidationError`` → ``ValueError``, and the outer ``except
+        Exception`` then re-wraps the ``ValueError`` as a ``ConnectionError``
+        (which is itself a ``ValueError`` in legacy mode). The
+        "via REST API" prefix in the final message misled users into
+        thinking FFIEC was down when the real cause was a missing
+        Python dependency.
 
-        Filed mentally for a follow-up: in legacy mode the except block
-        should also preserve ``ValueError`` untouched (because that's how
-        typed errors present when the library itself raised them). Keeping
-        the behavior as-is for rc6 — narrow hotfix scope.
+        rc6 fix: the narrowed ``except`` block now also re-raises bare
+        ``ValueError`` when ``use_legacy_errors()`` is True. In legacy
+        mode ``ValueError`` is the type-stand-in for ``FFIECError``, so
+        treating it the same way keeps the narrowing principle symmetric
+        across both error modes.
         """
         creds = _make_creds()
         with _mock_adapter_everywhere(_default_mock_adapter()):
             with patch("ffiec_data_connect.methods_enhanced.POLARS_AVAILABLE", False):
-                # Case-insensitive since the wrapped message capitalizes
-                # "Polars" and the inner one doesn't.
-                with pytest.raises(ValueError, match="(?i)polars"):
+                with pytest.raises(ValueError) as exc_info:
                     collect_reporting_periods(
                         creds, series="call", output_type="polars"
                     )
+        msg = str(exc_info.value)
+        assert "Polars not available" in msg
+        # Key assertion: no misleading "via REST API" prefix.
+        assert "via REST API" not in msg
+        assert "Failed to retrieve" not in msg
+
+    def test_polars_missing_clean_message_across_all_enhanced_methods(
+        self, legacy_mode
+    ):
+        """Symmetry check: all four enhanced methods with narrowed except
+        blocks surface the polars-missing error cleanly in legacy mode,
+        not with the "Failed to retrieve … via REST API" wrap.
+        """
+        creds = _make_creds()
+        cases = [
+            (
+                collect_reporting_periods,
+                {"series": "call", "output_type": "polars"},
+            ),
+            (
+                collect_ubpr_reporting_periods,
+                {"output_type": "polars"},
+            ),
+            (
+                collect_filers_since_date,
+                {
+                    "since_date": "1/1/2024",
+                    "reporting_period": "12/31/2024",
+                    "output_type": "polars",
+                },
+            ),
+            (
+                collect_filers_submission_date_time,
+                {
+                    "since_date": "1/1/2024",
+                    "reporting_period": "12/31/2024",
+                    "output_type": "polars",
+                },
+            ),
+        ]
+        for func, kwargs in cases:
+            with _mock_adapter_everywhere(_default_mock_adapter()):
+                with patch(
+                    "ffiec_data_connect.methods_enhanced.POLARS_AVAILABLE", False
+                ):
+                    with pytest.raises(ValueError) as exc_info:
+                        func(creds, **kwargs)
+            msg = str(exc_info.value)
+            assert "Polars not available" in msg, f"{func.__name__}: {msg!r}"
+            assert "via REST API" not in msg, f"{func.__name__}: {msg!r}"
 
     def test_unparseable_python_format_raises_valueerror_in_legacy(self, legacy_mode):
         """The rc6 unparseable-in-python_format raise survives legacy mode

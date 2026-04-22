@@ -100,6 +100,19 @@ Post-review tightening based on parallel code-review + silent-failure hunt:
   propagates verbatim instead of being re-wrapped with the
   "Failed to retrieve … via REST API: …" prefix. The new message is
   cleaner; flagged here because legacy-mode users may notice.
+- **Legacy-error-mode narrowing symmetry.** rc6's initial narrowed
+  `except Exception` re-raised `FFIECError` subclasses untouched — but
+  that only helps users running with `FFIEC_USE_LEGACY_ERRORS=false`.
+  In the default legacy mode, `raise_exception(ValidationError, ...)`
+  produces a plain `ValueError`, which wasn't in the re-raise list and
+  got wrapped as `"Failed to retrieve … via REST API: …"`. Net effect:
+  when a legacy-mode user forgot `pip install 'ffiec-data-connect[polars]'`
+  and asked for `output_type="polars"`, they saw a message that read
+  like FFIEC was down (`"Failed to retrieve reporting periods via REST
+  API: Polars not available"`). The narrowed `except` now also
+  re-raises `ValueError` when `use_legacy_errors()` is true, so the
+  clean `"Polars not available"` error surfaces in both modes. Applied
+  to the same four sites as the prior narrowing.
 
 ### Tests
 
